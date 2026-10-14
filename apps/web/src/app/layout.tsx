@@ -23,11 +23,11 @@ const bloomDisplay = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Bloom Kigali',
-    template: '%s | Bloom Kigali',
+    default: 'Mosse Tech',
+    template: '%s | Mosse Tech',
   },
   description:
-    'Internal business management system for Bloom Kigali.',
+    'Internal business management system for Mosse Tech.',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
@@ -48,10 +48,10 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
     shortcut: '/favicon.ico',
   },
-  applicationName: 'Bloom Kigali',
+  applicationName: 'Mosse Tech',
   appleWebApp: {
     capable: true,
-    title: 'Bloom Kigali',
+    title: 'Mosse Tech',
     statusBarStyle: 'default',
   },
 };

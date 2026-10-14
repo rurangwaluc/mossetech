@@ -37,7 +37,7 @@ export function LoginForm() {
           type="email"
           autoComplete="email"
           required
-          placeholder="bloomkigali@gmail.com"
+          placeholder="name@example.com"
           className="h-11 w-full rounded-[4px] border border-[var(--border-strong)] bg-[var(--background)] px-4 text-sm sm:h-12 font-medium text-[var(--text)] outline-none transition placeholder:font-normal placeholder:text-[var(--muted)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-soft)]"
         />
       </div>

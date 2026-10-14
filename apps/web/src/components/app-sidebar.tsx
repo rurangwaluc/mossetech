@@ -143,17 +143,16 @@ export function AppSidebar({
           className="block no-underline"
         >
           <Image
-            src="/brand/bloom-logo-horizontal.png"
-            alt="Bloom Kigali"
-            width={145}
-            height={49}
-            className="w-[145px] object-contain"
-        style={{ height: 'auto' }}
-            priority
-          />
+  src="/brand/mossetech-logo-transparent-v2.png"
+  alt="Mosse Tech Ltd"
+  width={2172}
+  height={724}
+  className="h-auto w-[170px] max-w-full object-contain"
+  priority
+/>
 
           <p className="mt-1 text-[8px] font-semibold leading-3.5 text-[var(--muted)]">
-            Beautiful flowers. Brighter moments.
+            Electronics inventory & operations
           </p>
         </Link>
       </div>

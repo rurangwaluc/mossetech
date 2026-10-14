@@ -20,16 +20,16 @@ export default async function LoginPage() {
           <Link
             href="/"
             className="inline-flex min-w-0 items-center no-underline"
-            aria-label="Bloom Kigali home"
+            aria-label="Mosse Tech home"
           >
             <Image
-              src="/brand/bloom-logo-horizontal.png"
-              alt="Bloom Kigali"
-              width={176}
-              height={60}
-              className="h-auto w-[142px] object-contain sm:w-[165px]"
-              priority
-            />
+  src="/brand/mossetech-logo-transparent-v2.png"
+  alt="Mosse Tech Ltd"
+  width={2172}
+  height={724}
+  className="h-auto w-[205px] max-w-full object-contain max-[380px]:w-[150px]"
+  priority
+/>
           </Link>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -68,7 +68,7 @@ export default async function LoginPage() {
               </h1>
 
               <p className="mx-auto mt-2.5 max-w-sm text-[12px] leading-5 text-[var(--muted)] sm:mt-4 sm:text-[13px] sm:leading-6">
-                Enter your details to continue to Bloom Kigali.
+                Enter your details to continue to Mosse Tech.
               </p>
             </div>
 

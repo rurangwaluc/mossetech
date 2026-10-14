@@ -1,9 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { PublicThemeToggle } from './public-theme-toggle';
 import styles from './page.module.css';
 
-const workspaceItems = [
+const operations = [
   {
     number: '01',
     name: 'Sales',
@@ -12,17 +13,17 @@ const workspaceItems = [
   {
     number: '02',
     name: 'Products',
-    description: 'Product catalogue',
+    description: 'Electronics and accessories',
   },
   {
     number: '03',
     name: 'Stock',
-    description: 'Received, sold and remaining stock',
+    description: 'Received, sold and available stock',
   },
   {
     number: '04',
     name: 'Customers',
-    description: 'Customer records and balances',
+    description: 'Customer accounts and balances',
   },
   {
     number: '05',
@@ -41,117 +42,118 @@ export default function HomePage() {
 
   return (
     <main className={styles.page}>
-      <header className={styles.header}>
-        <Link
-          href="/"
-          className={styles.brand}
-          aria-label="Bloom Kigali home"
-        >
-          <Image
-            src="/brand/bloom-logo-horizontal.png"
-            alt="Bloom Kigali"
-            width={210}
-            height={72}
-            className={styles.brandLogo}
-            priority
-          />
-        </Link>
-
-        <div className={styles.headerActions}>
-          <PublicThemeToggle />
-
+      <div className={styles.container}>
+        <header className={styles.header}>
           <Link
-            href="/login"
-            className={styles.headerSignIn}
+            href="/"
+            className={styles.brand}
+            aria-label="Mosse Tech Ltd home"
           >
-            Sign in
+            <Image
+              src="/brand/mossetech-logo-transparent-v2.png"
+              alt="Mosse Tech Ltd"
+              width={2172}
+              height={724}
+              className={styles.logo}
+              priority
+            />
           </Link>
-        </div>
-      </header>
 
-      <section
-        className={styles.hero}
-        aria-labelledby="landing-heading"
-      >
-        <div className={styles.heroCopy}>
-          <p className={styles.eyebrow}>
-            Private business system
-          </p>
+          <div className={styles.headerActions}>
+            <PublicThemeToggle />
 
-          <h1 id="landing-heading">
-            <span>One clear place to</span>
-            <span>run Bloom Kigali.</span>
-          </h1>
-
-          <p className={styles.intro}>
-            Manage sales, products, stock, customers,
-            expenses and money records from one focused
-            workspace built for daily operations.
-          </p>
-
-          <div className={styles.actions}>
             <Link
               href="/login"
-              className={styles.primaryAction}
+              className={styles.headerSignIn}
             >
               Sign in
             </Link>
           </div>
+        </header>
 
-          <p className={styles.access}>
-            Authorized owner and staff access only
-          </p>
-        </div>
-
-        <aside
-          className={styles.workspace}
-          aria-label="Bloom Kigali daily operations"
+        <section
+          className={styles.hero}
+          aria-labelledby="landing-heading"
         >
-          <div className={styles.workspaceHeader}>
-            <p className={styles.workspaceLabel}>
-              Workspace
+          <div className={styles.heroCopy}>
+            <p className={styles.eyebrow}>
+              Inventory &amp; sales system
             </p>
 
-            <h2>Daily operations</h2>
-          </div>
+            <h1 id="landing-heading">
+              One clear place to
+              <span>
+                run <em>Mosse Tech.</em>
+              </span>
+            </h1>
 
-          <div className={styles.workspaceList}>
-            {workspaceItems.map((item) => (
-              <div
-                key={item.number}
-                className={styles.workspaceRow}
+            <p className={styles.intro}>
+              Manage sales, products, stock, customers,
+              expenses and reports from one focused
+              workspace built for daily operations.
+            </p>
+
+            <div className={styles.actions}>
+              <Link
+                href="/login"
+                className={styles.primaryAction}
               >
-                <span className={styles.rowNumber}>
-                  {item.number}
-                </span>
+                Sign in
+              </Link>
+            </div>
 
-                <span className={styles.rowName}>
-                  {item.name}
-                </span>
-
-                <span className={styles.rowDescription}>
-                  {item.description}
-                </span>
-              </div>
-            ))}
+            <p className={styles.access}>
+              Authorized owner and staff access only
+            </p>
           </div>
-        </aside>
-      </section>
 
-      <footer className={styles.footer}>
-        <span>© {year} Bloom Kigali</span>
-
-        <span>
-          Developed by{' '}
-          <a
-            href="https://webimpactlab.com"
-            target="_blank"
-            rel="noreferrer"
+          <aside
+            className={styles.workspace}
+            aria-label="Mosse Tech daily operations"
           >
-            WebImpact Lab
-          </a>
-        </span>
-      </footer>
+            <div className={styles.workspaceHeader}>
+              <p className={styles.workspaceLabel}>
+                Workspace
+              </p>
+              <h2>Daily operations</h2>
+            </div>
+
+            <div className={styles.workspaceList}>
+              {operations.map((item) => (
+                <div
+                  className={styles.workspaceRow}
+                  key={item.number}
+                >
+                  <span className={styles.rowNumber}>
+                    {item.number}
+                  </span>
+                  <span className={styles.rowName}>
+                    {item.name}
+                  </span>
+                  <span className={styles.rowDescription}>
+                    {item.description}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </section>
+
+        <footer className={styles.footer}>
+          <span>© {year} Mosse Tech Ltd</span>
+
+          <span>
+            Developed by{' '}
+            <a
+              href="https://webimpactlab.com"
+              target="_blank"
+              rel="noreferrer"
+            >
+              WebImpact Lab
+            </a>
+          </span>
+        </footer>
+      </div>
     </main>
   );
 }

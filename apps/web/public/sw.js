@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bloom-kigali-static-v5';
+const CACHE_NAME = 'mossetech-static-v1';
 const OFFLINE_URL = '/offline';
 
 const IS_LOCAL_DEVELOPMENT =
@@ -14,8 +14,8 @@ const STATIC_ASSETS = [
   '/icons/icon-maskable-512.png',
   '/apple-touch-icon.png',
   '/favicon.ico',
-  '/brand/bloom-logo-horizontal.png',
-  '/brand/bloom-logo-circle.png',
+  '/brand/mossetech-logo-transparent-v2.png',
+  '/brand/mossetech-laptop-symbol.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -44,8 +44,9 @@ self.addEventListener('activate', (event) => {
           keys
             .filter(
               (key) =>
-                key.startsWith(
-                  'bloom-kigali-',
+                (
+                  key.startsWith('bloom-kigali-') ||
+                  key.startsWith('mossetech-static-')
                 ) &&
                 (IS_LOCAL_DEVELOPMENT ||
                   key !== CACHE_NAME),

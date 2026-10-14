@@ -217,8 +217,8 @@ function getPageName(pathname: string) {
   }
 
   return {
-    eyebrow: 'Bloom Kigali',
-    title: 'Bloom Kigali',
+    eyebrow: 'Mosse Tech',
+    title: 'Mosse Tech',
   };
 }
 

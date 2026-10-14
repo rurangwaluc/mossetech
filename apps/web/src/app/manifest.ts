@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Bloom Kigali',
-    short_name: 'Bloom',
+    name: 'Mosse Tech',
+    short_name: 'Mosse Tech',
     description:
-      'Internal business management system for Bloom Kigali.',
+      'Internal business management system for Mosse Tech.',
     start_url: '/dashboard',
     scope: '/',
     display: 'standalone',
