@@ -86,6 +86,31 @@ export const sessions = pgTable('sessions', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const otpRequestSourceLimits = pgTable(
+  'otp_request_source_limits',
+  {
+    sourceHash: varchar('source_hash', {
+      length: 64,
+    }).primaryKey(),
+
+    windowStart: timestamp('window_start', {
+      withTimezone: true,
+    }).notNull(),
+
+    requestCount: integer('request_count')
+      .notNull()
+      .default(0),
+
+    expiresAt: timestamp('expires_at', {
+      withTimezone: true,
+    }).notNull(),
+  },
+  (table) => [
+    index('otp_request_source_limits_expires_idx')
+      .on(table.expiresAt),
+  ],
+);
+
 export const emailOtpChallenges = pgTable(
   'email_otp_challenges',
   {

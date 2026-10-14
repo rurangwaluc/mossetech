@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@mossetech/db/client';
 import { sessions } from '@mossetech/db/schema';
 
-export const SESSION_COOKIE_NAME = 'bloom_kigali_session';
+export const SESSION_COOKIE_NAME = 'mossetech_session';
 const SESSION_DAYS = 7;
 
 export type AppUserRole = 'OWNER' | 'EMPLOYEE';
