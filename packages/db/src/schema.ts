@@ -70,7 +70,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 180 }).notNull().unique(),
   phone: varchar('phone', { length: 40 }),
   passwordHash: text('password_hash').notNull(),
-  role: userRoleEnum('role').notNull().default('OWNER'),
+  role: userRoleEnum('role').notNull().default('EMPLOYEE'),
   status: userStatusEnum('status').notNull().default('ACTIVE'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
@@ -85,6 +85,63 @@ export const sessions = pgTable('sessions', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+export const emailOtpChallenges = pgTable(
+  'email_otp_challenges',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'restrict',
+      }),
+
+    email: varchar('email', {
+      length: 180,
+    }).notNull(),
+
+    codeHash: varchar('code_hash', {
+      length: 64,
+    }).notNull(),
+
+    attempts: integer('attempts')
+      .notNull()
+      .default(0),
+
+    expiresAt: timestamp('expires_at', {
+      withTimezone: true,
+    }).notNull(),
+
+    sentAt: timestamp('sent_at', {
+      withTimezone: true,
+    }),
+
+    consumedAt: timestamp('consumed_at', {
+      withTimezone: true,
+    }),
+
+    revokedAt: timestamp('revoked_at', {
+      withTimezone: true,
+    }),
+
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index('email_otp_challenges_user_created_idx')
+      .on(table.userId, table.createdAt),
+
+    index('email_otp_challenges_email_created_idx')
+      .on(table.email, table.createdAt),
+
+    index('email_otp_challenges_expires_idx')
+      .on(table.expiresAt),
+  ],
+);
 
 export const offlineOperations = pgTable(
   'offline_operations',

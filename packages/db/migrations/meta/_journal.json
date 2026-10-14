@@ -232,6 +232,13 @@
       "when": 1791199974132,
       "tag": "0032_flawless_polaris",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791972815308,
+      "tag": "0033_regular_betty_ross",
+      "breakpoints": true
     }
   ]
 }
