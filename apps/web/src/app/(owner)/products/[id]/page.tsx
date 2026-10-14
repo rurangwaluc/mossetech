@@ -136,7 +136,7 @@ export default async function ProductDetailsPage({
             <Link
               href={`/products/${product.id}/edit`}
               prefetch
-              className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] sm:w-auto sm:px-5"
+              className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] sm:w-auto sm:px-5"
             >
               {user.role ===
               'OWNER'

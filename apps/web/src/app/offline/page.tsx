@@ -24,7 +24,7 @@ export default function OfflinePage() {
 
         <Link
           href="/dashboard"
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[var(--primary)] px-6 text-sm font-black text-white no-underline shadow-sm transition hover:bg-[var(--primary-strong)]"
+          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl bg-[var(--primary-action)] px-6 text-sm font-black text-white no-underline shadow-sm transition hover:bg-[var(--primary-action-hover)]"
         >
           Try again
         </Link>

@@ -317,7 +317,7 @@ export default async function ProductsPage({
           <Link
             href="/products/new"
             prefetch
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] sm:w-auto"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] sm:w-auto"
           >
             <Plus className="h-4 w-4" />
             Add product

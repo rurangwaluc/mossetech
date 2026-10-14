@@ -346,7 +346,7 @@ export function AppHeader({
               {requestCount > 0 ? (
                 <span
                   aria-hidden="true"
-                  className="absolute -right-1.5 -top-1.5 inline-flex h-[19px] min-w-[19px] items-center justify-center rounded-full border-2 border-[var(--background)] bg-[var(--primary)] px-1 text-[9px] font-black leading-none text-white tabular-nums"
+                  className="absolute -right-1.5 -top-1.5 inline-flex h-[19px] min-w-[19px] items-center justify-center rounded-full border-2 border-[var(--background)] bg-[var(--primary-action)] px-1 text-[9px] font-black leading-none text-white tabular-nums"
                 >
                   {requestCount > 99
                     ? '99+'

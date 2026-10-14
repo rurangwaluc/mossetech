@@ -3,26 +3,31 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --primary: #BF9A2F;
-  --primary-strong: #9A781F;
-  --primary-soft: #F4EFD9;
-  --primary-contrast: #17150F;
+  --primary: #0068B8;
+  --primary-strong: #005295;
+  --primary-soft: #EAF4FF;
+  --primary-contrast: #FFFFFF;
 
-  --background: #F1F1F1;
-  --surface: #F7F6F2;
+  /* Mosse Tech brand and accessible actions */
+  --brand-blue: #008CF6;
+  --primary-action: #0068B8;
+  --primary-action-hover: #005295;
+
+  --background: #F3F6FA;
+  --surface: #F9FBFE;
   --card: #FFFFFF;
 
-  --text: #191914;
-  --muted: #6E6D65;
+  --text: #152437;
+  --muted: #586A7D;
 
-  --border: #DEDDD6;
-  --border-strong: #C8C6BC;
+  --border: #DAE4EE;
+  --border-strong: #BCCCD9;
 
   --success: #347653;
   --danger: #B64949;
 
   --shadow-large:
-    0 24px 60px rgba(38, 35, 22, 0.07);
+    0 24px 60px rgba(19, 39, 60, 0.07);
 
   --font-body:
     var(--font-geist-sans),
@@ -37,19 +42,19 @@
 }
 
 .dark {
-  --primary: #BF9A2F;
-  --primary-strong: #E0C36E;
-  --primary-soft: #2C291D;
+  --primary: #56B4FF;
+  --primary-strong: #80CAFF;
+  --primary-soft: #152B42;
 
-  --background: #12130F;
-  --surface: #171813;
-  --card: #1C1D18;
+  --background: #0E141E;
+  --surface: #151F2C;
+  --card: #1B2735;
 
-  --text: #F3F1E9;
-  --muted: #A7A499;
+  --text: #F2F7FC;
+  --muted: #AABACC;
 
-  --border: #303128;
-  --border-strong: #444538;
+  --border: #2B3A4C;
+  --border-strong: #405468;
 
   --success: #73AD86;
   --danger: #DD7474;

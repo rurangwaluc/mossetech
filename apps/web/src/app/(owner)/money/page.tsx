@@ -554,7 +554,7 @@ export default async function MoneyPage({
             ) : (
               <Link
                 href="/money?accountAction=external"
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
               >
                 Add external money
               </Link>
@@ -684,7 +684,7 @@ export default async function MoneyPage({
           </div>
 
           <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-            <button className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]">
+            <button className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]">
               Add money
             </button>
           </div>
@@ -992,7 +992,7 @@ export default async function MoneyPage({
             </div>
 
             <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-              <button className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]">
+              <button className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]">
                 Open drawer
               </button>
             </div>
@@ -1109,7 +1109,7 @@ export default async function MoneyPage({
                     className={
                       selectedAction ===
                       'add'
-                        ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white'
+                        ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white'
                         : 'inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-black text-[var(--text)] hover:border-[var(--primary)]'
                     }
                   >
@@ -1123,7 +1123,7 @@ export default async function MoneyPage({
                     className={
                       selectedAction ===
                       'remove'
-                        ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white'
+                        ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white'
                         : 'inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-black text-[var(--text)] hover:border-[var(--primary)]'
                     }
                   >
@@ -1137,7 +1137,7 @@ export default async function MoneyPage({
                     className={
                       selectedAction ===
                       'deposit'
-                        ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white'
+                        ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white'
                         : 'inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-black text-[var(--text)] hover:border-[var(--primary)]'
                     }
                   >
@@ -1153,7 +1153,7 @@ export default async function MoneyPage({
                 className={
                   selectedAction ===
                   'expense'
-                    ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white'
+                    ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white'
                     : 'inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-black text-[var(--text)] hover:border-[var(--primary)]'
                 }
               >
@@ -1167,7 +1167,7 @@ export default async function MoneyPage({
                 className={
                   selectedAction ===
                   'close'
-                    ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white'
+                    ? 'inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white'
                     : 'inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-black text-[var(--text)] hover:border-[var(--primary)]'
                 }
               >
@@ -1234,7 +1234,7 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white">
+                <button className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white">
                   Add cash
                 </button>
               </div>
@@ -1366,7 +1366,7 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white">
+                <button className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white">
                   Record deposit
                 </button>
               </div>
@@ -1534,7 +1534,7 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white">
+                <button className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white">
                   Close drawer
                 </button>
               </div>

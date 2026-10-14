@@ -1121,7 +1121,7 @@ export function SaleForm({
                       }}
                       className={
                         active
-                          ? 'h-10 rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white'
+                          ? 'h-10 rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white'
                           : 'h-10 rounded-lg border border-[var(--border)] px-4 text-sm font-black text-[var(--text)] transition hover:border-[var(--primary)]'
                       }
                     >
@@ -1671,7 +1671,7 @@ export function SaleForm({
                       }
                       className={
                         active
-                          ? 'h-10 rounded-lg bg-[var(--primary)] px-3 text-sm font-black text-white'
+                          ? 'h-10 rounded-lg bg-[var(--primary-action)] px-3 text-sm font-black text-white'
                           : 'h-10 rounded-lg border border-[var(--border)] px-3 text-sm font-black text-[var(--text)] transition hover:border-[var(--primary)]'
                       }
                     >
@@ -2381,7 +2381,7 @@ export function SaleForm({
           <button
             type="submit"
             disabled={!canSave}
-            className="h-11 w-full rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] disabled:cursor-not-allowed disabled:border disabled:border-[var(--border)] disabled:bg-[var(--surface)] disabled:text-[var(--muted)] disabled:opacity-100"
+            className="h-11 w-full rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:border disabled:border-[var(--border)] disabled:bg-[var(--surface)] disabled:text-[var(--muted)] disabled:opacity-100"
           >
             {submitText()}
           </button>

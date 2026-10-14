@@ -404,7 +404,7 @@ export default async function DamageFixPage({
                   pendingRequest,
                 )
               }
-              className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-6 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary-action)] px-6 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isOwner
                 ? 'Save correction'

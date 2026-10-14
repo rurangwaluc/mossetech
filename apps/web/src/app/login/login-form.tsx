@@ -111,7 +111,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="flex h-11 w-full items-center sm:h-12 justify-center gap-2 rounded-[4px] border border-[var(--primary)] bg-[var(--primary)] px-5 text-sm font-bold text-[#17150F] transition hover:border-[var(--primary-strong)] hover:bg-[var(--primary-strong)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--primary)] disabled:cursor-wait disabled:opacity-70"
+        className="flex h-11 w-full items-center sm:h-12 justify-center gap-2 rounded-[4px] border border-[var(--primary-action)] bg-[var(--primary-action)] px-5 text-sm font-bold text-[var(--primary-contrast)] transition hover:border-[var(--primary-strong)] hover:bg-[var(--primary-action-hover)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[var(--primary)] disabled:cursor-wait disabled:opacity-70"
       >
         {pending ? (
           <>

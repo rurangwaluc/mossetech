@@ -374,7 +374,7 @@ export default async function ReportsPage({
 
           <Link
             href={`/reports/download?${query}&mode=download`}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] sm:w-auto"
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] sm:w-auto"
           >
             <Download className="h-4 w-4" />
             Download PDF
@@ -399,7 +399,7 @@ export default async function ReportsPage({
                   href={`/reports?preset=${preset.value}`}
                   className={
                     active
-                      ? 'shrink-0 rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-black text-white'
+                      ? 'shrink-0 rounded-lg bg-[var(--primary-action)] px-3 py-2 text-sm font-black text-white'
                       : 'shrink-0 rounded-lg border border-neutral-200 px-3 py-2 text-sm font-bold text-[#6B7280] transition hover:border-[var(--primary)] hover:text-[var(--primary)] dark:border-[#343434] dark:text-[#A3A3A3]'
                   }
                 >

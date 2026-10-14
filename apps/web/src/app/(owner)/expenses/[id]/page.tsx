@@ -254,7 +254,7 @@ export default async function ExpenseDetailPage({
             {isOwner ? (
               <Link
                 href="/requests"
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white"
               >
                 Review request
               </Link>

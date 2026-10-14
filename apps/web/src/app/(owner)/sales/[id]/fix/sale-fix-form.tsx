@@ -1321,7 +1321,7 @@ export function SaleFixForm({
             disabled={
               !canSubmit
             }
-            className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-6 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] disabled:cursor-not-allowed disabled:border disabled:border-[var(--border)] disabled:bg-[var(--surface)] disabled:text-[var(--muted)] disabled:opacity-100"
+            className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-6 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:border disabled:border-[var(--border)] disabled:bg-[var(--surface)] disabled:text-[var(--muted)] disabled:opacity-100"
           >
             {hasPendingRequest
               ? isOwner

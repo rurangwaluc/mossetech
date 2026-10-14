@@ -511,7 +511,7 @@ export function DebtPaymentForm({
           saving ||
           queuedLocally
         }
-        className="h-11 w-full rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-11 w-full rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {saving
           ? 'Saving...'

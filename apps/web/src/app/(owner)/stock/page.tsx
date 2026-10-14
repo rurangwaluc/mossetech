@@ -1217,7 +1217,7 @@ export default async function StockPage({
             <Link
               href="/stock/receive"
               prefetch
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
             >
               <Truck className="h-4 w-4" />
               Receive stock

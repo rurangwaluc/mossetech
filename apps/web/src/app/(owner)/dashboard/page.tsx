@@ -1052,7 +1052,7 @@ export default async function DashboardPage() {
 
               <Link
                 href="/money"
-                className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white"
+                className="mt-4 inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white"
               >
                 Open drawer
               </Link>
@@ -1068,7 +1068,7 @@ export default async function DashboardPage() {
           <div className="mt-4 space-y-2">
             <Link
               href="/sales/new"
-              className="flex h-11 items-center gap-3 rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white"
+              className="flex h-11 items-center gap-3 rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white"
             >
               <Plus className="h-4 w-4" />
               New Sale

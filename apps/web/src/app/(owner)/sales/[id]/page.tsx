@@ -623,7 +623,7 @@ export default async function SaleDetailPage({
             {isOwner ? (
               <Link
                 href="/requests"
-                className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+                className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
               >
                 Review request
               </Link>
@@ -659,7 +659,7 @@ export default async function SaleDetailPage({
               isOwner ? (
                 <Link
                   href="/requests"
-                  className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
                 >
                   Review request
                 </Link>
@@ -1096,7 +1096,7 @@ export default async function SaleDetailPage({
             {sale.customerId ? (
               <Link
                 href={`/debts/${sale.id}`}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
               >
                 Collect payment
               </Link>

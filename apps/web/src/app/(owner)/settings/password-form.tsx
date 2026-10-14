@@ -113,7 +113,7 @@ export function PasswordForm() {
               disabled={
                 pending
               }
-              className="h-11 w-full rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-[#17150F] transition hover:bg-[var(--primary-strong)] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+              className="h-11 w-full rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-[var(--primary-contrast)] transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
             >
               {pending
                 ? 'Changing...'

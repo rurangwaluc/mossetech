@@ -707,7 +707,7 @@ export function ReceiveStockForm({
               savingLocally ||
               queuedLocally
             }
-            className="h-11 rounded-lg bg-[var(--primary)] px-6 text-sm font-black text-white transition hover:bg-[var(--primary-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-11 rounded-lg bg-[var(--primary-action)] px-6 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {savingLocally
               ? 'Saving...'

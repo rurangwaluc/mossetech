@@ -396,7 +396,7 @@ export default async function ExpensesPage({
                 href={buildAddHref(
                   q,
                 )}
-                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
               >
                 Add expense
               </Link>
@@ -573,7 +573,7 @@ export default async function ExpensesPage({
 
               <button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
               >
                 Save expense
               </button>

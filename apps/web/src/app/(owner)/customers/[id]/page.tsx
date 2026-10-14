@@ -583,7 +583,7 @@ export default async function CustomerDetailPage({
                           {unpaid ? (
                             <Link
                               href={`/debts/${sale.id}`}
-                              className="inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-3 text-xs font-black text-white transition hover:bg-[var(--primary-strong)]"
+                              className="inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-3 text-xs font-black text-white transition hover:bg-[var(--primary-action-hover)]"
                             >
                               Collect payment
                             </Link>
@@ -682,7 +682,7 @@ export default async function CustomerDetailPage({
                         {unpaid ? (
                           <Link
                             href={`/debts/${sale.id}`}
-                            className="inline-flex h-9 items-center rounded-lg bg-[var(--primary)] px-3 text-xs font-black text-white"
+                            className="inline-flex h-9 items-center rounded-lg bg-[var(--primary-action)] px-3 text-xs font-black text-white"
                           >
                             Collect payment
                           </Link>

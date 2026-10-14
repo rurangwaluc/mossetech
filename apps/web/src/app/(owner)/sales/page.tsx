@@ -604,7 +604,7 @@ export default async function SalesPage() {
           <Link
             href="/sales/new"
             prefetch
-            className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+            className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
           >
             <Plus className="h-4 w-4" />
             New sale
@@ -632,7 +632,7 @@ export default async function SalesPage() {
             <Link
               href="/sales/new"
               prefetch
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-strong)]"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
             >
               <Plus className="h-4 w-4" />
               New sale

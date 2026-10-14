@@ -372,7 +372,7 @@ export default async function ExpenseFixPage({
             {!pendingRequest ? (
               <button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white"
               >
                 {isOwner
                   ? 'Save fix'
@@ -381,7 +381,7 @@ export default async function ExpenseFixPage({
             ) : isOwner ? (
               <Link
                 href="/requests"
-                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white"
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white"
               >
                 Review request
               </Link>

@@ -185,7 +185,7 @@ export function AppSidebar({
                 }
                 className={
                   active
-                    ? 'flex min-h-11 items-center gap-3 rounded-[6px] bg-[var(--primary)] px-4 text-[13px] font-bold text-[#17150F] no-underline lg:min-h-[40px] lg:px-3.5 lg:text-[13px]'
+                    ? 'flex min-h-11 items-center gap-3 rounded-[6px] bg-[var(--primary-action)] px-4 text-[13px] font-bold text-[var(--primary-contrast)] no-underline lg:min-h-[40px] lg:px-3.5 lg:text-[13px]'
                     : 'flex min-h-11 items-center gap-3 rounded-[6px] px-4 text-[13px] font-semibold text-[var(--text)] no-underline transition hover:bg-[var(--surface)] lg:min-h-[40px] lg:px-3.5 lg:text-[13px]'
                 }
               >

@@ -1620,7 +1620,7 @@ export default async function RequestsPage({
 
                       <button
                         type="submit"
-                        className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[var(--primary)] px-5 text-sm font-black text-white sm:w-auto"
+                        className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white sm:w-auto"
                       >
                         Approve
                       </button>

@@ -261,7 +261,7 @@ export function OwnerRequestNotifier({
             onClick={() =>
               setIsOpen(false)
             }
-            className="mt-3 inline-flex h-9 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white"
+            className="mt-3 inline-flex h-9 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white"
           >
             View request
           </Link>

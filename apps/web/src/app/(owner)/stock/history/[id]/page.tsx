@@ -526,7 +526,7 @@ export default async function StockHistoryPage({
           <Link
             href={`/stock/receive?product=${product.id}`}
             prefetch
-            className="hidden h-10 items-center justify-center rounded-lg bg-[var(--primary)] px-4 text-xs font-black text-white sm:inline-flex"
+            className="hidden h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-xs font-black text-white sm:inline-flex"
           >
             Receive stock
           </Link>
