@@ -1,0 +1,31 @@
+{
+  "name": "@mossetech/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "seed:owner": "tsx src/seed-owner.ts"
+  },
+  "dependencies": {
+    "@vercel/functions": "^3.9.5",
+    "bcryptjs": "latest",
+    "drizzle-orm": "0.45.3",
+    "pg": "^8.23.0",
+    "postgres": "latest"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "latest",
+    "@types/node": "latest",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  },
+  "exports": {
+    "./*": "./src/*.ts",
+    ".": "./src/index.ts"
+  }
+}

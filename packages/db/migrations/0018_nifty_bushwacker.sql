@@ -1,0 +1,2 @@
+ALTER TABLE "stock_arrivals" ADD COLUMN "received_by_user_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "stock_arrivals" ADD CONSTRAINT "stock_arrivals_received_by_user_id_users_id_fk" FOREIGN KEY ("received_by_user_id") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;

@@ -1,0 +1,3 @@
+ALTER TYPE "public"."cash_drawer_movement_type" ADD VALUE 'EXPENSE_CORRECTION' BEFORE 'CASH_DEBT_PAYMENT';--> statement-breakpoint
+ALTER TABLE "expenses" ADD COLUMN "recorded_by_user_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_recorded_by_user_id_users_id_fk" FOREIGN KEY ("recorded_by_user_id") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;

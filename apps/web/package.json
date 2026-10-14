@@ -1,0 +1,41 @@
+{
+  "name": "web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "check": "eslint . && tsc --noEmit"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1138.0",
+    "@aws-sdk/s3-request-presigner": "^3.1138.0",
+    "@mossetech/db": "workspace:*",
+    "@mossetech/validators": "workspace:*",
+    "@react-pdf/renderer": "^4.5.1",
+    "bcryptjs": "latest",
+    "drizzle-orm": "0.45.3",
+    "idb": "^8.0.3",
+    "lucide-react": "^1.21.0",
+    "nanoid": "latest",
+    "next": "16.2.9",
+    "pg": "^8.23.0",
+    "postgres": "latest",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

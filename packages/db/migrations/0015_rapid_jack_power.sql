@@ -1,0 +1,1 @@
+ALTER TYPE "public"."cash_drawer_movement_type" ADD VALUE 'CASH_DEBT_PAYMENT' BEFORE 'CLOSING_COUNT';

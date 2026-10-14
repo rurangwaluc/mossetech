@@ -1,0 +1,2 @@
+CREATE UNIQUE INDEX "cash_drawers_single_open_idx" ON "cash_drawers" USING btree ("status") WHERE "cash_drawers"."status" = 'OPEN';--> statement-breakpoint
+CREATE INDEX "cash_drawers_status_idx" ON "cash_drawers" USING btree ("status");

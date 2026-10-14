@@ -1,0 +1,18 @@
+{
+  "name": "mossetech",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "scripts": {
+    "dev": "set -a; . ./.env; set +a; pnpm --filter ./apps/web dev",
+    "dev:web": "set -a; . ./.env; set +a; pnpm --filter ./apps/web dev",
+    "build": "set -a; . ./.env; set +a; pnpm --filter ./apps/web build",
+    "start": "set -a; . ./.env; set +a; pnpm --filter ./apps/web start",
+    "lint": "pnpm --filter ./apps/web lint",
+    "check": "set -a; . ./.env; set +a; pnpm -r --if-present check",
+    "db:generate": "set -a; . ./.env; set +a; pnpm --filter ./packages/db db:generate",
+    "db:migrate": "set -a; . ./.env; set +a; pnpm --filter ./packages/db db:migrate",
+    "seed:owner": "set -a; . ./.env; set +a; pnpm --filter ./packages/db seed:owner",
+    "build:vercel": "pnpm --filter ./apps/web build"
+  }
+}

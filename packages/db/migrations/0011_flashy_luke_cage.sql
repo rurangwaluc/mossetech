@@ -1,0 +1,3 @@
+-- Empty placeholder migration.
+-- This migration was listed in the Drizzle journal but the SQL file was missing.
+-- The database schema already contains the changes needed after this point.

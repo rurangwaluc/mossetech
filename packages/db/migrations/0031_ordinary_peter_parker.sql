@@ -1,0 +1,2 @@
+ALTER TABLE "money_transfers" ADD COLUMN "moved_by_user_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "money_transfers" ADD CONSTRAINT "money_transfers_moved_by_user_id_users_id_fk" FOREIGN KEY ("moved_by_user_id") REFERENCES "public"."users"("id") ON DELETE restrict ON UPDATE no action;
