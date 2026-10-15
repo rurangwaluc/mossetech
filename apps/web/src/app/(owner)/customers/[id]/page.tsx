@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -17,8 +18,6 @@ import {
   sales,
   users,
 } from '@mossetech/db/schema';
-
-import { requireUser } from '@/lib/auth/session';
 
 type CustomerDetailPageProps = {
   params: Promise<{
@@ -135,7 +134,7 @@ export default async function CustomerDetailPage({
   searchParams,
 }: CustomerDetailPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('customers.view');
 
   const { id } =
     await params;

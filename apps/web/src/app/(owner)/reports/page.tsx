@@ -3,7 +3,8 @@ import {
   ArrowRight,
   Download,
 } from 'lucide-react';
-import { requireOwner } from '@/lib/auth/session';
+import { requirePermission } from '@/lib/auth/require-permission';
+import { hasEmployeePermission } from '@/lib/auth/permissions';
 import {
   getReport,
   money,
@@ -192,7 +193,11 @@ function MobileRow({
 export default async function ReportsPage({
   searchParams,
 }: ReportsPageProps) {
-  await requireOwner();
+  const user = await requirePermission('reports.view');
+  const canDownload = await hasEmployeePermission(
+    user,
+    'reports.download',
+  );
 
   const params =
     await searchParams;
@@ -373,7 +378,13 @@ export default async function ReportsPage({
           </div>
 
           <Link
-            href={`/reports/download?${query}&mode=download`}
+            href={
+              canDownload
+                ? `/reports/download?${query}&mode=download`
+                : '#'
+            }
+            aria-disabled={!canDownload}
+            tabIndex={canDownload ? undefined : -1}
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] sm:w-auto"
           >
             <Download className="h-4 w-4" />

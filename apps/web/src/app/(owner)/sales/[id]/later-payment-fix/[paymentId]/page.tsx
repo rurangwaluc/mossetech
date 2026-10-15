@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import {
   and,
   eq,
@@ -18,7 +19,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import LaterPaymentFixForm from './later-payment-fix-form';
@@ -80,7 +80,7 @@ export default async function LaterPaymentFixPage({
   searchParams,
 }: PageProps) {
   const user =
-    await requireUser();
+    await requirePermission('sales.correct');
 
   const {
     id,

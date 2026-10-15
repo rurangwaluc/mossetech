@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import {
   desc,
@@ -11,8 +12,6 @@ import {
   saleItems,
   sales,
 } from '@mossetech/db/schema';
-import { requireUser } from '@/lib/auth/session';
-
 type DebtsPageProps = {
   searchParams?: Promise<{
     q?: string;
@@ -64,7 +63,7 @@ function buildLoadMoreHref(
 export default async function DebtsPage({
   searchParams,
 }: DebtsPageProps) {
-  await requireUser();
+  await requirePermission('debts.view');
 
   const params =
     await searchParams;

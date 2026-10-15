@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   and,
   eq,
@@ -25,7 +27,6 @@ import {
 
 import {
   requireOwner,
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -1238,7 +1239,7 @@ export async function submitAtSalePaymentFixAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('sales.correct');
 
   const saleId =
     String(
@@ -1472,7 +1473,7 @@ export async function submitLaterPaymentFixAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('sales.correct');
 
   const saleId =
     String(

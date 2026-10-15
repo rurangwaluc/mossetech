@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import {
   eq,
   sql,
@@ -20,7 +21,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -38,7 +38,7 @@ export default async function DamagePage({
   searchParams,
 }: DamagePageProps) {
   const user =
-    await requireUser();
+    await requirePermission('stock.damage');
 
   const params =
     await searchParams;

@@ -1,7 +1,14 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { requireOwner } from '@/lib/auth/session';
 import { db } from '@mossetech/db/client';
-import { users } from '@mossetech/db/schema';
+import {
+  employeePermissions,
+  users,
+} from '@mossetech/db/schema';
+import {
+  employeePermissionSchema,
+  type EmployeePermission,
+} from '@mossetech/validators/permissions';
 import { SettingsWorkspace } from './settings-workspace';
 
 export default async function SettingsPage() {
@@ -47,6 +54,56 @@ export default async function SettingsPage() {
       .limit(1),
   ]);
 
+  // Permissions are enabled only when their database migration
+  // and server-side enforcement are ready together.
+  const permissionsEnabled =
+    process.env.MOSSETECH_EMPLOYEE_PERMISSIONS_ENABLED === 'true';
+
+  const permissionRows = permissionsEnabled && staffUsers.length
+    ? await db
+        .select({
+          employeeUserId: employeePermissions.employeeUserId,
+          permission: employeePermissions.permission,
+        })
+        .from(employeePermissions)
+        .where(
+          inArray(
+            employeePermissions.employeeUserId,
+            staffUsers.map((staff) => staff.id),
+          ),
+        )
+    : [];
+
+  const permissionsByEmployee = new Map<
+    string,
+    EmployeePermission[]
+  >();
+
+  for (const row of permissionRows) {
+    const parsed = employeePermissionSchema.safeParse(
+      row.permission,
+    );
+
+    if (!parsed.success) {
+      continue;
+    }
+
+    const current =
+      permissionsByEmployee.get(row.employeeUserId) ?? [];
+
+    current.push(parsed.data);
+
+    permissionsByEmployee.set(
+      row.employeeUserId,
+      current,
+    );
+  }
+
+  const staffWithPermissions = staffUsers.map((staff) => ({
+    ...staff,
+    permissions: permissionsByEmployee.get(staff.id) ?? [],
+  }));
+
   const ownerAccount =
     ownerRows[0];
 
@@ -84,7 +141,8 @@ export default async function SettingsPage() {
       <SettingsWorkspace
         settings={safeSettings}
         owner={safeOwner}
-        staffUsers={staffUsers}
+        staffUsers={staffWithPermissions}
+        permissionsEnabled={permissionsEnabled}
       />
     </section>
   );

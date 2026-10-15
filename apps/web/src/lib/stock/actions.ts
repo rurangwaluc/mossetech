@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   eq,
   sql,
@@ -25,7 +27,6 @@ import {
 } from '@mossetech/validators/stock';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 function cleanOptional(
@@ -79,7 +80,7 @@ export async function receiveStockAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('stock.receive');
 
   const rawProductId =
     String(
@@ -274,7 +275,7 @@ export async function recordStockDamageAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('stock.damage');
 
   const productId =
     String(

@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import {
   and,
   asc,
@@ -13,7 +14,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -31,7 +31,7 @@ export default async function ReceiveStockPage({
   searchParams,
 }: ReceiveStockPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('stock.receive');
 
   const params =
     await searchParams;

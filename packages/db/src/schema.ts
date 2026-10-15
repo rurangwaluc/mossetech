@@ -76,6 +76,26 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const employeePermissions = pgTable(
+  'employee_permissions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    employeeUserId: uuid('employee_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    permission: text('permission').notNull(),
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+    }).defaultNow().notNull(),
+  },
+  (table) => [
+    uniqueIndex('employee_permissions_user_permission_unique')
+      .on(table.employeeUserId, table.permission),
+    index('employee_permissions_user_idx')
+      .on(table.employeeUserId),
+  ],
+);
+
 export const sessions = pgTable('sessions', {
   id: uuid('id').defaultRandom().primaryKey(),
   userId: uuid('user_id')

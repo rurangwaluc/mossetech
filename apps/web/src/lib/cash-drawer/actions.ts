@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   desc,
   eq,
@@ -31,7 +33,6 @@ import {
 
 import {
   requireOwner,
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -73,7 +74,7 @@ export async function openCashDrawerAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('money.manage');
 
   const parsed =
     openCashDrawerSchema.safeParse({
@@ -644,7 +645,8 @@ export async function recordDrawerCashExpenseAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('expenses.create');
+  await requirePermission('money.manage');
 
   const parsed =
     cashDrawerExpenseSchema.safeParse({
@@ -800,7 +802,7 @@ export async function closeCashDrawerAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('money.manage');
 
   const parsed =
     closeCashDrawerSchema.safeParse({

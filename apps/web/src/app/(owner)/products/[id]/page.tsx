@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import {
   notFound,
@@ -16,7 +17,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -76,7 +76,7 @@ export default async function ProductDetailsPage({
   params,
 }: ProductDetailsPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('products.view');
 
   const {
     id,

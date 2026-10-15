@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   and,
   eq,
@@ -32,7 +34,6 @@ import {
 } from '@mossetech/validators/sale';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -213,7 +214,7 @@ export async function createSaleAction(
   formData: FormData,
 ): Promise<SaleState> {
   const user =
-    await requireUser();
+    await requirePermission('sales.create');
 
   let items:
     unknown = [];
@@ -307,6 +308,12 @@ export async function createSaleAction(
           ?.message ||
         'Check the sale form.',
     };
+  }
+
+  // Creating a customer requires its own permission, even
+  // when the employee is allowed to record sales.
+  if (parsed.data.customerMode === 'NEW') {
+    await requirePermission('customers.create');
   }
 
   if (

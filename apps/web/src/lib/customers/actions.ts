@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   and,
   eq,
@@ -21,7 +23,6 @@ import {
 
 import {
   requireOwner,
-  requireUser,
 } from '@/lib/auth/session';
 
 
@@ -462,7 +463,7 @@ export async function submitCustomerFixAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('customers.edit');
 
   const customerId =
     cleanRequired(

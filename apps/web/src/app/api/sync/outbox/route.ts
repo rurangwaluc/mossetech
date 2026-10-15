@@ -1,3 +1,4 @@
+import { hasEmployeePermission } from '@/lib/auth/permissions';
 import {
   NextResponse,
 } from 'next/server';
@@ -180,6 +181,10 @@ export async function POST(
       body.kind ===
       'PRODUCT_CREATE'
     ) {
+      if (!(await hasEmployeePermission(user, 'products.create'))) {
+        return errorResponse('You do not have permission for this action.', 403);
+      }
+
       const execution =
         await runIdempotentOfflineOperation({
           operationId:
@@ -217,6 +222,10 @@ export async function POST(
       body.kind ===
       'PRODUCT_UPDATE'
     ) {
+      if (!(await hasEmployeePermission(user, 'products.edit'))) {
+        return errorResponse('You do not have permission for this action.', 403);
+      }
+
       const execution =
         await runIdempotentOfflineOperation({
           operationId:
@@ -255,6 +264,10 @@ export async function POST(
       body.kind ===
       'STOCK_RECEIVE'
     ) {
+      if (!(await hasEmployeePermission(user, 'stock.receive'))) {
+        return errorResponse('You do not have permission for this action.', 403);
+      }
+
       const execution =
         await runIdempotentOfflineOperation({
           operationId:
@@ -294,6 +307,10 @@ export async function POST(
       body.kind ===
       'STOCK_DAMAGE'
     ) {
+      if (!(await hasEmployeePermission(user, 'stock.damage'))) {
+        return errorResponse('You do not have permission for this action.', 403);
+      }
+
       const execution =
         await runIdempotentOfflineOperation({
           operationId:
@@ -333,6 +350,10 @@ export async function POST(
       body.kind ===
       'DEBT_PAYMENT'
     ) {
+      if (!(await hasEmployeePermission(user, 'debts.pay'))) {
+        return errorResponse('You do not have permission for this action.', 403);
+      }
+
       const execution =
         await runIdempotentOfflineOperation({
           operationId:
@@ -374,6 +395,28 @@ export async function POST(
       body.kind ===
       'SALE_CREATE'
     ) {
+      if (!(await hasEmployeePermission(user, 'sales.create'))) {
+        return errorResponse('You do not have permission for this action.', 403);
+      }
+
+      const salePayload = body.payload;
+      const createsCustomer =
+        typeof salePayload === 'object' &&
+        salePayload !== null &&
+        !Array.isArray(salePayload) &&
+        'customerMode' in salePayload &&
+        salePayload.customerMode === 'NEW';
+
+      if (
+        createsCustomer &&
+        !(await hasEmployeePermission(user, 'customers.create'))
+      ) {
+        return errorResponse(
+          'You do not have permission to create customers.',
+          403,
+        );
+      }
+
       const execution =
         await runIdempotentOfflineOperation({
           operationId:

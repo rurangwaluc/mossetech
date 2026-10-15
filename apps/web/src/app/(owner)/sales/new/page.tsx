@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 
 import {
@@ -22,7 +23,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -31,7 +31,7 @@ import {
 
 export default async function NewSalePage() {
   const user =
-    await requireUser();
+    await requirePermission('sales.create');
 
   const [
     productRows,

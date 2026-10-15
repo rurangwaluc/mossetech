@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 
 import {
@@ -23,7 +24,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 
@@ -343,7 +343,7 @@ function statusClass(
 
 export default async function SalesPage() {
   const user =
-    await requireUser();
+    await requirePermission('sales.view');
 
   const isOwner =
     user.role ===

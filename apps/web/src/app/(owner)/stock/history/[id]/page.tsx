@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -24,7 +25,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 type StockHistoryPageProps = {
@@ -134,7 +134,7 @@ function formatDate(
 export default async function StockHistoryPage({
   params,
 }: StockHistoryPageProps) {
-  await requireUser();
+  await requirePermission('stock.view');
 
   const {
     id,

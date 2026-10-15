@@ -5,6 +5,9 @@ import { SettingsForm } from './settings-form';
 import { InstallAppCard } from './install-app-card';
 import { OwnerAccountForm } from './owner-account-form';
 import { StaffAccessForm } from './staff-access-form';
+import type {
+  EmployeePermission,
+} from '@mossetech/validators/permissions';
 
 type SettingsSection =
   | 'business'
@@ -25,6 +28,7 @@ type SettingsWorkspaceProps = {
     phone: string;
   };
 
+  permissionsEnabled: boolean;
   staffUsers: Array<{
     id: string;
     name: string;
@@ -33,6 +37,7 @@ type SettingsWorkspaceProps = {
     status:
       | 'ACTIVE'
       | 'DISABLED';
+    permissions: EmployeePermission[];
   }>;
 };
 
@@ -62,6 +67,7 @@ export function SettingsWorkspace({
   settings,
   owner,
   staffUsers,
+  permissionsEnabled,
 }: SettingsWorkspaceProps) {
   const [
     activeSection,
@@ -155,6 +161,7 @@ export function SettingsWorkspace({
           'staff' && (
           <StaffAccessForm
             staffUsers={staffUsers}
+            permissionsEnabled={permissionsEnabled}
           />
         )}
       </div>

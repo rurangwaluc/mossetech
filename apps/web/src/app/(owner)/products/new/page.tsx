@@ -1,9 +1,9 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import {
   randomUUID,
 } from 'node:crypto';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -12,7 +12,7 @@ import {
 
 export default async function NewProductPage() {
   const user =
-    await requireUser();
+    await requirePermission('products.create');
 
   return (
     <ProductForm

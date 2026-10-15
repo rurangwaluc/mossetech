@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 
 import {
@@ -34,7 +35,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -356,7 +356,7 @@ function periodRange(
 export default async function StockPage({
   searchParams,
 }: StockPageProps) {
-  await requireUser();
+  await requirePermission('stock.view');
 
   const params =
     await searchParams;

@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 
 import {
@@ -26,7 +27,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -116,7 +116,7 @@ export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('products.view');
 
   const canHideProducts =
     user.role === 'OWNER';

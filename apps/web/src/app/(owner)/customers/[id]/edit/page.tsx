@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import {
   and,
   eq,
@@ -15,7 +16,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import CustomerFixForm from './customer-fix-form';
@@ -39,7 +39,7 @@ export default async function CustomerFixPage({
   searchParams,
 }: PageProps) {
   const user =
-    await requireUser();
+    await requirePermission('customers.edit');
 
   const {
     id,

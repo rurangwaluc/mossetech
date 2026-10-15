@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   randomUUID,
 } from 'node:crypto';
@@ -36,7 +38,6 @@ import {
 
 import {
   requireOwner,
-  requireUser,
 } from '@/lib/auth/session';
 
 export type ProductState = {
@@ -277,7 +278,7 @@ export async function createProductAction(
   _previousState: ProductState,
   formData: FormData,
 ): Promise<ProductState> {
-  await requireUser();
+  await requirePermission('products.create');
 
   const parsed =
     productFormSchema.safeParse(
@@ -433,7 +434,7 @@ export async function updateProductAction(
   formData: FormData,
 ): Promise<ProductState> {
   const user =
-    await requireUser();
+    await requirePermission('products.edit');
 
   const parsed =
     productFormSchema.safeParse(

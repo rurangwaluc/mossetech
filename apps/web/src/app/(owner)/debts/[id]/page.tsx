@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -14,7 +15,6 @@ import {
   sales,
   users,
 } from '@mossetech/db/schema';
-import { requireUser } from '@/lib/auth/session';
 import { DebtPaymentForm } from './debt-payment-form';
 
 type DebtDetailPageProps = {
@@ -78,7 +78,7 @@ export default async function DebtDetailPage({
   searchParams,
 }: DebtDetailPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('debts.view');
 
   const { id } =
     await params;

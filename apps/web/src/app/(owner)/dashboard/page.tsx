@@ -35,6 +35,7 @@ import {
   sales,
 } from '@mossetech/db/schema';
 import { requireUser } from '@/lib/auth/session';
+import { getEmployeePermissions } from '@/lib/auth/permissions';
 import {
   getDrawerCashIn,
   getDrawerCashOut,
@@ -193,6 +194,128 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const isOwner =
     user.role === 'OWNER';
+
+  // Never query unrestricted business data for employees
+  // after granular permissions are activated.
+  const permissionsEnabled =
+    process.env.MOSSETECH_EMPLOYEE_PERMISSIONS_ENABLED === 'true';
+
+  if (permissionsEnabled && user.role === 'EMPLOYEE') {
+    const permissions = await getEmployeePermissions(user);
+
+    const destinations = [
+      {
+        permission: 'sales.view',
+        label: 'View sales',
+        href: '/sales',
+      },
+      {
+        permission: 'sales.create',
+        label: 'New sale',
+        href: '/sales/new',
+      },
+      {
+        permission: 'products.view',
+        label: 'View products',
+        href: '/products',
+      },
+      {
+        permission: 'products.create',
+        label: 'Add product',
+        href: '/products/new',
+      },
+      {
+        permission: 'stock.view',
+        label: 'View stock',
+        href: '/stock',
+      },
+      {
+        permission: 'stock.receive',
+        label: 'Receive stock',
+        href: '/stock/receive',
+      },
+      {
+        permission: 'stock.damage',
+        label: 'Record damage',
+        href: '/stock/damage',
+      },
+      {
+        permission: 'customers.view',
+        label: 'View customers',
+        href: '/customers',
+      },
+      {
+        permission: 'debts.view',
+        label: 'View debts',
+        href: '/debts',
+      },
+      {
+        permission: 'expenses.view',
+        label: 'View expenses',
+        href: '/expenses',
+      },
+      {
+        permission: 'money.view',
+        label: 'View money',
+        href: '/money',
+      },
+      {
+        permission: 'reports.view',
+        label: 'View reports',
+        href: '/reports',
+      },
+    ] as const;
+
+    const allowedDestinations = destinations.filter(
+      (destination) =>
+        permissions.includes(destination.permission),
+    );
+
+    return (
+      <section className="space-y-6 pb-6">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight text-[var(--text)]">
+            Dashboard
+          </h1>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Welcome back, {user.name}.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+          <h2 className="text-lg font-bold text-[var(--text)]">
+            Your workspace
+          </h2>
+
+          {allowedDestinations.length === 0 ? (
+            <p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+              You do not have any assigned access yet.
+              Please contact Moses to request access.
+            </p>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Choose an area you have access to.
+              </p>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {allowedDestinations.map((destination) => (
+                  <Link
+                    key={destination.permission}
+                    href={destination.href}
+                    className="flex min-h-12 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-semibold text-[var(--text)] no-underline transition hover:bg-[var(--surface)]"
+                  >
+                    {destination.label}
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    );
+  }
+
+
 
   const firstName =
     user.name

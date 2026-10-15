@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 
 import {
@@ -20,7 +21,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -95,7 +95,7 @@ export default async function DamageFixPage({
   searchParams,
 }: DamageFixPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('stock.correct');
 
   const {
     id,

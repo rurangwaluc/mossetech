@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import { and, eq, gte, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { db } from '@mossetech/db/client';
@@ -10,7 +12,6 @@ import {
   sales,
 } from '@mossetech/db/schema';
 import { debtPaymentSchema } from '@mossetech/validators/debt';
-import { requireUser } from '@/lib/auth/session';
 import { lockCurrentOpenDrawer } from '@/lib/cash-drawer/locking';
 
 export type DebtPaymentState = {
@@ -31,7 +32,7 @@ export async function recordDebtPaymentAction(
   _previousState: DebtPaymentState,
   formData: FormData,
 ): Promise<DebtPaymentState> {
-  const user = await requireUser();
+  const user = await requirePermission('debts.pay');
 
   const parsed = debtPaymentSchema.safeParse({
     saleId: formData.get('saleId'),

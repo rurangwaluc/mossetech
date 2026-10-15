@@ -18,11 +18,14 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { EmployeePermission } from '@mossetech/validators/permissions';
 
 type UserRole = 'OWNER' | 'EMPLOYEE';
 
 type AppSidebarProps = {
   userRole: UserRole;
+  permissions: EmployeePermission[];
+  permissionsEnabled: boolean;
 };
 
 const navigation = [
@@ -104,6 +107,8 @@ function routeIsActive(
 
 export function AppSidebar({
   userRole,
+  permissions,
+  permissionsEnabled,
 }: AppSidebarProps) {
   const pathname = usePathname();
 
@@ -128,12 +133,66 @@ export function AppSidebar({
     };
   }, [mobileOpen]);
 
-  const visibleNavigation =
-    navigation.filter((item) =>
-      (
-        item.roles as readonly UserRole[]
-      ).includes(userRole),
-    );
+  // Each link must lead to a page the employee can open.
+  // Action-only permissions use direct entry pages where available.
+  const employeeDestinations: Record<
+    string,
+    Array<{ permission: EmployeePermission; href: string }>
+  > = {
+    '/sales': [
+      { permission: 'sales.view', href: '/sales' },
+      { permission: 'sales.create', href: '/sales/new' },
+    ],
+    '/products': [
+      { permission: 'products.view', href: '/products' },
+      { permission: 'products.create', href: '/products/new' },
+    ],
+    '/stock': [
+      { permission: 'stock.view', href: '/stock' },
+      { permission: 'stock.receive', href: '/stock/receive' },
+      { permission: 'stock.damage', href: '/stock/damage' },
+    ],
+    '/customers': [
+      { permission: 'customers.view', href: '/customers' },
+    ],
+    '/debts': [
+      { permission: 'debts.view', href: '/debts' },
+    ],
+    '/expenses': [
+      { permission: 'expenses.view', href: '/expenses' },
+    ],
+    '/money': [
+      { permission: 'money.view', href: '/money' },
+    ],
+    '/reports': [
+      { permission: 'reports.view', href: '/reports' },
+    ],
+  };
+
+  type NavigationItem = {
+    label: string;
+    href: string;
+    icon: (typeof navigation)[number]['icon'];
+    roles: readonly UserRole[];
+  };
+
+  const visibleNavigation: NavigationItem[] = !permissionsEnabled
+    ? navigation.filter((item) =>
+        (item.roles as readonly UserRole[]).includes(userRole),
+      )
+    : navigation.flatMap<NavigationItem>((item) => {
+        if (userRole === 'OWNER' || item.href === '/dashboard') {
+          return [item];
+        }
+
+        const destination = (
+          employeeDestinations[item.href] ?? []
+        ).find(({ permission }) => permissions.includes(permission));
+
+        return destination
+          ? [{ ...item, href: destination.href }]
+          : [];
+      });
 
   const content = (
     <>

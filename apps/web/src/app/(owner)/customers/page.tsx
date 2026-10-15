@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import {
   and,
@@ -20,7 +21,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 
@@ -123,7 +123,7 @@ function pageHref(
 export default async function CustomersPage({
   searchParams,
 }: CustomersPageProps) {
-  await requireUser();
+  await requirePermission('customers.view');
 
   const params =
     await searchParams;

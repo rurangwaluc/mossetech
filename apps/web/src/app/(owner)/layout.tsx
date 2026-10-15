@@ -12,6 +12,7 @@ import { AppHeader } from '@/components/app-header';
 import { AppSidebar } from '@/components/app-sidebar';
 import { OfflineSyncManager } from '@/components/offline-sync-manager';
 import { requireUser } from '@/lib/auth/session';
+import { getEmployeePermissions } from '@/lib/auth/permissions';
 
 function getKigaliGreeting() {
   const hour = Number(
@@ -39,6 +40,16 @@ export default async function OwnerLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+
+  // Keep existing navigation working until migration 0035
+  // and all server-side authorization checks are activated.
+  const permissionsEnabled =
+    process.env.MOSSETECH_EMPLOYEE_PERMISSIONS_ENABLED === 'true';
+
+  const employeePermissions =
+    permissionsEnabled && user.role === 'EMPLOYEE'
+      ? await getEmployeePermissions(user)
+      : [];
 
   let pendingRequestCount = 0;
 
@@ -112,6 +123,8 @@ export default async function OwnerLayout({
     <main className="min-h-screen overflow-x-hidden bg-[var(--background)] text-[var(--text)]">
       <AppSidebar
         userRole={user.role}
+        permissions={employeePermissions}
+        permissionsEnabled={permissionsEnabled}
       />
 
       <OfflineSyncManager

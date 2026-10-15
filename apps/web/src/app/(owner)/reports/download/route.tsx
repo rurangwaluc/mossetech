@@ -1,4 +1,5 @@
-import { requireOwner } from '@/lib/auth/session';
+import { getCurrentUser } from '@/lib/auth/session';
+import { hasEmployeePermission } from '@/lib/auth/permissions';
 import {
   Document,
   Page,
@@ -1181,7 +1182,19 @@ function ReportPdf({
 export async function GET(
   request: Request,
 ) {
-  await requireOwner();
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return new Response('Authentication required.', {
+      status: 401,
+    });
+  }
+
+  if (!(await hasEmployeePermission(user, 'reports.download'))) {
+    return new Response('Access denied.', {
+      status: 403,
+    });
+  }
 
   const url =
     new URL(

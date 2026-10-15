@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import { notFound } from 'next/navigation';
 import {
   and,
@@ -10,7 +11,7 @@ import {
   saleItems,
   stockArrivals,
 } from '@mossetech/db/schema';
-import { requireUser } from '@/lib/auth/session';
+
 import { ProductForm } from '../../product-form';
 
 type EditProductPageProps = {
@@ -23,7 +24,7 @@ export default async function EditProductPage({
   params,
 }: EditProductPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('products.edit');
 
   const { id } = await params;
 

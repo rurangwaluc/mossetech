@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import {
   and,
@@ -7,7 +8,7 @@ import {
 } from 'drizzle-orm';
 import { ArrowLeft } from 'lucide-react';
 import { notFound } from 'next/navigation';
-import { requireUser } from '@/lib/auth/session';
+
 import { db } from '@mossetech/db/client';
 import {
   corrections,
@@ -196,7 +197,7 @@ export default async function SaleDetailPage({
   searchParams,
 }: SaleDetailPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('sales.view');
 
   const { id } =
     await params;

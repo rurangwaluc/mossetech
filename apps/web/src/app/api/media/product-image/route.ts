@@ -37,6 +37,7 @@ import {
 import {
   getCurrentUser,
 } from '@/lib/auth/session';
+import { hasEmployeePermission } from '@/lib/auth/permissions';
 
 import {
   getR2BucketName,
@@ -87,6 +88,24 @@ async function currentUser() {
   return user;
 }
 
+async function canChangeProductImage(
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
+) {
+  if (
+    process.env.MOSSETECH_EMPLOYEE_PERMISSIONS_ENABLED !== 'true'
+  ) {
+    return true;
+  }
+
+  if (user.role === 'OWNER') {
+    return true;
+  }
+
+  // Product photos belong to existing product records.
+  // Creating products alone does not authorize editing them.
+  return hasEmployeePermission(user, 'products.edit');
+}
+
 export async function POST(
   request: Request,
 ) {
@@ -97,6 +116,13 @@ export async function POST(
     return errorResponse(
       'Your session has expired.',
       401,
+    );
+  }
+
+  if (!(await canChangeProductImage(user))) {
+    return errorResponse(
+      'You do not have permission to change product photos.',
+      403,
     );
   }
 
@@ -159,6 +185,8 @@ export async function POST(
       .select({
         id:
           products.id,
+        imageKey:
+          products.imageKey,
       })
       .from(products)
       .where(
@@ -183,6 +211,13 @@ export async function POST(
     return errorResponse(
       'Product not found.',
       404,
+    );
+  }
+
+  if (product.imageKey && user.role !== 'OWNER') {
+    return errorResponse(
+      'Only the owner can replace an existing product photo.',
+      403,
     );
   }
 
@@ -227,6 +262,13 @@ export async function PATCH(
     return errorResponse(
       'Your session has expired.',
       401,
+    );
+  }
+
+  if (!(await canChangeProductImage(user))) {
+    return errorResponse(
+      'You do not have permission to change product photos.',
+      403,
     );
   }
 

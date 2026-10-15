@@ -1,7 +1,11 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, ShieldCheck } from 'lucide-react';
+import { StaffPermissionsEditor } from './staff-permissions-editor';
+import type {
+  EmployeePermission,
+} from '@mossetech/validators/permissions';
 import {
   createStaffAction,
 } from '@/lib/settings/create-staff-action';
@@ -18,10 +22,12 @@ type StaffUser = {
   status:
     | 'ACTIVE'
     | 'DISABLED';
+  permissions: EmployeePermission[];
 };
 
 type StaffAccessFormProps = {
   staffUsers: StaffUser[];
+  permissionsEnabled: boolean;
 };
 
 const inputClass =
@@ -29,8 +35,11 @@ const inputClass =
 
 export function StaffAccessForm({
   staffUsers,
+  permissionsEnabled,
 }: StaffAccessFormProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [openPermissionsFor, setOpenPermissionsFor] =
+    useState<string | null>(null);
 
   const [createState, createAction, creating] =
     useActionState(createStaffAction, {});
@@ -333,6 +342,55 @@ export function StaffAccessForm({
                         : 'Restore access'}
                     </button>
                   </form>
+                </div>
+
+                <div className="mt-5 border-t border-[var(--border)] pt-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setOpenPermissionsFor((current) =>
+                        current === staff.id ? null : staff.id
+                      )
+                    }
+                    aria-expanded={openPermissionsFor === staff.id}
+                    aria-controls={`permissions-${staff.id}`}
+                    className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm font-bold text-[var(--text)]"
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <ShieldCheck
+                        className="h-4 w-4 text-[var(--primary)]"
+                        aria-hidden="true"
+                      />
+                      {openPermissionsFor === staff.id
+                        ? 'Close permissions'
+                        : 'Manage permissions'}
+                    </span>
+
+                    <span className="text-xs font-semibold text-[var(--muted)]">
+                      {staff.permissions.length} of 23 enabled
+                    </span>
+                  </button>
+
+                  {openPermissionsFor === staff.id && (
+                    <div
+                      id={`permissions-${staff.id}`}
+                      className="mt-4 border-t border-[var(--border)] pt-4"
+                    >
+                      <p className="text-sm font-semibold text-[var(--muted)]">
+                        Managing permissions for
+                        {' '}
+                        <span className="font-bold text-[var(--text)]">
+                          {staff.name}
+                        </span>
+                      </p>
+
+                      <StaffPermissionsEditor
+                        employeeUserId={staff.id}
+                        permissions={staff.permissions}
+                        enabled={permissionsEnabled}
+                      />
+                    </div>
+                  )}
                 </div>
               </article>
             ),

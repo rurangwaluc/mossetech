@@ -1,11 +1,12 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { db } from '@mossetech/db/client';
 import { cashDrawerMovements, expenses } from '@mossetech/db/schema';
 import { expenseFormSchema } from '@mossetech/validators/expense';
-import { requireUser } from '@/lib/auth/session';
 import { getPaymentMethodBalance, paymentName } from '@/lib/money/balance';
 import { getLockedCurrentDrawerState } from '@/lib/cash-drawer/locking';
 
@@ -60,7 +61,7 @@ function kigaliDateKey() {
 }
 
 export async function createExpenseAction(formData: FormData) {
-  const user = await requireUser();
+  const user = await requirePermission('expenses.create');
 
   const parsed = expenseFormSchema.safeParse({
     name: formData.get('name'),

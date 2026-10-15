@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import {
   and,
   asc,
@@ -23,7 +24,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 
 import {
@@ -47,7 +47,7 @@ export default async function SaleFixPage({
   searchParams,
 }: SaleFixPageProps) {
   const user =
-    await requireUser();
+    await requirePermission('sales.correct');
 
   const { id } =
     await params;

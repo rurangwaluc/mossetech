@@ -1,3 +1,4 @@
+import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import {
   and,
@@ -16,7 +17,6 @@ import {
 } from '@mossetech/db/schema';
 
 import {
-  requireUser,
 } from '@/lib/auth/session';
 import {
   submitExpenseFixAction,
@@ -89,7 +89,7 @@ export default async function ExpenseFixPage({
   searchParams,
 }: PageProps) {
   const user =
-    await requireUser();
+    await requirePermission('expenses.edit');
 
   const {
     id,

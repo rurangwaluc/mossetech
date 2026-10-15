@@ -1,5 +1,7 @@
 'use server';
 
+import { requirePermission } from '@/lib/auth/require-permission';
+
 import {
   and,
   eq,
@@ -28,7 +30,6 @@ import {
 
 import {
   requireOwner,
-  requireUser,
 } from '@/lib/auth/session';
 
 type StockDamageFixValues = {
@@ -643,7 +644,7 @@ export async function submitStockDamageFixAction(
   formData: FormData,
 ) {
   const user =
-    await requireUser();
+    await requirePermission('stock.correct');
 
   const damageId =
     String(
