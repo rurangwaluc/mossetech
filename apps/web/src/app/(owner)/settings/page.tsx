@@ -53,7 +53,7 @@ export default async function SettingsPage() {
   const safeSettings = {
     businessName:
       settings?.businessName ||
-      'Bloom Kigali',
+      'Mosse Tech Ltd',
 
     phone:
       settings?.phone ||

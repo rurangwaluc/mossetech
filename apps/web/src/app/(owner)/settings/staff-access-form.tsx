@@ -1,9 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { useActionState, useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import {
-  resetStaffPasswordAction,
+  createStaffAction,
+} from '@/lib/settings/create-staff-action';
+import {
   updateStaffProfileAction,
   updateStaffStatusAction,
 } from '@/lib/settings/password-actions';
@@ -28,24 +30,170 @@ const inputClass =
 export function StaffAccessForm({
   staffUsers,
 }: StaffAccessFormProps) {
-  const [
-    state,
-    resetPasswordAction,
-    pending,
-  ] = useActionState(
-    resetStaffPasswordAction,
-    {},
-  );
+  const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const [createState, createAction, creating] =
+    useActionState(createStaffAction, {});
+
+  // A successful submission closes the current form.
+  // A new click can explicitly open a fresh form again.
+  const [acknowledgedSubmissionId, setAcknowledgedSubmissionId] =
+    useState<string | null>(null);
+
+  const createFormVisible =
+    showCreateForm &&
+    (!createState.submissionId ||
+      acknowledgedSubmissionId === createState.submissionId);
 
   return (
     <section className="w-full">
-<h2 className="mt-1 font-display text-2xl font-black tracking-tight text-[#222222] dark:text-[#F5F5F5]">
+      <h2 className="mt-1 font-display text-2xl font-black tracking-tight text-[#222222] dark:text-[#F5F5F5]">
         Staff access
       </h2>
 
       <p className="mt-1 text-sm font-semibold leading-6 text-[#6B7280] dark:text-[#A3A3A3]">
-        Manage who can sign in to Bloom Kigali.
+        Manage employees who can securely access Mosse Tech.
       </p>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--border)] pb-5">
+        <div>
+          <p className="text-sm font-bold text-[var(--text)]">
+            Employees
+          </p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            {staffUsers.length} registered
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (createFormVisible) {
+              setShowCreateForm(false);
+            } else {
+              setAcknowledgedSubmissionId(createState.submissionId ?? null);
+              setShowCreateForm(true);
+            }
+          }}
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[4px] bg-[var(--primary-action)] px-4 text-sm font-bold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-action-hover)]"
+          aria-expanded={createFormVisible}
+        >
+          {createFormVisible ? (
+            <>
+              <X className="h-4 w-4" aria-hidden="true" />
+              Cancel
+            </>
+          ) : (
+            <>
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Add employee
+            </>
+          )}
+        </button>
+      </div>
+
+      {createState.success && (
+        <div
+          role="status"
+          className="mt-5 border border-[#5F8A63]/30 bg-[#5F8A63]/5 px-4 py-4"
+        >
+          <p className="text-sm font-bold text-[var(--text)]">
+            Employee added successfully
+          </p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            {createState.success}
+          </p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            Share mossetech.store/login with the employee.
+            No password is needed.
+          </p>
+        </div>
+      )}
+
+      {createFormVisible && (
+        <div className="mt-5 border border-[var(--border)] bg-[var(--card)] p-4 sm:p-6">
+          <h3 className="text-lg font-bold text-[var(--text)]">
+            New employee
+          </h3>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            They will sign in using a verification code sent to their email.
+          </p>
+
+          <form action={createAction} className="mt-5 space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="new-staff-name"
+                  className="text-sm font-bold text-[var(--text)]"
+                >
+                  Full name
+                </label>
+                <input
+                  id="new-staff-name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  maxLength={120}
+                  required
+                  placeholder="Employee name"
+                  className={inputClass}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="new-staff-email"
+                  className="text-sm font-bold text-[var(--text)]"
+                >
+                  Email address
+                </label>
+                <input
+                  id="new-staff-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={180}
+                  required
+                  placeholder="employee@example.com"
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="max-w-sm space-y-2">
+              <label
+                htmlFor="new-staff-phone"
+                className="text-sm font-bold text-[var(--text)]"
+              >
+                Phone number <span className="font-normal text-[var(--muted)]">(optional)</span>
+              </label>
+              <input
+                id="new-staff-phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                maxLength={40}
+                placeholder="+250..."
+                className={inputClass}
+              />
+            </div>
+
+            {createState.error && (
+              <p role="alert" className="text-sm font-semibold text-[#E85D5D]">
+                {createState.error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={creating}
+              className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-[var(--primary-action)] px-5 text-sm font-bold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {creating ? 'Creating employee...' : 'Create employee'}
+            </button>
+          </form>
+        </div>
+      )}
 
       {staffUsers.length === 0 ? (
         <p className="mt-6 border-y border-neutral-200 py-5 text-sm font-semibold text-[#6B7280] dark:border-[#343434] dark:text-[#A3A3A3]">
@@ -145,77 +293,7 @@ export function StaffAccessForm({
                 </form>
 
                 <div className="mt-4 flex flex-col gap-4 border-t border-neutral-100 pt-4 dark:border-[#2A2A2A] lg:flex-row lg:items-start lg:justify-between">
-                  <details className="group w-full lg:max-w-2xl">
-                    <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-black text-[var(--primary)] [&::-webkit-details-marker]:hidden">
-                      Reset password
 
-                      <ChevronDown
-                        className="h-4 w-4 transition-transform group-open:rotate-180"
-                        aria-hidden="true"
-                      />
-                    </summary>
-
-                    <form
-                      action={
-                        resetPasswordAction
-                      }
-                      className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end"
-                    >
-                      <input
-                        type="hidden"
-                        name="staffUserId"
-                        value={staff.id}
-                      />
-
-                      <div className="space-y-2">
-                        <label
-                          htmlFor={`staff-new-password-${staff.id}`}
-                          className="text-sm font-black text-[#222222] dark:text-[#F5F5F5]"
-                        >
-                          New password
-                        </label>
-
-                        <input
-                          id={`staff-new-password-${staff.id}`}
-                          name="newPassword"
-                          type="password"
-                          autoComplete="new-password"
-                          required
-                          minLength={8}
-                          className={inputClass}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label
-                          htmlFor={`staff-confirm-password-${staff.id}`}
-                          className="text-sm font-black text-[#222222] dark:text-[#F5F5F5]"
-                        >
-                          Confirm password
-                        </label>
-
-                        <input
-                          id={`staff-confirm-password-${staff.id}`}
-                          name="confirmPassword"
-                          type="password"
-                          autoComplete="new-password"
-                          required
-                          minLength={8}
-                          className={inputClass}
-                        />
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={pending}
-                        className="h-11 rounded-[6px] bg-[var(--primary-action)] px-5 text-sm font-black text-[var(--primary-contrast)] transition hover:bg-[var(--primary-action-hover)] disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        {pending
-                          ? 'Resetting...'
-                          : 'Reset password'}
-                      </button>
-                    </form>
-                  </details>
 
                   <form
                     action={
@@ -262,17 +340,6 @@ export function StaffAccessForm({
         </div>
       )}
 
-      {state.error ? (
-        <div className="mt-4 rounded-[6px] border border-[#F2C94C]/50 bg-[#F2C94C]/10 px-4 py-3 text-sm font-bold text-[#8A5A00] dark:text-[#FFD45A]">
-          {state.error}
-        </div>
-      ) : null}
-
-      {state.success ? (
-        <div className="mt-4 rounded-[6px] border border-[#5F8A63]/40 bg-[#5F8A63]/10 px-4 py-3 text-sm font-bold text-[#5F8A63] dark:text-[#79C27D]">
-          {state.success}
-        </div>
-      ) : null}
     </section>
   );
 }

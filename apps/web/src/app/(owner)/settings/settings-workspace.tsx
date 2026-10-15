@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { SettingsForm } from './settings-form';
 import { InstallAppCard } from './install-app-card';
 import { OwnerAccountForm } from './owner-account-form';
-import { PasswordForm } from './password-form';
 import { StaffAccessForm } from './staff-access-form';
 
 type SettingsSection =
@@ -55,7 +54,7 @@ const sections: Array<{
   },
   {
     value: 'staff',
-    label: 'Staff',
+    label: 'Staff Management',
   },
 ];
 
@@ -89,11 +88,14 @@ export function SettingsWorkspace({
                 <button
                   key={section.value}
                   type="button"
-                  onClick={() =>
-                    setActiveSection(
-                      section.value,
-                    )
-                  }
+                  onClick={() => {
+                    setActiveSection(section.value);
+                    window.history.replaceState(
+                      null,
+                      '',
+                      `#${section.value}`,
+                    );
+                  }}
                   aria-current={
                     active
                       ? 'page'
@@ -122,7 +124,7 @@ export function SettingsWorkspace({
             </h2>
 
             <p className="mt-1 text-sm font-semibold leading-6 text-[#6B7280] dark:text-[#A3A3A3]">
-              Core information used across Bloom Kigali.
+              Business information used across Mosse Tech.
             </p>
 
             <div className="mt-6">
@@ -145,9 +147,7 @@ export function SettingsWorkspace({
               owner={owner}
             />
 
-            <div className="border-t border-neutral-200 pt-7 dark:border-[#343434]">
-              <PasswordForm />
-            </div>
+
           </div>
         )}
 
