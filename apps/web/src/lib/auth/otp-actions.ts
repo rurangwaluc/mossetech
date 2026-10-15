@@ -1,6 +1,8 @@
 'use server';
 
 import { randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import {
@@ -39,10 +41,25 @@ async function getRequestSource(): Promise<string> {
     return 'local-development';
   }
 
-  // Production authentication remains disabled until
-  // the deployment's trusted client-IP boundary is verified.
-  // Never trust a browser-supplied forwarding header.
-  throw new Error('Production OTP source protection is not configured.');
+  // Trust Vercel's forwarding header only inside its runtime.
+  // Vercel replaces externally supplied X-Forwarded-For values
+  // on its normal ingress path.
+  if (
+    process.env.VERCEL !== '1' ||
+    process.env.VERCEL_ENV !== 'production'
+  ) {
+    throw new Error('Production OTP source protection is unavailable.');
+  }
+
+  const requestHeaders = await headers();
+  const forwardedFor = requestHeaders.get('x-forwarded-for')?.trim();
+
+  // Never accept an unverified forwarding chain or malformed IP.
+  if (!forwardedFor || isIP(forwardedFor) === 0) {
+    throw new Error('Trusted production client IP is unavailable.');
+  }
+
+  return forwardedFor;
 }
 
 export async function requestOtpAction(

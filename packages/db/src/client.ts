@@ -15,8 +15,36 @@ if (!databaseUrl) {
 const isVercel =
   process.env.VERCEL === '1';
 
+const caCertificate =
+  process.env.DATABASE_CA_CERT?.replace(/\\n/g, '\n');
+
+const connectionUrl = new URL(databaseUrl);
+
+if (caCertificate) {
+  // node-postgres may replace an explicit ssl object when
+  // SSL parameters are also present in the connection URL.
+  // The CA must remain authoritative for verification.
+  for (const key of [
+    'sslmode',
+    'sslrootcert',
+    'sslcert',
+    'sslkey',
+  ]) {
+    connectionUrl.searchParams.delete(key);
+  }
+}
+
 const queryClient = new Pool({
-  connectionString: databaseUrl,
+  connectionString: connectionUrl.toString(),
+  ...(caCertificate
+    ? {
+        ssl: {
+          ca: caCertificate,
+          rejectUnauthorized: true,
+          servername: connectionUrl.hostname,
+        },
+      }
+    : {}),
 
   /*
    * Production runs on serverless infrastructure.

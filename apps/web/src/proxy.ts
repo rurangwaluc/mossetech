@@ -38,11 +38,9 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Never expose operational API routes or mutations.
-  if (
-    pathname.startsWith('/api/') ||
-    (request.method !== 'GET' && request.method !== 'HEAD')
-  ) {
+  // Operational API routes remain disabled until their
+  // production authorization review is complete.
+  if (pathname.startsWith('/api/')) {
     return new NextResponse('Not available', {
       status: 404,
       headers: {
@@ -51,8 +49,52 @@ export function proxy(request: NextRequest) {
     });
   }
 
-  // Until owner authentication is ready, keep visitors
-  // on the public homepage rather than opening the app.
+  // Next.js Server Actions submit POST requests to the
+  // page that renders the form. Allow those requests only
+  // for login and the authenticated application; the
+  // corresponding server-side actions enforce identity.
+  //
+  // Requests without valid sessions are redirected by
+  // the protected application layout.
+  if (
+    pathname === '/login' ||
+    pathname.startsWith('/login/') ||
+    pathname === '/dashboard' ||
+    pathname.startsWith('/dashboard/') ||
+    pathname === '/customers' ||
+    pathname.startsWith('/customers/') ||
+    pathname === '/debts' ||
+    pathname.startsWith('/debts/') ||
+    pathname === '/expenses' ||
+    pathname.startsWith('/expenses/') ||
+    pathname === '/money' ||
+    pathname.startsWith('/money/') ||
+    pathname === '/products' ||
+    pathname.startsWith('/products/') ||
+    pathname === '/reports' ||
+    pathname.startsWith('/reports/') ||
+    pathname === '/requests' ||
+    pathname.startsWith('/requests/') ||
+    pathname === '/sales' ||
+    pathname.startsWith('/sales/') ||
+    pathname === '/settings' ||
+    pathname.startsWith('/settings/') ||
+    pathname === '/stock' ||
+    pathname.startsWith('/stock/')
+  ) {
+    return NextResponse.next();
+  }
+
+  // Keep remaining unfinished routes unavailable.
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new NextResponse('Not available', {
+      status: 404,
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
+
   return NextResponse.redirect(
     new URL('/', request.url),
     307,
