@@ -1,5 +1,6 @@
 import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
+import { CostPriceForm } from './cost-price-form';
 import {
   notFound,
 } from 'next/navigation';
@@ -300,6 +301,13 @@ export default async function ProductDetailsPage({
           </div>
         </aside>
       </div>
+      {user.role === 'OWNER' ? (
+        <CostPriceForm
+          productId={product.id}
+          buyingPrice={product.buyingPrice}
+          minimumSellingPrice={product.minimumSellingPrice}
+        />
+      ) : null}
     </section>
   );
 }

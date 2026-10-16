@@ -280,6 +280,7 @@ export const products = pgTable('products', {
   supplierName: varchar('supplier_name', { length: 160 }),
   buyingPrice: numeric('buying_price', { precision: 12, scale: 2 }).notNull().default('0'),
   sellingPrice: numeric('selling_price', { precision: 12, scale: 2 }).notNull().default('0'),
+  minimumSellingPrice: numeric('minimum_selling_price', { precision: 12, scale: 2 }),
   wholesalePrice: numeric('wholesale_price', { precision: 12, scale: 2 }).notNull().default('0'),
   wholesaleMinQuantity: integer('wholesale_min_quantity').notNull().default(0),
   quantity: integer('quantity').notNull().default(0),

@@ -1,0 +1,1 @@
+ALTER TABLE "products" ADD COLUMN "minimum_selling_price" numeric(12, 2);

@@ -101,7 +101,16 @@ export default async function EditProductPage({
 
   return (
     <ProductForm
-      product={product}
+      product={{
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        unit: product.unit,
+        sellingPrice: product.sellingPrice,
+        minQuantity: product.minQuantity,
+        imageKey: product.imageKey,
+        notes: product.notes,
+      }}
       backHref="/products"
       userId={user.id}
       userRole={user.role}

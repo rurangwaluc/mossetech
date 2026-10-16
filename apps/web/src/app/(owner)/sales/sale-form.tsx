@@ -23,6 +23,14 @@ import {
 } from '@/lib/sales/actions';
 
 import {
+  validateMinimumSellingPrices,
+} from '@mossetech/validators/minimum-selling-price';
+
+import {
+  minimumPriceEnforcementEnabled,
+} from '@/lib/sales/minimum-price-rollout';
+
+import {
   enqueueOfflineOperation,
   getOfflineOperation,
   removeOfflineOperation,
@@ -37,6 +45,7 @@ type SellableItem = {
   name: string;
   category: string;
   sellingPrice: string;
+  minimumSellingPrice: string | null;
   quantity: number;
   unit: string;
   imageKey: string | null;
@@ -351,13 +360,15 @@ export function SaleForm({
             return sum;
           }
 
-          const sellingPrice =
+          const enteredPrice =
             numberValue(
               row.unitPrice,
-            ) ||
-            itemPrice(
-              item,
             );
+
+          const sellingPrice =
+            minimumPriceEnforcementEnabled
+              ? enteredPrice
+              : enteredPrice || itemPrice(item);
 
           return (
             sum +
@@ -414,6 +425,33 @@ export function SaleForm({
   const discountTooLarge =
     roundedMoney(discount) >
     roundedMoney(subtotal);
+
+  const minimumPriceCheck =
+    minimumPriceEnforcementEnabled
+      ? validateMinimumSellingPrices(
+          rows
+            .filter((row) => Boolean(row.productId))
+            .map((row) => {
+              const item = items.find(
+                (current) => current.id === row.productId,
+              );
+
+              return {
+                name: item?.name ?? 'Product',
+                quantity: row.quantity,
+                agreedUnitPrice: numberValue(row.unitPrice),
+                minimumUnitPrice:
+                  item?.minimumSellingPrice ?? null,
+              };
+            }),
+          discount,
+        )
+      : null;
+
+  const minimumPriceError =
+    minimumPriceCheck && !minimumPriceCheck.valid
+      ? minimumPriceCheck.error
+      : null;
 
   const discountNeedsReason =
     discount > 0 &&
@@ -506,7 +544,8 @@ export function SaleForm({
     total > 0 &&
     !discountTooLarge &&
     !discountNeedsReason &&
-    !priceBelowNormal &&
+    !(minimumPriceEnforcementEnabled && minimumPriceError) &&
+    (minimumPriceEnforcementEnabled || !priceBelowNormal) &&
     hasPaymentEntry &&
     received >= 0 &&
     !cashDrawerBlocked &&
@@ -1321,12 +1360,10 @@ export function SaleForm({
 
                 const price =
                   selected
-                    ? (
-                        numberValue(
-                          row.unitPrice,
-                        ) ||
+                    ? minimumPriceEnforcementEnabled
+                      ? numberValue(row.unitPrice)
+                      : numberValue(row.unitPrice) ||
                         normalPrice
-                      )
                     : 0;
 
                 const priceRaised =
@@ -1422,7 +1459,9 @@ export function SaleForm({
                                           quantity:
                                             1,
                                           unitPrice:
-                                            item.sellingPrice,
+                                            minimumPriceEnforcementEnabled
+                                              ? ''
+                                              : item.sellingPrice,
                                           searchText:
                                             itemSearchLabel(
                                               item,
@@ -1587,7 +1626,37 @@ export function SaleForm({
                           className={`${fieldClass} mt-2`}
                         />
 
-                        {priceRaised ? (
+                        {minimumPriceEnforcementEnabled &&
+                        selected ? (
+                          <div className="mt-2 space-y-1">
+                            {selected.minimumSellingPrice !== null &&
+                            Number(selected.minimumSellingPrice) > 0 ? (
+                              <p className="text-xs font-bold text-[var(--muted)]">
+                                Minimum selling price:{' '}
+                                <span className="font-black text-[var(--text)]">
+                                  RWF {money(selected.minimumSellingPrice)}
+                                </span>
+                              </p>
+                            ) : (
+                              <p className="text-xs font-black text-[var(--danger)]">
+                                Minimum selling price not configured.
+                              </p>
+                            )}
+
+                            {selected.minimumSellingPrice !== null &&
+                            Number(selected.minimumSellingPrice) > 0 &&
+                            row.unitPrice.trim() !== '' &&
+                            numberValue(row.unitPrice) <
+                              Number(selected.minimumSellingPrice) ? (
+                              <p className="text-xs font-black text-[var(--danger)]">
+                                Below minimum selling price.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
+
+                        {!minimumPriceEnforcementEnabled &&
+                        priceRaised ? (
                           <p className="mt-1 text-xs font-bold text-[var(--primary)]">
                             Normal{' '}
                             {money(
@@ -1596,7 +1665,8 @@ export function SaleForm({
                           </p>
                         ) : null}
 
-                        {priceLowered ? (
+                        {!minimumPriceEnforcementEnabled &&
+                        priceLowered ? (
                           <p className="mt-1 text-xs font-black text-[var(--danger)]">
                             Use Add discount for a lower price.
                           </p>
@@ -2378,6 +2448,16 @@ export function SaleForm({
         ) : null}
 
         <div className="border-t border-[var(--border)] p-4">
+          {minimumPriceEnforcementEnabled &&
+          minimumPriceError ? (
+            <p
+              role="alert"
+              className="mb-3 text-sm font-bold text-[var(--danger)]"
+            >
+              {minimumPriceError}
+            </p>
+          ) : null}
+
           <button
             type="submit"
             disabled={!canSave}

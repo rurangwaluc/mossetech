@@ -25,6 +25,14 @@ import {
 } from '@mossetech/validators/sale';
 
 import {
+  validateMinimumSellingPrices,
+} from '@mossetech/validators/minimum-selling-price';
+
+import {
+  minimumPriceEnforcementEnabled,
+} from './minimum-price-rollout';
+
+import {
   getProductLedgerTotals,
   lockProductLedgers,
   reconcileProductLedgerQuantity,
@@ -712,6 +720,7 @@ export async function executeSaleCreateSync(
           );
 
         if (
+          !minimumPriceEnforcementEnabled &&
           baseUnitPrice <= 0
         ) {
           throw new SaleSyncError(
@@ -725,9 +734,11 @@ export async function executeSaleCreateSync(
           );
 
         const unitPrice =
-          enteredPrice > 0
+          minimumPriceEnforcementEnabled
             ? enteredPrice
-            : baseUnitPrice;
+            : enteredPrice > 0
+              ? enteredPrice
+              : baseUnitPrice;
 
         if (
           unitPrice <= 0
@@ -738,6 +749,7 @@ export async function executeSaleCreateSync(
         }
 
         if (
+          !minimumPriceEnforcementEnabled &&
           roundMoney(
             unitPrice,
           ) <
@@ -876,6 +888,26 @@ export async function executeSaleCreateSync(
     throw new SaleSyncError(
       'Enter why the discount was given.',
     );
+  }
+
+  if (minimumPriceEnforcementEnabled) {
+    const priceCheck = validateMinimumSellingPrices(
+      lines.map((line) => ({
+        name: line.item.name,
+        quantity: line.quantity,
+        agreedUnitPrice: line.unitPrice,
+        minimumUnitPrice:
+          line.item.minimumSellingPrice,
+      })),
+      discountAmount,
+    );
+
+    if (!priceCheck.valid) {
+      throw new SaleSyncError(
+        priceCheck.error,
+        409,
+      );
+    }
   }
 
   const totalAmount =
@@ -1223,8 +1255,8 @@ export async function executeSaleCreateSync(
             ),
 
           priceAdjustedByUserId:
-            line.unitPrice >
-            line.baseUnitPrice
+            Math.round(line.unitPrice * 100) !==
+                  Math.round(line.baseUnitPrice * 100)
               ? user.id
               : null,
 

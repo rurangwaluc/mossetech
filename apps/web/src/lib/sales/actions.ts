@@ -34,6 +34,14 @@ import {
 } from '@mossetech/validators/sale';
 
 import {
+  validateMinimumSellingPrices,
+} from '@mossetech/validators/minimum-selling-price';
+
+import {
+  minimumPriceEnforcementEnabled,
+} from './minimum-price-rollout';
+
+import {
 } from '@/lib/auth/session';
 
 import {
@@ -420,8 +428,8 @@ export async function createSaleAction(
                 );
 
               if (
-                baseUnitPrice <=
-                0
+                !minimumPriceEnforcementEnabled &&
+                baseUnitPrice <= 0
               ) {
                 throw new Error(
                   `${item.name} does not have a selling price.`,
@@ -434,9 +442,11 @@ export async function createSaleAction(
                 );
 
               const unitPrice =
-                enteredPrice > 0
+                minimumPriceEnforcementEnabled
                   ? enteredPrice
-                  : baseUnitPrice;
+                  : enteredPrice > 0
+                    ? enteredPrice
+                    : baseUnitPrice;
 
               if (
                 unitPrice <= 0
@@ -452,6 +462,7 @@ export async function createSaleAction(
                * reduction and its reason remain visible.
                */
               if (
+                !minimumPriceEnforcementEnabled &&
                 Number(
                   unitPrice.toFixed(
                     2,
@@ -596,6 +607,23 @@ export async function createSaleAction(
           throw new Error(
             'Enter why the discount was given.',
           );
+        }
+
+        if (minimumPriceEnforcementEnabled) {
+          const priceCheck = validateMinimumSellingPrices(
+            lines.map((line) => ({
+              name: line.item.name,
+              quantity: line.quantity,
+              agreedUnitPrice: line.unitPrice,
+              minimumUnitPrice:
+                line.item.minimumSellingPrice,
+            })),
+            discountAmount,
+          );
+
+          if (!priceCheck.valid) {
+            throw new Error(priceCheck.error);
+          }
         }
 
         const totalAmount =
@@ -972,8 +1000,8 @@ export async function createSaleAction(
                   ),
 
                 priceAdjustedByUserId:
-                  line.unitPrice >
-                  line.baseUnitPrice
+                  Math.round(line.unitPrice * 100) !==
+                  Math.round(line.baseUnitPrice * 100)
                     ? user.id
                     : null,
 

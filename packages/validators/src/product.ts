@@ -8,8 +8,8 @@ const moneySchema = z
     'Enter a valid amount.',
   )
   .refine(
-    (value) => Number(value) > 0,
-    'Selling price must be more than zero.',
+    (value) => Number(value) >= 0,
+    'Selling price cannot be negative.',
   );
 
 const wholeNumberSchema = z
@@ -51,7 +51,7 @@ export const productFormSchema =
       )
       .max(40),
 
-    sellingPrice: moneySchema,
+    sellingPrice: moneySchema.or(z.literal('')).default(''),
 
     minQuantity:
       wholeNumberSchema,

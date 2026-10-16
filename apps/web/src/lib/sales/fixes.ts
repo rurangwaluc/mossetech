@@ -32,6 +32,14 @@ import {
 } from '@/lib/auth/session';
 
 import {
+  validateMinimumSellingPrices,
+} from '@mossetech/validators/minimum-selling-price';
+
+import {
+  minimumPriceEnforcementEnabled,
+} from './minimum-price-rollout';
+
+import {
   getProductLedgerTotals,
   lockProductLedgers,
   reconcileProductLedgerQuantity,
@@ -707,6 +715,7 @@ async function prepareAfterValues(
               );
 
         if (
+          !minimumPriceEnforcementEnabled &&
           baseUnitPrice <= 0
         ) {
           throw new SaleFixError(
@@ -715,6 +724,7 @@ async function prepareAfterValues(
         }
 
         if (
+          !minimumPriceEnforcementEnabled &&
           roundMoney(
             input.unitPrice,
           ) <
@@ -830,6 +840,29 @@ async function prepareAfterValues(
     throw new SaleFixError(
       'Enter why the discount was given.',
     );
+  }
+
+  if (minimumPriceEnforcementEnabled) {
+    const priceCheck = validateMinimumSellingPrices(
+      items.map((item) => {
+        const product = productRows.find(
+          (row) => row.id === item.productId,
+        );
+
+        return {
+          name: item.itemName,
+          quantity: item.quantity,
+          agreedUnitPrice: item.unitPrice,
+          minimumUnitPrice:
+            product?.minimumSellingPrice ?? null,
+        };
+      }),
+      discountAmount,
+    );
+
+    if (!priceCheck.valid) {
+      throw new SaleFixError(priceCheck.error);
+    }
   }
 
   const totalAmount =
@@ -1248,6 +1281,9 @@ async function applySaleFix(
 
                 itemType:
                   products.itemType,
+
+                minimumSellingPrice:
+                  products.minimumSellingPrice,
               })
               .from(products)
               .where(
@@ -1256,6 +1292,7 @@ async function applySaleFix(
                   productIds,
                 ),
               )
+              .for('update')
           : [];
 
       if (
@@ -1265,6 +1302,61 @@ async function applySaleFix(
         throw new SaleFixError(
           'One product was not found.',
         );
+      }
+
+      /*
+       * Current minimum-price check at correction application.
+       *
+       * A pending approval may have been prepared before Moses
+       * changed the product's minimum selling price.
+       *
+       * Historical sales are not retroactively re-priced when
+       * the correction changes only non-financial information.
+       */
+      if (minimumPriceEnforcementEnabled) {
+        const financialItemsChanged =
+          before.items.length !== after.items.length ||
+          before.items.some((previous, index) => {
+            const next = after.items[index];
+
+            return (
+              !next ||
+              previous.productId !== next.productId ||
+              previous.quantity !== next.quantity ||
+              roundMoney(previous.unitPrice) !==
+                roundMoney(next.unitPrice)
+            );
+          });
+
+        const financialChange =
+          financialItemsChanged ||
+          roundMoney(before.discountAmount) !==
+            roundMoney(after.discountAmount);
+
+        if (financialChange) {
+          const priceCheck = validateMinimumSellingPrices(
+            after.items.map((item) => {
+              const product = lockedProducts.find(
+                (row) => row.id === item.productId,
+              );
+
+              return {
+                name: product?.name ?? item.itemName,
+                quantity: item.quantity,
+                agreedUnitPrice: item.unitPrice,
+                minimumUnitPrice:
+                  product?.minimumSellingPrice ?? null,
+              };
+            }),
+            after.discountAmount,
+          );
+
+          if (!priceCheck.valid) {
+            throw new SaleFixError(
+              priceCheck.error,
+            );
+          }
+        }
       }
 
       for (

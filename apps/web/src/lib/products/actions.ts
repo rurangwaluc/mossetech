@@ -1089,6 +1089,106 @@ export async function approveProductChangeRequestAction(
   );
 }
 
+export async function updateProductCostAction(
+  formData: FormData,
+) {
+  await requireOwner();
+
+  const productId = String(
+    formData.get('productId') || '',
+  ).trim();
+
+  const cost = String(
+    formData.get('buyingPrice') || '',
+  ).trim();
+
+  if (!PRODUCT_ID_PATTERN.test(productId)) {
+    throw new Error('Invalid product ID.');
+  }
+
+  if (
+    !/^[0-9]+(\\.[0-9]{1,2})?$/.test(cost) ||
+    !Number.isFinite(Number(cost)) ||
+    Number(cost) <= 0 ||
+    Number(cost) > 9999999999.99
+  ) {
+    throw new Error('Enter a valid cost price greater than zero.');
+  }
+
+  const updated = await db
+    .update(products)
+    .set({
+      buyingPrice: Number(cost).toFixed(2),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(products.id, productId),
+        eq(products.status, 'ACTIVE'),
+        eq(products.itemType, 'PRODUCT'),
+      ),
+    )
+    .returning({ id: products.id });
+
+  if (updated.length !== 1) {
+    throw new Error('Active product not found.');
+  }
+
+  revalidateProductPaths();
+  revalidatePath(`/products/${productId}`);
+}
+
+export async function updateProductMinimumPriceAction(
+  formData: FormData,
+) {
+  await requireOwner();
+
+  const productId = String(
+    formData.get('productId') || '',
+  ).trim();
+
+  const minimum = String(
+    formData.get('minimumSellingPrice') || '',
+  ).trim();
+
+  if (!PRODUCT_ID_PATTERN.test(productId)) {
+    throw new Error('Invalid product ID.');
+  }
+
+  if (
+    !/^[0-9]+(\.[0-9]{1,2})?$/.test(minimum) ||
+    !Number.isFinite(Number(minimum)) ||
+    Number(minimum) <= 0 ||
+    Number(minimum) > 9999999999.99
+  ) {
+    throw new Error(
+      'Enter a valid minimum selling price greater than zero.',
+    );
+  }
+
+  const updated = await db
+    .update(products)
+    .set({
+      minimumSellingPrice: Number(minimum).toFixed(2),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(products.id, productId),
+        eq(products.status, 'ACTIVE'),
+        eq(products.itemType, 'PRODUCT'),
+      ),
+    )
+    .returning({ id: products.id });
+
+  if (updated.length !== 1) {
+    throw new Error('Active product not found.');
+  }
+
+  revalidateProductPaths();
+  revalidatePath(`/products/${productId}`);
+}
+
 export async function archiveProductAction(
   formData: FormData,
 ) {

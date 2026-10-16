@@ -63,13 +63,11 @@ const labelClass =
   'block text-[13px] font-black text-[var(--text)]';
 
 const suggestedUnits = [
-  'stem',
-  'bouquet',
-  'bunch',
   'piece',
   'pack',
   'box',
-  'pot',
+  'set',
+  'pair',
 ];
 
 function fileSize(
@@ -534,10 +532,10 @@ export function ProductForm({
       !Number.isFinite(
         sellingPrice,
       ) ||
-      sellingPrice <= 0
+      sellingPrice < 0
     ) {
       setClientError(
-        'Selling price must be more than zero.',
+        'Selling price cannot be negative.',
       );
 
       return;
@@ -1258,7 +1256,7 @@ export function ProductForm({
                     labelClass
                   }
                 >
-                  Selling price
+                  Default selling price (optional)
                 </label>
 
                 <div className="mt-2 flex h-12 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] transition focus-within:border-[var(--primary)]">
@@ -1280,8 +1278,7 @@ export function ProductForm({
                           )
                         : ''
                     }
-                    placeholder="25000"
-                    required
+                    placeholder="Enter during sale (optional)"
                     className="min-w-0 flex-1 bg-transparent px-4 text-sm font-black text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
                   />
                 </div>

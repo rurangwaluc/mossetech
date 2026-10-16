@@ -53,6 +53,9 @@ export default async function NewSalePage() {
           sellingPrice:
             products.sellingPrice,
 
+          minimumSellingPrice:
+            products.minimumSellingPrice,
+
           unit:
             products.unit,
 

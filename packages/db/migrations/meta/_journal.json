@@ -253,6 +253,13 @@
       "when": 1792062209000,
       "tag": "0035_chunky_marauders",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1792148339853,
+      "tag": "0036_lumpy_stark_industries",
+      "breakpoints": true
     }
   ]
 }
