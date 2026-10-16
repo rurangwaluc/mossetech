@@ -220,7 +220,7 @@ export function AppSidebar({
         className="flex-1 overflow-y-auto px-2.5 py-3 lg:flex lg:overflow-hidden lg:py-3"
         aria-label="Main navigation"
       >
-        <div className="space-y-1 lg:flex lg:h-full lg:w-full lg:flex-col lg:justify-between lg:space-y-0">
+        <div className="flex w-full flex-col gap-1">
           {visibleNavigation.map((item) => {
             const Icon = item.icon;
 
@@ -262,42 +262,6 @@ export function AppSidebar({
         </div>
       </nav>
 
-      <div className="px-0 pb-0">
-        <div
-          className="relative h-[115px] overflow-hidden border-t border-[var(--border)] bg-[#f4f1ea]"
-          style={{
-            backgroundImage:
-              "url('/brand/sidebar-flowers-final.jpg')",
-            backgroundSize:
-              'cover',
-            backgroundPosition:
-              '72% center',
-            backgroundRepeat:
-              'no-repeat',
-          }}
-        >
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                'linear-gradient(90deg, rgba(244,241,234,0.82) 0%, rgba(244,241,234,0.60) 40%, rgba(244,241,234,0.10) 68%, transparent 100%)',
-            }}
-            aria-hidden="true"
-          />
-
-          <div className="relative z-[1] h-[115px] px-4 py-3">
-            <p className="shop-display max-w-[112px] text-[14px] font-semibold leading-[1.05] tracking-[-0.015em] text-[#171814]">
-              Fresh
-              <br />
-              Flowers
-              <br />
-              Brighter Days
-            </p>
-
-            <div className="mt-2.5 h-[2px] w-8 bg-[#BF9A2F]" />
-          </div>
-        </div>
-      </div>
     </>
   );
 

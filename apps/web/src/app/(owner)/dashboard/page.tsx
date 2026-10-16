@@ -907,7 +907,7 @@ export default async function DashboardPage() {
           </h1>
 
           <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
-            Here&apos;s what&apos;s happening at Bloom Kigali today.
+            Your electronics business at a glance.
           </p>
         </div>
 
@@ -1565,91 +1565,6 @@ export default async function DashboardPage() {
         </article>
       </section>
 
-      <section className="grid overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] lg:grid-cols-[0.72fr_0.82fr_1.7fr]">
-        <div
-          className="min-h-[190px] bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage:
-              "url('/brand/dashboard-bouquet.jpg')",
-          }}
-          role="img"
-          aria-label="Bloom Kigali flower bouquet"
-        />
-
-        <div className="flex min-h-[190px] flex-col justify-center border-t border-[var(--border)] p-6 lg:border-l lg:border-t-0">
-          <p className="shop-display text-[25px] font-semibold leading-[1.12] tracking-[-0.04em] text-[var(--text)]">
-            “Flowers always
-            <br />
-            make people feel
-            <br />
-            better.”
-          </p>
-
-          <div className="mt-5 h-[3px] w-10 rounded-full bg-[var(--primary)]" />
-        </div>
-
-        <div className="border-t border-[var(--border)] p-5 sm:p-6 lg:border-l lg:border-t-0">
-          <h2 className="text-lg font-black text-[var(--text)]">
-            Today at a glance
-          </h2>
-
-          <div className="mt-5 grid grid-cols-2 gap-5 sm:grid-cols-4 lg:grid-cols-2 2xl:grid-cols-4">
-            <div className="flex items-center gap-3">
-              <ShoppingCart className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-
-              <div>
-                <p className="text-xl font-black text-[var(--text)]">
-                  {todaySales.length}
-                </p>
-                <p className="text-[11px] font-semibold text-[var(--muted)]">
-                  Sales
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Users className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-
-              <div>
-                <p className="text-xl font-black text-[var(--text)]">
-                  {customersToday}
-                </p>
-                <p className="text-[11px] font-semibold text-[var(--muted)]">
-                  Customers
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Boxes className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-
-              <div>
-                <p className="text-xl font-black text-[var(--text)]">
-                  {lowStockCount}
-                </p>
-                <p className="text-[11px] font-semibold text-[var(--muted)]">
-                  Low stock
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-
-              <div>
-                <p className="text-xl font-black text-[var(--text)]">
-                  {
-                    unpaidSales.length
-                  }
-                </p>
-                <p className="text-[11px] font-semibold text-[var(--muted)]">
-                  Unpaid sales
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </section>
   );
 }
