@@ -342,6 +342,117 @@
   }
 }
 
+
+/* MOSSETECH_MOBILE_HANDOVER_FIX */
+@media (max-width: 760px) {
+  .page,
+  .container,
+  .header,
+  .hero,
+  .heroCopy,
+  .workspace {
+    min-width: 0;
+  }
+
+  .container {
+    width: calc(100% - 32px);
+    max-width: 640px;
+  }
+
+  .header {
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+  }
+
+  .brand {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .logo {
+    width: clamp(105px, 32vw, 155px);
+  }
+
+  .headerActions {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .headerSignIn {
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 9px;
+    font-size: 11px;
+  }
+
+  .hero {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 34px;
+    padding: 42px 0;
+  }
+
+  .hero h1 {
+    max-width: 100%;
+    font-size: clamp(32px, 8vw, 52px);
+    line-height: 1.1;
+    letter-spacing: -0.045em;
+    overflow-wrap: anywhere;
+  }
+
+  .intro,
+  .access {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .workspace {
+    width: 100%;
+  }
+
+  .workspaceRow {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 5px 10px;
+    padding: 13px 16px;
+  }
+
+  .rowNumber {
+    grid-row: span 2;
+  }
+
+  .rowName,
+  .rowDescription {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .rowDescription {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 380px) {
+  .header {
+    align-items: center;
+  }
+
+  .headerActions {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+
+  .logo {
+    width: 135px;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .headerSignIn,
   .primaryAction {
