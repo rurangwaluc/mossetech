@@ -60,6 +60,13 @@ export default function HomePage() {
           </Link>
 
           <div className={styles.headerActions}>
+            <Link
+              href="/catalog"
+              className={styles.headerSignIn}
+            >
+              View Products
+            </Link>
+
             <PublicThemeToggle />
 
             <Link
