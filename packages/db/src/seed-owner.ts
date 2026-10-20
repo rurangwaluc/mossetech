@@ -22,7 +22,7 @@ const ownerName =
 
 const businessName =
   process.env.BUSINESS_NAME?.trim() ||
-  'Bloom Kigali';
+  'Mosse Tech Ltd';
 
 const businessPhone =
   process.env.BUSINESS_PHONE?.trim() ||
@@ -120,7 +120,7 @@ async function main() {
       .where(eq(businessSettings.id, existingSettings.id));
   }
 
-  console.log('Bloom Kigali setup completed.');
+  console.log('Mosse Tech setup completed.');
 }
 
 main()

@@ -1,4 +1,5 @@
 import { requirePermission } from '@/lib/auth/require-permission';
+import { saveStockReceiptCostAction } from '@/lib/stock/receipt-cost-actions';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -134,7 +135,7 @@ function formatDate(
 export default async function StockHistoryPage({
   params,
 }: StockHistoryPageProps) {
-  await requirePermission('stock.view');
+  const user = await requirePermission('stock.view');
 
   const {
     id,
@@ -312,6 +313,28 @@ export default async function StockHistoryPage({
         ),
       ),
   ]);
+
+  /*
+   * Private acquisition costs are queried separately.
+   * Employee requests never select or receive these values.
+   */
+  const ownerReceiptCosts =
+    user.role === 'OWNER'
+      ? await db
+          .select({
+            id: stockArrivals.id,
+            buyingPrice: stockArrivals.buyingPrice,
+          })
+          .from(stockArrivals)
+          .where(eq(stockArrivals.productId, product.id))
+      : [];
+
+  const costByReceiptId = new Map(
+    ownerReceiptCosts.map((receipt) => [
+      receipt.id,
+      Number(receipt.buyingPrice),
+    ]),
+  );
 
   const imported =
     receipts.reduce(
@@ -704,13 +727,61 @@ export default async function StockHistoryPage({
                         ) : null}
                       </div>
 
-                      <Link
+                      <div className="flex flex-col gap-2">
+                        {user.role === 'OWNER' ? (
+                          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
+                            {Number(costByReceiptId.get(entry.id) ?? 0) > 0 ? (
+                              <p className="text-xs font-bold text-[var(--text)]">
+                                Acquisition cost per unit: {money(
+                                  Number(costByReceiptId.get(entry.id)),
+                                )}
+                              </p>
+                            ) : (
+                              <>
+                                <p className="text-xs font-bold text-[var(--muted)]">
+                                  Cost pending
+                                </p>
+                                <form
+                                  action={saveStockReceiptCostAction}
+                                  className="mt-2 flex flex-wrap items-end gap-2"
+                                >
+                                  <input
+                                    type="hidden"
+                                    name="receiptId"
+                                    value={entry.id}
+                                  />
+                                  <label className="min-w-0 flex-1 text-xs font-bold text-[var(--text)]">
+                                    Unit acquisition cost (RWF)
+                                    <input
+                                      type="number"
+                                      name="buyingPrice"
+                                      min="0.01"
+                                      max="9999999999.99"
+                                      step="0.01"
+                                      required
+                                      placeholder="Actual cost"
+                                      className="mt-1 h-10 w-full min-w-0 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-bold text-[var(--text)]"
+                                    />
+                                  </label>
+                                  <button
+                                    type="submit"
+                                    className="h-10 rounded-lg bg-[var(--primary-action)] px-3 text-xs font-bold text-white"
+                                  >
+                                    Save cost
+                                  </button>
+                                </form>
+                              </>
+                            )}
+                          </div>
+                        ) : null}
+                        <Link
                         href={`/stock/received/${entry.id}/fix`}
                         prefetch
                         className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--border)] px-3 text-xs font-black text-[var(--text)] transition hover:border-[var(--primary)]"
                       >
                         Correct receipt
-                      </Link>
+                        </Link>
+                      </div>
                     </article>
                   );
                 }

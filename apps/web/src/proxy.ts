@@ -31,8 +31,17 @@ export function proxy(request: NextRequest) {
       (prefix) => pathname.startsWith(prefix),
     );
 
+  const isPublicCatalog =
+    pathname === '/catalog' ||
+    pathname.startsWith('/catalog/');
+
+  const isPublicProductImage =
+    /^\/api\/public\/product-image\/[0-9a-f-]{36}$/.test(
+      pathname,
+    );
+
   if (
-    isPublic &&
+    (isPublic || isPublicCatalog || isPublicProductImage) &&
     (request.method === 'GET' || request.method === 'HEAD')
   ) {
     return NextResponse.next();

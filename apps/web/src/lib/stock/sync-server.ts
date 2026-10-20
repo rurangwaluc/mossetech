@@ -126,24 +126,35 @@ export async function executeStockReceiveSync(
     );
   }
 
+  const rawSellingPriceSnapshot =
+    input.sellingPriceSnapshot;
+
   const sellingPriceSnapshot =
-    Number(
-      String(
-        input.sellingPriceSnapshot ??
-          '',
-      ),
-    );
+    Number(rawSellingPriceSnapshot);
 
   if (
-    !Number.isFinite(
-      sellingPriceSnapshot,
-    ) ||
-    sellingPriceSnapshot <= 0
+    rawSellingPriceSnapshot === null ||
+    rawSellingPriceSnapshot === undefined ||
+    String(rawSellingPriceSnapshot).trim() === '' ||
+    !Number.isFinite(sellingPriceSnapshot) ||
+    sellingPriceSnapshot < 0
   ) {
     throw new StockSyncError(
       'The product selling price is invalid.',
     );
   }
+
+  /*
+   * Serialize stock receiving with sales, damage
+   * recording, and stock corrections for this product.
+   * Acquire the lock before adding the receipt.
+   */
+  await tx.execute(sql`
+    SELECT id
+    FROM products
+    WHERE id = ${parsed.data.productId}
+    FOR UPDATE
+  `);
 
   const [product] =
     await tx

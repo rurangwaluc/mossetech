@@ -48,6 +48,11 @@ type ProductFormProps = {
     id: string;
     name: string;
     category: string;
+    brand?: string | null;
+    model?: string | null;
+    condition?: string | null;
+    specifications?: unknown;
+    compatibility?: string | null;
     unit: string;
     sellingPrice: string;
     minQuantity: number;
@@ -61,6 +66,54 @@ const fieldClass =
 
 const labelClass =
   'block text-[13px] font-black text-[var(--text)]';
+
+const specificationFields = [
+  { key: 'processor', label: 'Processor', placeholder: 'Intel Core i5' },
+  { key: 'ram', label: 'RAM', placeholder: '8 GB' },
+  { key: 'storage', label: 'Storage', placeholder: '256 GB SSD' },
+  { key: 'capacity', label: 'Capacity', placeholder: '5000 mAh' },
+  { key: 'wattage', label: 'Wattage', placeholder: '65 W' },
+  { key: 'connector', label: 'Connector', placeholder: 'USB-C' },
+] as const;
+
+function relevantSpecifications(
+  category: string,
+): readonly string[] | null {
+  const value = category.trim().toLowerCase();
+
+  if (
+    /charger|adapter|power supply/.test(value)
+  ) {
+    return ['wattage', 'connector'];
+  }
+
+  if (
+    /power bank|powerbank|battery|batteries/.test(value)
+  ) {
+    return ['capacity', 'wattage', 'connector'];
+  }
+
+  if (
+    /laptop|notebook|desktop|computer/.test(value)
+  ) {
+    return ['processor', 'ram', 'storage'];
+  }
+
+  if (
+    /phone|smartphone|tablet|ipad/.test(value)
+  ) {
+    return ['ram', 'storage', 'capacity'];
+  }
+
+  if (
+    /cable|connector|usb hub|docking station/.test(value)
+  ) {
+    return ['connector', 'wattage'];
+  }
+
+  // Other and custom categories retain access to all fields.
+  return null;
+}
 
 const suggestedUnits = [
   'piece',
@@ -158,6 +211,25 @@ export function ProductForm({
     queuedLocally,
     setQueuedLocally,
   ] = useState(false);
+
+  const [selectedCategory, setSelectedCategory] = useState(
+    product?.category || '',
+  );
+
+  const [
+    showAllSpecifications,
+    setShowAllSpecifications,
+  ] = useState(false);
+
+  const relevantSpecificationKeys =
+    relevantSpecifications(selectedCategory);
+
+  const initialSpecs =
+    product?.specifications &&
+    typeof product.specifications === 'object' &&
+    !Array.isArray(product.specifications)
+      ? product.specifications as Record<string, unknown>
+      : {};
 
   const isEditing =
     Boolean(product);
@@ -469,6 +541,33 @@ export function ProductForm({
         data.get('category') || '',
       ).trim();
 
+    const brand = String(data.get('brand') || '').trim();
+    const model = String(data.get('model') || '').trim();
+    const condition = String(data.get('condition') || '').trim();
+    const compatibility =
+      String(data.get('compatibility') || '').trim();
+
+    const specifications: Record<string, string> = {};
+
+    for (const [key, value] of Object.entries(initialSpecs)) {
+      if (
+        typeof value === 'string' &&
+        !specificationFields.some((field) => field.key === key)
+      ) {
+        specifications[key] = value;
+      }
+    }
+
+    for (const { key } of specificationFields) {
+      const value = String(data.get(`spec_${key}`) || '').trim();
+
+      if (value) {
+        specifications[key] = value;
+      } else {
+        delete specifications[key];
+      }
+    }
+
     const unit =
       String(
         data.get('unit') || '',
@@ -567,6 +666,11 @@ export function ProductForm({
     }
 
     const after = {
+      brand: brand || null,
+      model: model || null,
+      condition: condition || null,
+      specifications,
+      compatibility: compatibility || null,
       name,
       category,
       unit,
@@ -587,6 +691,17 @@ export function ProductForm({
 
     if (product) {
       before = {
+        brand: product?.brand || null,
+        model: product?.model || null,
+        condition: product?.condition || null,
+        specifications: Object.fromEntries(
+          Object.entries(initialSpecs).filter(
+            (entry): entry is [string, string] =>
+              typeof entry[1] === 'string',
+          ),
+        ),
+        compatibility: product?.compatibility || null,
+
         name:
           product.name,
 
@@ -875,7 +990,7 @@ export function ProductForm({
         </div>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(300px,0.45fr)] xl:items-start">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
         <section className="min-w-0 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
           <header className="border-b border-[var(--border)] px-4 py-4 sm:px-6">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--primary)]">
@@ -1087,7 +1202,7 @@ export function ProductForm({
                   product?.name ||
                   ''
                 }
-                placeholder="Classic Roses"
+                placeholder="HP EliteBook 840 G8"
                 required
                 autoFocus={
                   !product
@@ -1097,7 +1212,7 @@ export function ProductForm({
               />
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-5">
               <div>
                 <label
                   htmlFor="category"
@@ -1111,6 +1226,9 @@ export function ProductForm({
                 <input
                   id="category"
                   name="category"
+                  onChange={(event) =>
+                    setSelectedCategory(event.currentTarget.value)
+                  }
                   defaultValue={
                     product?.category ||
                     ''
@@ -1123,6 +1241,138 @@ export function ProductForm({
               </div>
 
               <div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="product-brand" className={labelClass}>
+                  Brand
+                </label>
+                <input
+                  id="product-brand"
+                  name="brand"
+                  className={fieldClass}
+                  maxLength={120}
+                  placeholder="HP, Dell, Lenovo, Samsung..."
+                  defaultValue={product?.brand || ''}
+                  disabled={busy || hasPendingRequest}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="product-model" className={labelClass}>
+                  Model
+                </label>
+                <input
+                  id="product-model"
+                  name="model"
+                  className={fieldClass}
+                  maxLength={160}
+                  placeholder="EliteBook 840 G8"
+                  defaultValue={product?.model || ''}
+                  disabled={busy || hasPendingRequest}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="product-condition" className={labelClass}>
+                  Condition
+                </label>
+                <select
+                  id="product-condition"
+                  name="condition"
+                  className={fieldClass}
+                  defaultValue={product?.condition || ''}
+                  disabled={busy || hasPendingRequest}
+                >
+                  <option value="">Not specified</option>
+                  <option value="NEW">New</option>
+                  <option value="USED">Used</option>
+                  <option value="REFURBISHED">Refurbished</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="product-compatibility" className={labelClass}>
+                  Compatible devices
+                </label>
+                <input
+                  id="product-compatibility"
+                  name="compatibility"
+                  className={fieldClass}
+                  maxLength={1000}
+                  placeholder="HP EliteBook 840 G8, 850 G8..."
+                  defaultValue={product?.compatibility || ''}
+                  disabled={busy || hasPendingRequest}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3 sm:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className={labelClass}>
+                    Technical specifications
+                    <span className="ml-1 font-medium text-[var(--muted)]">
+                      (optional)
+                    </span>
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--muted)]">
+                    Fields adapt to the selected category.
+                  </p>
+                </div>
+
+                {relevantSpecificationKeys !== null ? (
+                  <button
+                    type="button"
+                    aria-expanded={showAllSpecifications}
+                    onClick={() =>
+                      setShowAllSpecifications((current) => !current)
+                    }
+                    className="rounded-lg border border-[var(--border)] px-3 py-2 text-xs font-bold text-[var(--text)] transition hover:border-[var(--primary)]"
+                  >
+                    {showAllSpecifications
+                      ? 'Show relevant only'
+                      : 'Show all specifications'}
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {specificationFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className="space-y-1"
+                    hidden={
+                      !showAllSpecifications &&
+                      relevantSpecificationKeys !== null &&
+                      !relevantSpecificationKeys.includes(field.key) &&
+                      !Boolean(initialSpecs[field.key])
+                    }
+                  >
+                    <label
+                      htmlFor={`product-spec-${field.key}`}
+                      className={labelClass}
+                    >
+                      {field.label}
+                    </label>
+                    <input
+                      id={`product-spec-${field.key}`}
+                      name={`spec_${field.key}`}
+                      className={fieldClass}
+                      maxLength={200}
+                      placeholder={field.placeholder}
+                      defaultValue={
+                        typeof initialSpecs[field.key] === 'string'
+                          ? initialSpecs[field.key] as string
+                          : ''
+                      }
+                      disabled={busy || hasPendingRequest}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+
                 <label
                   htmlFor="unit"
                   className={
@@ -1154,7 +1404,7 @@ export function ProductForm({
                   list="product-units"
                   defaultValue={
                     product?.unit ||
-                    'bouquet'
+                    'piece'
                   }
                   disabled={
                     Boolean(
@@ -1169,7 +1419,7 @@ export function ProductForm({
                     )
                   }
                   maxLength={40}
-                  placeholder="Bouquet"
+                  placeholder="Piece"
                   className={`${fieldClass} mt-2 disabled:cursor-not-allowed disabled:opacity-60`}
                 />
 
@@ -1371,7 +1621,7 @@ export function ProductForm({
 
       {queuedLocally ? (
         <div className="mt-4 rounded-lg border border-[var(--success)] px-4 py-3 text-sm font-bold text-[var(--success)]">
-          Saved on this device. Bloom Kigali will sync it automatically when you are back online.
+          Saved on this device. Mosse Tech will sync it automatically when you are back online.
         </div>
       ) : null}
 

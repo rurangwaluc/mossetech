@@ -91,12 +91,6 @@ async function currentUser() {
 async function canChangeProductImage(
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
 ) {
-  if (
-    process.env.MOSSETECH_EMPLOYEE_PERMISSIONS_ENABLED !== 'true'
-  ) {
-    return true;
-  }
-
   if (user.role === 'OWNER') {
     return true;
   }

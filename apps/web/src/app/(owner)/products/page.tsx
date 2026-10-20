@@ -51,11 +51,13 @@ type ProductsPageProps = {
 function money(
   value: string | number,
 ) {
-  return `RWF ${Number(
-    value,
-  ).toLocaleString(
-    'en-US',
-  )}`;
+  const amount = Number(value);
+
+  if (amount === 0) {
+    return 'Price not set';
+  }
+
+  return `RWF ${amount.toLocaleString('en-US')}`;
 }
 
 function stockState(
@@ -309,8 +311,7 @@ export default async function ProductsPage({
             </h1>
 
             <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-              Products Bloom
-              Kigali sells.
+              Products Mosse Tech sells.
             </p>
           </div>
 
@@ -387,7 +388,7 @@ export default async function ProductsPage({
             <p className="mt-1 text-sm font-bold text-[var(--muted)]">
               {q
                 ? 'Try another search.'
-                : 'Add the first product Bloom Kigali sells.'}
+                : 'Add the first product Mosse Tech sells.'}
             </p>
           </div>
 

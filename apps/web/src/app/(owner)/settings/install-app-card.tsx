@@ -136,11 +136,11 @@ export function InstallAppCard() {
   return (
     <section className="w-full">
 <h2 className="mt-1 font-display text-2xl font-black tracking-tight text-[#222222] dark:text-[#F5F5F5]">
-        Bloom Kigali app
+        Mosse Tech app
       </h2>
 
       <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-[#6B7280] dark:text-[#A3A3A3]">
-        Install Bloom Kigali on this device for quicker access.
+        Install Mosse Tech on this device for quicker access.
       </p>
 
       <div className="mt-6 border-y border-neutral-200 dark:border-[#343434]">
@@ -151,7 +151,7 @@ export function InstallAppCard() {
             </h3>
 
             <p className="mt-1 text-sm font-semibold leading-6 text-[#6B7280] dark:text-[#A3A3A3]">
-              Use Bloom Kigali like an app on this phone or computer.
+              Use Mosse Tech like an app on this phone or computer.
             </p>
           </div>
 
@@ -186,7 +186,7 @@ export function InstallAppCard() {
             </h3>
 
             <p className="mt-1 text-sm font-semibold leading-6 text-[#6B7280] dark:text-[#A3A3A3]">
-              When a new version is ready, refresh Bloom Kigali to use it.
+              When a new version is ready, refresh Mosse Tech to use it.
             </p>
           </div>
 

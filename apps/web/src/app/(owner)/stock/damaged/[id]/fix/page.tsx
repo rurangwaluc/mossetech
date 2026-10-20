@@ -382,7 +382,7 @@ export default async function DamageFixPage({
               minLength={3}
               maxLength={1000}
               required
-              placeholder="Example: 2 bouquets were entered as damaged instead of 1"
+              placeholder="Example: 2 chargers were entered as damaged instead of 1"
               className="mt-2 min-h-24 w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-bold text-[var(--text)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--primary)]"
             />
           </div>

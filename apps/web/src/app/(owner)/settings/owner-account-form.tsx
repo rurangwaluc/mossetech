@@ -36,7 +36,7 @@ export function OwnerAccountForm({
       </h2>
 
       <p className="mt-1 text-sm font-semibold leading-6 text-[#6B7280] dark:text-[#A3A3A3]">
-        Manage the owner profile used to access Bloom Kigali.
+        Manage the owner profile used to access Mosse Tech.
       </p>
 
       <form

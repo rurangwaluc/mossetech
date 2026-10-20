@@ -42,6 +42,17 @@ export const productFormSchema =
       )
       .max(120),
 
+    brand: z.string().trim().max(120).optional().default(''),
+    model: z.string().trim().max(160).optional().default(''),
+    condition: z.enum(['NEW', 'USED', 'REFURBISHED'])
+      .optional(),
+    compatibility: z.string().trim().max(1000)
+      .optional().default(''),
+    specifications: z.record(
+      z.string(),
+      z.string().max(200),
+    ).optional().default({}),
+
     unit: z
       .string()
       .trim()

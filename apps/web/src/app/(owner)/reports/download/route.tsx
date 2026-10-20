@@ -1,7 +1,10 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getCurrentUser } from '@/lib/auth/session';
 import { hasEmployeePermission } from '@/lib/auth/permissions';
 import {
   Document,
+  Image,
   Page,
   StyleSheet,
   Text,
@@ -27,10 +30,10 @@ type ReportPdfProps = {
 const styles =
   StyleSheet.create({
     page: {
-      padding: 30,
+      padding: 24,
       backgroundColor:
-        '#FAFAFC',
-      color: '#222222',
+        '#FFFFFF',
+      color: '#192B3E',
       fontSize: 8,
       fontFamily:
         'Helvetica',
@@ -38,14 +41,22 @@ const styles =
 
     header: {
       backgroundColor:
-        '#222222',
-      color: '#FFFFFF',
-      padding: 17,
-      marginBottom: 14,
+        '#FFFFFF',
+      color: '#192B3E',
+      borderBottom: '2 solid #006DBB',
+      padding: 12,
+      marginBottom: 10,
+    },
+
+    logo: {
+      width: 145,
+      height: 34,
+      objectFit: 'contain',
+      marginBottom: 7,
     },
 
     brand: {
-      color: '#D3AA2F',
+      color: '#006DBB',
       fontSize: 8,
       letterSpacing: 1.6,
       marginBottom: 5,
@@ -58,16 +69,16 @@ const styles =
     },
 
     period: {
-      color: '#D1D5DB',
+      color: '#475B70',
       fontSize: 9,
     },
 
     section: {
-      marginBottom: 14,
+      marginBottom: 10,
     },
 
     eyebrow: {
-      color: '#B68A00',
+      color: '#006DBB',
       fontSize: 7,
       letterSpacing: 1.2,
       marginBottom: 3,
@@ -89,7 +100,7 @@ const styles =
     tableHeader: {
       flexDirection: 'row',
       backgroundColor:
-        '#F0F0F1',
+        '#EDF5FC',
       borderBottom:
         '1 solid #D7D7D7',
       minHeight: 25,
@@ -100,13 +111,13 @@ const styles =
       flexDirection: 'row',
       borderBottom:
         '1 solid #E4E4E4',
-      minHeight: 28,
+      minHeight: 24,
       alignItems: 'center',
     },
 
     finalRow: {
       flexDirection: 'row',
-      minHeight: 28,
+      minHeight: 24,
       alignItems: 'center',
     },
 
@@ -195,7 +206,10 @@ const styles =
     },
 
     footer: {
-      marginTop: 5,
+      position: 'absolute',
+      bottom: 12,
+      left: 30,
+      right: 30,
       textAlign: 'center',
       color: '#6B7280',
       fontSize: 6.5,
@@ -1091,6 +1105,16 @@ function ProductsTable({
 function ReportPdf({
   report,
 }: ReportPdfProps) {
+  const logoPaths = [
+    join(process.cwd(), 'public/brand/mossetech-logo-horizontal.png'),
+    join(process.cwd(), 'apps/web/public/brand/mossetech-logo-horizontal.png'),
+  ];
+
+  const logoPath = logoPaths.find((path) => existsSync(path));
+  const logoSource = logoPath
+    ? { data: readFileSync(logoPath), format: 'png' as const }
+    : null;
+
   const generatedAt =
     new Intl.DateTimeFormat(
       'en-GB',
@@ -1120,13 +1144,16 @@ function ReportPdf({
             styles.header
           }
         >
-          <Text
-            style={
-              styles.brand
-            }
-          >
-            BLOOM KIGALI
-          </Text>
+          {logoSource ? (
+            <Image
+              src={logoSource}
+              style={styles.logo}
+            />
+          ) : (
+            <Text style={styles.brand}>
+              MOSSE TECH LTD
+            </Text>
+          )}
 
           <Text
             style={
@@ -1172,7 +1199,7 @@ function ReportPdf({
           Generated{' '}
           {generatedAt} /
           Africa/Kigali /
-          Bloom Kigali
+          Mosse Tech Ltd
         </Text>
       </Page>
     </Document>
@@ -1255,7 +1282,7 @@ export async function GET(
     );
 
   const filename =
-    `bloom-kigali-report-${report.period.fileLabel}.pdf`;
+    `mosse-tech-report-${report.period.fileLabel}.pdf`;
 
   return new Response(
     new Uint8Array(pdf),

@@ -481,7 +481,7 @@ export default async function FixStockPage({
               minLength={3}
               maxLength={1000}
               required
-              placeholder="Example: I entered 9 bouquets instead of 8"
+              placeholder="Example: I entered 9 chargers instead of 8"
               className="mt-2 min-h-24 w-full resize-none rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-3 text-sm font-bold text-[var(--text)] outline-none placeholder:text-[var(--muted)] focus:border-[var(--primary)]"
             />
           </div>

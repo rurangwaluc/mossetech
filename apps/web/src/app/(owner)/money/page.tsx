@@ -613,7 +613,7 @@ export default async function MoneyPage({
             </h3>
 
             <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-              Record money added from outside Bloom Kigali. Cash must be added through the physical drawer.
+              Record money added from outside Mosse Tech. Cash must be added through the physical drawer.
             </p>
           </div>
 

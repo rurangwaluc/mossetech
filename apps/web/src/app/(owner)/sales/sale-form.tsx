@@ -1957,7 +1957,7 @@ export function SaleForm({
                     htmlFor="amountReceived"
                     className="text-sm font-black text-[var(--text)]"
                   >
-                    Amount paid
+                    Amount received
                   </label>
 
                   <input
@@ -2362,7 +2362,7 @@ export function SaleForm({
               {paymentMethod ===
               'CASH'
                 ? 'Cash received'
-                : 'Amount paid'}
+                : 'Amount received'}
             </span>
 
             <span className="text-sm font-black text-[var(--text)]">

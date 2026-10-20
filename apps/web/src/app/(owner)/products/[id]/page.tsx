@@ -1,6 +1,7 @@
 import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import { CostPriceForm } from './cost-price-form';
+import { ProductPublicationCard } from '../product-publication-card';
 import {
   notFound,
 } from 'next/navigation';
@@ -230,9 +231,9 @@ export default async function ProductDetailsPage({
               </dt>
 
               <dd className="mt-1 text-lg font-black text-[var(--text)]">
-                {money(
-                  product.sellingPrice,
-                )}
+                {Number(product.sellingPrice) > 0
+                  ? money(product.sellingPrice)
+                  : 'Price not set'}
               </dd>
             </div>
 
@@ -301,6 +302,13 @@ export default async function ProductDetailsPage({
           </div>
         </aside>
       </div>
+      {user.role === 'OWNER' ? (
+        <ProductPublicationCard
+          productId={product.id}
+          isPublished={product.isPublished}
+          availableQuantity={product.quantity}
+        />
+      ) : null}
       {user.role === 'OWNER' ? (
         <CostPriceForm
           productId={product.id}

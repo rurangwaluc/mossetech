@@ -71,26 +71,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-const themeInitScript = `
-(function () {
-  try {
-    var stored = window.localStorage.getItem('theme');
 
-    var theme =
-      stored === 'light' || stored === 'dark'
-        ? stored
-        : window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark'
-          : 'light';
-
-    var root = document.documentElement;
-
-    root.classList.toggle('dark', theme === 'dark');
-    root.dataset.theme = theme;
-    root.style.colorScheme = theme;
-  } catch (_) {}
-})();
-`;
 
 export default function RootLayout({
   children,
@@ -101,13 +82,6 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: themeInitScript,
-          }}
-        />
-      </head>
 
       <body
         className={`${geistSans.variable} ${bloomDisplay.variable}`}

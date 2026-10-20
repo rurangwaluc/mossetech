@@ -82,7 +82,7 @@ export async function updateBusinessSettingsAction(
 
   /*
    * These legacy values remain in the schema for compatibility.
-   * Product-level stock controls are used by Bloom Kigali.
+   * Product-level stock controls are used by Mosse Tech.
    */
   const lowStockAlertQuantity =
     currentSettings?.lowStockAlertQuantity ||

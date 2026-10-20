@@ -970,7 +970,7 @@ export default async function StockPage({
       ) : null}
 
       <p className="-mt-1 text-sm font-bold text-[var(--muted)]">
-        Track flowers received,
+        Track products received,
         sold, damaged and currently
         available.
       </p>
@@ -984,14 +984,14 @@ export default async function StockPage({
 
             <div className="min-w-0">
               <p className="text-sm font-bold text-[var(--muted)]">
-                Imported Stock
+                Received Stock
                 Value
               </p>
 
               <p className="mt-1 truncate text-xl font-black tracking-tight tabular-nums text-[var(--text)] sm:text-2xl">
-                {money(
-                  importedValue,
-                )}
+                {importedUnits > 0 && importedValue === 0
+                  ? 'No receipt price recorded'
+                  : money(importedValue)}
               </p>
 
               <p className="mt-1 text-xs font-bold text-[var(--muted)]">
@@ -1039,14 +1039,14 @@ export default async function StockPage({
 
             <div className="min-w-0">
               <p className="text-sm font-bold text-[var(--muted)]">
-                Remaining Stock
+                Potential Sales
                 Value
               </p>
 
               <p className="mt-1 truncate text-xl font-black tracking-tight tabular-nums text-[var(--text)] sm:text-2xl">
-                {money(
-                  remainingValue,
-                )}
+                {remainingUnits > 0 && remainingValue === 0
+                  ? 'Not priced'
+                  : money(remainingValue)}
               </p>
 
               <p className="mt-1 text-xs font-bold text-[var(--muted)]">

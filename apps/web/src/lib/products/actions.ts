@@ -49,6 +49,11 @@ export type ProductState = {
 };
 
 type ProductChangeValues = {
+  brand: string | null;
+  model: string | null;
+  condition: 'NEW' | 'USED' | 'REFURBISHED' | null;
+  specifications: Record<string, string>;
+  compatibility: string | null;
   name: string;
   category: string;
   unit: string;
@@ -90,6 +95,29 @@ function getFormValues(
       formData.get('name'),
     category:
       formData.get('category'),
+
+    brand: formData.get('brand') || '',
+    model: formData.get('model') || '',
+    condition: formData.get('condition') || undefined,
+    compatibility: formData.get('compatibility') || '',
+    specifications: Object.fromEntries(
+      [
+        'processor',
+        'ram',
+        'storage',
+        'capacity',
+        'wattage',
+        'connector',
+      ].flatMap((key) => {
+        const value = String(
+          formData.get(`spec_${key}`) ?? '',
+        ).trim();
+
+        return value
+          ? [[key, value] as const]
+          : [];
+      }),
+    ),
     unit:
       formData.get('unit'),
     sellingPrice:
@@ -112,6 +140,12 @@ function valuesFromParsed(
   return {
     name: value.name,
     category: value.category,
+
+    brand: value.brand || null,
+    model: value.model || null,
+    condition: value.condition || null,
+    specifications: value.specifications,
+    compatibility: value.compatibility || null,
     unit: value.unit,
     sellingPrice:
       Number(
@@ -135,6 +169,19 @@ function valuesFromProduct(
     name: product.name,
     category:
       product.category,
+
+    brand: product.brand,
+    model: product.model,
+    condition: product.condition as
+      'NEW' | 'USED' | 'REFURBISHED' | null,
+    specifications: (
+      product.specifications &&
+      typeof product.specifications === 'object' &&
+      !Array.isArray(product.specifications)
+        ? product.specifications
+        : {}
+    ) as Record<string, string>,
+    compatibility: product.compatibility,
     unit: product.unit,
     sellingPrice:
       Number(
@@ -173,6 +220,12 @@ function valuesFromSnapshot(
       name: snapshot.name,
       category:
         snapshot.category,
+
+      brand: snapshot.brand ?? '',
+      model: snapshot.model ?? '',
+      condition: snapshot.condition ?? undefined,
+      compatibility: snapshot.compatibility ?? '',
+      specifications: snapshot.specifications ?? {},
       unit: snapshot.unit,
       sellingPrice:
         String(
@@ -200,13 +253,41 @@ function valuesFromSnapshot(
   );
 }
 
+function canonicalProductValue(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(canonicalProductValue);
+  }
+
+  if (value !== null && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+
+    return Object.fromEntries(
+      Object.keys(record)
+        .sort()
+        .map((key) => [
+          key,
+          canonicalProductValue(record[key]),
+        ]),
+    );
+  }
+
+  return value;
+}
+
+function productValuesEqual(
+  first: unknown,
+  second: unknown,
+): boolean {
+  return JSON.stringify(canonicalProductValue(first)) ===
+    JSON.stringify(canonicalProductValue(second));
+}
+
 function sameProductValues(
   first: ProductChangeValues,
   second: ProductChangeValues,
 ) {
   return (
-    JSON.stringify(first) ===
-    JSON.stringify(second)
+    productValuesEqual(first, second)
   );
 }
 
@@ -221,6 +302,12 @@ async function applyProductValues(
       name: values.name,
       category:
         values.category,
+
+      brand: values.brand,
+      model: values.model,
+      condition: values.condition,
+      specifications: values.specifications,
+      compatibility: values.compatibility,
       unit: values.unit,
       sellingPrice:
         values.sellingPrice.toFixed(
@@ -341,6 +428,12 @@ export async function createProductAction(
 
               category:
                 values.category,
+
+      brand: values.brand,
+      model: values.model,
+      condition: values.condition,
+      specifications: values.specifications,
+      compatibility: values.compatibility,
 
               unit:
                 values.unit,
@@ -509,6 +602,24 @@ export async function updateProductAction(
     valuesFromParsed(
       parsed.data,
     );
+
+  const editableSpecificationKeys = new Set([
+    'processor',
+    'ram',
+    'storage',
+    'capacity',
+    'wattage',
+    'connector',
+  ]);
+
+  after.specifications = {
+    ...Object.fromEntries(
+      Object.entries(before.specifications).filter(
+        ([key]) => !editableSpecificationKeys.has(key),
+      ),
+    ),
+    ...after.specifications,
+  };
 
   const productDetailsChanged =
     !sameProductValues(
