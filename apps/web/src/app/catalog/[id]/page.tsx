@@ -114,6 +114,17 @@ export default async function PublicProductPage({
               </p>
             ) : null}
 
+            {product.notes?.trim() ? (
+              <section className="mt-8">
+                <h2 className="text-lg font-black">
+                  Description
+                </h2>
+                <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-[var(--muted)]">
+                  {product.notes}
+                </p>
+              </section>
+            ) : null}
+
             {specifications.length > 0 ? (
               <section className="mt-8">
                 <h2 className="text-lg font-black">

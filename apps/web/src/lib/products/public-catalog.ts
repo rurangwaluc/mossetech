@@ -23,6 +23,7 @@ const PUBLIC_PRODUCT_COLUMNS = {
   condition: products.condition,
   specifications: products.specifications,
   compatibility: products.compatibility,
+  notes: products.notes,
   unit: products.unit,
   sellingPrice: products.sellingPrice,
   imageKey: products.imageKey,
