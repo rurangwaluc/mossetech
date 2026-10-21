@@ -23,6 +23,7 @@ import {
 
 import {
   enqueueOfflineOperation,
+  getOfflineOperation,
 } from '@/lib/offline/outbox';
 
 import {
@@ -512,6 +513,10 @@ export function ProductForm({
     event:
       React.FormEvent<HTMLFormElement>,
   ) {
+    if (navigator.onLine) {
+      return;
+    }
+
     event.preventDefault();
 
     if (
@@ -865,34 +870,40 @@ export function ProductForm({
     }
 
     /*
-     * Do not await synchronization here.
-     * The user is free to continue immediately.
+     * Wait for synchronization when online.
+     * Never report a confirmed save before the server
+     * has accepted the operation.
      */
-    void runOutboxSync(
-      userId,
-    );
+    if (navigator.onLine) {
+      try {
+        await runOutboxSync(userId);
 
-    if (
-      navigator.onLine
-    ) {
-      router.replace(
-        userRole ===
-          'EMPLOYEE' &&
-        product
-          ? '/products?requestSaved=1'
-          : '/products?saved=1',
+        const savedOperation = await getOfflineOperation(operationId);
+
+        if (savedOperation?.status === 'completed') {
+          router.replace(
+            userRole === 'EMPLOYEE' && product
+              ? '/products?requestSaved=1'
+              : '/products?saved=1',
+          );
+          router.refresh();
+          return;
+        }
+      } catch {
+        // Keep the operation in the offline queue.
+      }
+
+      const savedOperation = await getOfflineOperation(operationId);
+
+      setClientError(
+        savedOperation?.lastError
+          ? `Product saved on this device, but synchronization failed: ${savedOperation.lastError}`
+          : 'Product saved on this device. Server confirmation is pending.',
       );
-
-      return;
     }
 
-    setQueuedLocally(
-      true,
-    );
-
-    setSavingLocally(
-      false,
-    );
+    setQueuedLocally(true);
+    setSavingLocally(false);
   }
 
   function clearSelectedPhoto() {
