@@ -47,8 +47,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Operational API routes remain disabled until their
-  // production authorization review is complete.
+  // Enable product synchronization and photo uploads.
+  // Their route handlers enforce authentication and permissions.
+  const enabledOperationalApi =
+    pathname === '/api/sync/outbox' ||
+    pathname === '/api/media/product-image' ||
+    pathname.startsWith('/api/media/product-image/');
+
+  if (enabledOperationalApi) {
+    return NextResponse.next();
+  }
+
+  // Keep other unfinished API routes restricted.
   if (pathname.startsWith('/api/')) {
     return new NextResponse('Not available', {
       status: 404,
