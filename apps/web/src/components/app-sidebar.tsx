@@ -13,6 +13,7 @@ import {
   ReceiptText,
   Settings,
   ShoppingCart,
+  Truck,
   Users,
   WalletCards,
   X,
@@ -52,6 +53,12 @@ const navigation = [
     href: '/stock',
     icon: Boxes,
     roles: ['OWNER', 'EMPLOYEE'],
+  },
+  {
+    label: 'Suppliers',
+    href: '/suppliers',
+    icon: Truck,
+    roles: ['OWNER'],
   },
   {
     label: 'Customers',

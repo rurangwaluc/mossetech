@@ -2,6 +2,7 @@ import {
   eq,
   sql,
 } from 'drizzle-orm';
+import { resolveSupplierId } from '@/lib/suppliers/resolve-supplier';
 
 import {
   db,
@@ -28,6 +29,7 @@ type DbTransaction =
 
 type SyncUser = {
   id: string;
+  role: 'OWNER' | 'EMPLOYEE';
 };
 
 export class StockSyncError
@@ -126,6 +128,57 @@ export async function executeStockReceiveSync(
     );
   }
 
+  const rawBuyingPrice = input.buyingPrice;
+  const buyingPriceProvided =
+    rawBuyingPrice !== null &&
+    rawBuyingPrice !== undefined &&
+    String(rawBuyingPrice).trim() !== '';
+
+  if (buyingPriceProvided && user.role !== 'OWNER') {
+    throw new StockSyncError(
+      'Only the owner can record purchase costs.',
+      403,
+    );
+  }
+
+  const buyingPrice = buyingPriceProvided
+    ? String(rawBuyingPrice).trim()
+    : '0';
+
+  if (
+    buyingPriceProvided &&
+    (
+      !/^\d+(?:\.\d{1,2})?$/.test(buyingPrice) ||
+      !Number.isFinite(Number(buyingPrice)) ||
+      Number(buyingPrice) <= 0 ||
+      Number(buyingPrice) > 9999999999.99
+    )
+  ) {
+    throw new StockSyncError(
+      'Enter a valid Cost Price (RWF).',
+    );
+  }
+
+  const rawSupplierDebt =
+    input.supplierAmountOwed == null
+      ? ''
+      : String(input.supplierAmountOwed).trim();
+
+  if (rawSupplierDebt && user.role !== 'OWNER') {
+    throw new StockSyncError(
+      'Only the owner can record supplier credit.',
+      403,
+    );
+  }
+
+  if (rawSupplierDebt && (
+    !/^\d+(?:\.\d{1,2})?$/.test(rawSupplierDebt) ||
+    !Number.isFinite(Number(rawSupplierDebt)) ||
+    Number(rawSupplierDebt) <= 0
+  )) {
+    throw new StockSyncError('Enter a valid amount owed.');
+  }
+
   const rawSellingPriceSnapshot =
     input.sellingPriceSnapshot;
 
@@ -193,6 +246,44 @@ export async function executeStockReceiveSync(
     );
   }
 
+  const supplierName =
+    cleanOptional(parsed.data.supplierName);
+
+  const selectedSupplierId =
+    typeof input.supplierId === 'string'
+      ? input.supplierId.trim()
+      : '';
+
+  const supplierId = await resolveSupplierId(
+    tx,
+    supplierName,
+    selectedSupplierId || null,
+  );
+
+  const debtCents =
+    Math.round(Number(rawSupplierDebt || '0') * 100);
+
+  const purchaseCents =
+    Math.round(Number(buyingPrice) * 100) *
+    parsed.data.quantityReceived;
+
+  if (
+    debtCents > 0 &&
+    (!supplierId || debtCents > purchaseCents)
+  ) {
+    throw new StockSyncError(
+      'Select an existing supplier and enter an amount owed no higher than the purchase cost.',
+    );
+  }
+
+  if (supplierId) {
+    await tx.execute(sql`
+      SELECT id FROM suppliers
+      WHERE id = ${supplierId}
+      FOR UPDATE
+    `);
+  }
+
   const [receipt] =
     await tx
       .insert(
@@ -217,10 +308,12 @@ export async function executeStockReceiveSync(
             2,
           ),
 
-        supplierName:
-          cleanOptional(
-            parsed.data.supplierName,
-          ),
+        buyingPrice,
+
+        supplierName,
+        supplierId,
+        supplierAmountOwed:
+          Number(rawSupplierDebt || '0').toFixed(2),
 
         reference:
           cleanOptional(

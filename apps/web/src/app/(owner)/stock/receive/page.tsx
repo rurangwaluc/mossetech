@@ -11,6 +11,7 @@ import {
 
 import {
   products,
+  suppliers,
 } from '@mossetech/db/schema';
 
 import {
@@ -81,6 +82,15 @@ export default async function ReceiveStockPage({
         asc(products.name),
       );
 
+  const supplierOptions = await db
+    .select({
+      id: suppliers.id,
+      name: suppliers.name,
+    })
+    .from(suppliers)
+    .where(eq(suppliers.status, 'ACTIVE'))
+    .orderBy(asc(suppliers.name));
+
   const initialProductId =
     stockProducts.some(
       (product) =>
@@ -96,9 +106,13 @@ export default async function ReceiveStockPage({
         userId={
           user.id
         }
+        isOwner={
+          user.role === 'OWNER'
+        }
         products={
           stockProducts
         }
+        suppliers={supplierOptions}
         initialProductId={
           initialProductId
         }

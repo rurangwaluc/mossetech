@@ -1,0 +1,1 @@
+ALTER TABLE "stock_arrivals" ADD COLUMN "supplier_amount_owed" numeric(12, 2) DEFAULT '0' NOT NULL;

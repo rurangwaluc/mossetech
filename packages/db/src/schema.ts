@@ -480,8 +480,37 @@ export const salePayments = pgTable('sale_payments', {
     .notNull(),
 });
 
+
+// Supplier profiles and purchasing relationships.
+export const suppliers = pgTable('suppliers', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: varchar('name', { length: 160 }).notNull(),
+  contactPerson: varchar('contact_person', { length: 160 }),
+  phone: varchar('phone', { length: 40 }),
+  email: varchar('email', { length: 180 }),
+  address: text('address'),
+  notes: text('notes'),
+  status: varchar('status', { length: 20 }).notNull().default('ACTIVE'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const supplierPayments = pgTable('supplier_payments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  supplierId: uuid('supplier_id')
+    .notNull()
+    .references(() => suppliers.id, { onDelete: 'restrict' }),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  paymentMethod: paymentMethodEnum('payment_method').notNull(),
+  notes: text('notes'),
+  paidAt: timestamp('paid_at', { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const stockArrivals = pgTable('stock_arrivals', {
   id: uuid('id').defaultRandom().primaryKey(),
+  supplierId: uuid('supplier_id')
+    .references(() => suppliers.id, { onDelete: 'restrict' }),
   productId: uuid('product_id')
     .notNull()
     .references(() => products.id, { onDelete: 'restrict' }),
@@ -505,6 +534,10 @@ export const stockArrivals = pgTable('stock_arrivals', {
 
   buyingPrice: numeric('buying_price', { precision: 12, scale: 2 }).notNull().default('0'),
   supplierName: varchar('supplier_name', { length: 160 }),
+  supplierAmountOwed: numeric('supplier_amount_owed', {
+    precision: 12,
+    scale: 2,
+  }).notNull().default('0'),
   batchNumber: varchar('batch_number', { length: 80 }),
   expiryDate: date('expiry_date'),
   reference: varchar('reference', { length: 120 }),

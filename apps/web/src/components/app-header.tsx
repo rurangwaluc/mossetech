@@ -27,6 +27,16 @@ function getPageName(pathname: string) {
     };
   }
 
+  if (
+    pathname === '/suppliers' ||
+    pathname.startsWith('/suppliers/')
+  ) {
+    return {
+      eyebrow: 'Suppliers',
+      title: 'Suppliers',
+    };
+  }
+
   if (pathname === '/settings') {
     return {
       eyebrow: 'Settings',

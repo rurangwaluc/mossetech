@@ -1,6 +1,7 @@
 'use server';
 
 import { requirePermission } from '@/lib/auth/require-permission';
+import { resolveSupplierId } from '@/lib/suppliers/resolve-supplier';
 
 import {
   eq,
@@ -81,6 +82,42 @@ export async function receiveStockAction(
 ) {
   const user =
     await requirePermission('stock.receive');
+
+  const rawBuyingPrice =
+    String(formData.get('buyingPrice') ?? '').trim();
+
+  if (rawBuyingPrice && user.role !== 'OWNER') {
+    throw new Error(
+      'Only the owner can record purchase costs.',
+    );
+  }
+
+  if (
+    rawBuyingPrice &&
+    (
+      !/^\d+(?:\.\d{1,2})?$/.test(rawBuyingPrice) ||
+      !Number.isFinite(Number(rawBuyingPrice)) ||
+      Number(rawBuyingPrice) <= 0 ||
+      Number(rawBuyingPrice) > 9999999999.99
+    )
+  ) {
+    throw new Error('Enter a valid Cost Price (RWF).');
+  }
+
+  const rawSupplierDebt =
+    String(formData.get('supplierAmountOwed') ?? '').trim();
+
+  if (rawSupplierDebt && user.role !== 'OWNER') {
+    throw new Error('Only the owner can record supplier credit.');
+  }
+
+  if (rawSupplierDebt && (
+    !/^\d+(?:\.\d{1,2})?$/.test(rawSupplierDebt) ||
+    !Number.isFinite(Number(rawSupplierDebt)) ||
+    Number(rawSupplierDebt) <= 0
+  )) {
+    throw new Error('Enter a valid amount owed.');
+  }
 
   const rawProductId =
     String(
@@ -190,6 +227,39 @@ export async function receiveStockAction(
 
   await db.transaction(
     async (tx) => {
+      const selectedSupplierId =
+        String(formData.get('supplierId') ?? '').trim();
+
+      const supplierId = await resolveSupplierId(
+        tx,
+        supplierName,
+        selectedSupplierId || null,
+      );
+
+      const debtCents =
+        Math.round(Number(rawSupplierDebt || '0') * 100);
+
+      const purchaseCents =
+        Math.round(Number(rawBuyingPrice || '0') * 100) *
+        parsed.data.quantityReceived;
+
+      if (
+        debtCents > 0 &&
+        (!supplierId || debtCents > purchaseCents)
+      ) {
+        throw new Error(
+          'Select an existing supplier and enter an amount owed no higher than the purchase cost.',
+        );
+      }
+
+      if (supplierId) {
+        await tx.execute(sql`
+          SELECT id FROM suppliers
+          WHERE id = ${supplierId}
+          FOR UPDATE
+        `);
+      }
+
       await tx
         .insert(
           stockArrivals,
@@ -211,7 +281,13 @@ export async function receiveStockAction(
           sellingPriceSnapshot:
             product.sellingPrice,
 
+          buyingPrice:
+            rawBuyingPrice || '0',
+
           supplierName,
+          supplierId,
+          supplierAmountOwed:
+            Number(rawSupplierDebt || '0').toFixed(2),
           reference,
           notes,
         });

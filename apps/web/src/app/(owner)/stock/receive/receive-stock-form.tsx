@@ -36,9 +36,16 @@ type ProductOption = {
   sellingPrice: string;
 };
 
+type SupplierOption = {
+  id: string;
+  name: string;
+};
+
 type ReceiveStockFormProps = {
   userId: string;
+  isOwner: boolean;
   products: ProductOption[];
+  suppliers: SupplierOption[];
   initialProductId?: string;
   error?: string;
 };
@@ -68,12 +75,28 @@ function quantityLabel(
 
 export function ReceiveStockForm({
   userId,
+  isOwner,
   products,
+  suppliers,
   initialProductId = '',
   error,
 }: ReceiveStockFormProps) {
   const router =
     useRouter();
+
+  const [supplierSearch, setSupplierSearch] = useState('');
+  const [selectedSupplierId, setSelectedSupplierId] = useState('');
+  const [supplierSearchOpen, setSupplierSearchOpen] = useState(false);
+
+  const selectedSupplier = suppliers.find(
+    (supplier) => supplier.id === selectedSupplierId,
+  );
+
+  const matchingSuppliers = suppliers.filter((supplier) =>
+    supplier.name.toLocaleLowerCase().includes(
+      supplierSearch.trim().toLocaleLowerCase(),
+    ),
+  ).slice(0, 12);
 
   const initialProduct =
     products.find(
@@ -237,12 +260,46 @@ export function ReceiveStockForm({
     const data =
       new FormData(form);
 
-    const supplierName =
-      String(
-        data.get(
-          'supplierName',
-        ) || '',
-      ).trim();
+    const rawBuyingPrice = isOwner
+      ? String(data.get('buyingPrice') ?? '').trim()
+      : '';
+
+    if (
+      rawBuyingPrice &&
+      (
+        !/^\d+(?:\.\d{1,2})?$/.test(rawBuyingPrice) ||
+        !Number.isFinite(Number(rawBuyingPrice)) ||
+        Number(rawBuyingPrice) <= 0 ||
+        Number(rawBuyingPrice) > 9999999999.99
+      )
+    ) {
+      setClientError('Enter a valid Cost Price (RWF).');
+      return;
+    }
+
+    const rawSupplierDebt = isOwner
+      ? String(data.get('supplierAmountOwed') ?? '').trim()
+      : '';
+
+    if (rawSupplierDebt && (
+      !/^\d+(?:\.\d{1,2})?$/.test(rawSupplierDebt) ||
+      Number(rawSupplierDebt) <= 0 ||
+      Number(rawSupplierDebt) >
+        Number(rawBuyingPrice || '0') * validReceivedQuantity
+    )) {
+      setClientError(
+        'Amount owed must be within the purchase cost.',
+      );
+      return;
+    }
+
+    const supplierId = selectedSupplier?.id || '';
+    const supplierName = selectedSupplier?.name || '';
+
+    if (rawSupplierDebt && !supplierId) {
+      setClientError('Select a supplier to record an amount owed.');
+      return;
+    }
 
     const reference =
       String(
@@ -269,16 +326,6 @@ export function ReceiveStockForm({
       return;
     }
 
-    if (
-      reference.length >
-      120
-    ) {
-      setClientError(
-        'Reference is too long.',
-      );
-
-      return;
-    }
 
     if (
       notes.length >
@@ -320,13 +367,17 @@ export function ReceiveStockForm({
           sellingPriceSnapshot:
             selectedProduct.sellingPrice,
 
+          buyingPrice:
+            rawBuyingPrice || null,
+
           supplierName:
             supplierName ||
             null,
-
-          reference:
-            reference ||
+          supplierId:
+            supplierId ||
             null,
+          supplierAmountOwed:
+            rawSupplierDebt || null,
 
           notes:
             notes ||
@@ -397,7 +448,7 @@ export function ReceiveStockForm({
         </h2>
 
         <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-          Record flowers that
+          Record products that
           have arrived.
         </p>
       </div>
@@ -615,6 +666,52 @@ export function ReceiveStockForm({
           />
         </div>
 
+        {isOwner ? (
+          <div>
+            <label
+              htmlFor="buyingPrice"
+              className="text-sm font-black text-[var(--text)]"
+            >
+              Cost Price (RWF)
+            </label>
+            <input
+              id="buyingPrice"
+              name="buyingPrice"
+              type="number"
+              min="0.01"
+              max="9999999999.99"
+              step="0.01"
+              placeholder="Purchase cost per item"
+              className={`${inputClass} mt-2`}
+            />
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Private purchase cost. Not shown to staff or customers.
+            </p>
+          </div>
+        ) : null}
+
+        {isOwner ? (
+          <div className="mb-4">
+            <label
+              htmlFor="supplierAmountOwed"
+              className="text-sm font-black text-[var(--text)]"
+            >
+              Amount owed to supplier (RWF) — optional
+            </label>
+            <input
+              id="supplierAmountOwed"
+              name="supplierAmountOwed"
+              type="number"
+              min="0.01"
+              step="0.01"
+              placeholder="Leave empty if already paid"
+              className={`${inputClass} mt-2`}
+            />
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Enter an unpaid amount only for an existing supplier.
+            </p>
+          </div>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label
@@ -627,31 +724,74 @@ export function ReceiveStockForm({
               </span>
             </label>
 
-            <input
-              id="supplierName"
-              name="supplierName"
-              placeholder="Supplier name"
-              className={`${inputClass} mt-2`}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="reference"
-              className="text-sm font-black text-[var(--text)]"
-            >
-              Reference{' '}
-              <span className="font-bold text-[var(--muted)]">
-                (optional)
-              </span>
-            </label>
-
-            <input
-              id="reference"
-              name="reference"
-              placeholder="Delivery or receipt reference"
-              className={`${inputClass} mt-2`}
-            />
+            <div className="relative mt-2">
+              <input
+                type="hidden"
+                name="supplierId"
+                value={selectedSupplierId}
+              />
+              <input
+                type="hidden"
+                name="supplierName"
+                value={selectedSupplier?.name || ''}
+              />
+              <input
+                id="supplierName"
+                type="search"
+                autoComplete="off"
+                value={supplierSearch}
+                onChange={(event) => {
+                  setSupplierSearch(event.target.value);
+                  setSelectedSupplierId('');
+                  setSupplierSearchOpen(true);
+                }}
+                onFocus={() => setSupplierSearchOpen(true)}
+                placeholder="Search suppliers"
+                aria-label="Search suppliers"
+                aria-expanded={supplierSearchOpen}
+                className={inputClass}
+              />
+              {supplierSearchOpen && supplierSearch.trim() && (
+                <div className="absolute z-30 mt-1 max-h-52 w-full overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--card)] shadow-lg">
+                  {matchingSuppliers.length ? (
+                    matchingSuppliers.map((supplier) => (
+                      <button
+                        key={supplier.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSupplierId(supplier.id);
+                          setSupplierSearch(supplier.name);
+                          setSupplierSearchOpen(false);
+                        }}
+                        className="block w-full border-b border-[var(--border)] px-3 py-3 text-left text-sm font-semibold text-[var(--text)] last:border-b-0 hover:bg-[var(--background)]"
+                      >
+                        {supplier.name}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-3 text-sm text-[var(--muted)]">
+                      No matching suppliers.
+                    </p>
+                  )}
+                </div>
+              )}
+              {selectedSupplier && (
+                <button
+                  type="button"
+                  className="mt-2 text-xs font-bold text-[var(--muted)] underline"
+                  onClick={() => {
+                    setSelectedSupplierId('');
+                    setSupplierSearch('');
+                    setSupplierSearchOpen(false);
+                  }}
+                >
+                  Clear supplier
+                </button>
+              )}
+              <p className="mt-2 text-xs text-[var(--muted)]">
+                Optional. Leave empty if the supplier is unknown.
+              </p>
+            </div>
           </div>
         </div>
 
