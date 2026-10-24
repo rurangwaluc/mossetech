@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mossetech-static-v2';
+const CACHE_NAME = 'mossetech-static-v3';
 const OFFLINE_URL = '/offline';
 
 const IS_LOCAL_DEVELOPMENT =
