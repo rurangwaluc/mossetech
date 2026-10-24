@@ -1,3 +1,4 @@
+import ProductGallery from './product-gallery';
 import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import { CostPriceForm } from './cost-price-form';
@@ -15,6 +16,7 @@ import {
 } from '@mossetech/db/client';
 
 import {
+  productImages,
   products,
 } from '@mossetech/db/schema';
 
@@ -106,6 +108,15 @@ export default async function ProductDetailsPage({
     notFound();
   }
 
+  const galleryImages = await db
+    .select({
+      id: productImages.id,
+      imageKey: productImages.imageKey,
+    })
+    .from(productImages)
+    .where(eq(productImages.productId, product.id))
+    .orderBy(productImages.position, productImages.createdAt);
+
   const stock =
     stockText(
       product.quantity,
@@ -174,31 +185,12 @@ export default async function ProductDetailsPage({
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(270px,0.6fr)] xl:grid-cols-[minmax(0,1.45fr)_minmax(300px,0.55fr)]">
         <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
           <div className="p-3 sm:p-5 lg:p-6">
-            <div
-              className="flex aspect-[16/10] max-h-[460px] w-full items-center justify-center overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)] bg-cover bg-center sm:aspect-[16/9] sm:rounded-xl lg:max-h-[520px]"
-              style={
-                product.imageKey
-                  ? {
-                      backgroundImage:
-                        `url("/api/media/product-image/${product.id}?v=${encodeURIComponent(product.imageKey)}")`,
-                    }
-                  : undefined
-              }
-            >
-              {!product.imageKey ? (
-                <div className="text-center">
-                  <p className="text-5xl font-black text-[var(--primary)]">
-                    {product.name
-                      .slice(0, 1)
-                      .toUpperCase()}
-                  </p>
-
-                  <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    No product photo
-                  </p>
-                </div>
-              ) : null}
-            </div>
+            <ProductGallery
+              productId={product.id}
+              productName={product.name}
+              mainImageKey={product.imageKey}
+              additionalImages={galleryImages}
+            />
           </div>
 
           <div className="border-t border-[var(--border)] px-4 py-4 sm:px-6 sm:py-5">
@@ -227,7 +219,7 @@ export default async function ProductDetailsPage({
           <dl className="divide-y divide-[var(--border)]">
             <div className="px-5 py-4">
               <dt className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
-                Selling price
+                Asking price
               </dt>
 
               <dd className="mt-1 text-lg font-black text-[var(--text)]">

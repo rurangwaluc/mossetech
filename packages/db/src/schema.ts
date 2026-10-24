@@ -299,6 +299,21 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// Additional product photos.
+// products.imageKey remains the main photo so existing
+// sales, stock, and catalog views remain compatible.
+export const productImages = pgTable('product_images', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  productId: uuid('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  imageKey: text('image_key').notNull().unique(),
+  position: integer('position').notNull().default(0),
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
+});
+
 export const sales = pgTable('sales', {
   id: uuid('id').defaultRandom().primaryKey(),
   customerId: uuid('customer_id').references(() => customers.id, { onDelete: 'set null' }),
@@ -1123,6 +1138,62 @@ export type NewProduct = typeof products.$inferInsert;
 
 export type Sale = typeof sales.$inferSelect;
 export type NewSale = typeof sales.$inferInsert;
+
+/**
+ * Issued customer warranties.
+ *
+ * Each certificate refers to an actual saved sale item.
+ * Coverage is never generated automatically from product data.
+ */
+export const warranties = pgTable(
+  'warranties',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    saleId: uuid('sale_id')
+      .notNull()
+      .references(() => sales.id, { onDelete: 'restrict' }),
+
+    saleItemId: uuid('sale_item_id')
+      .notNull()
+      .references(() => saleItems.id, { onDelete: 'restrict' }),
+
+    issuedByUserId: uuid('issued_by_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'restrict' }),
+
+    customerName: varchar('customer_name', { length: 160 })
+      .notNull(),
+
+    customerPhone: varchar('customer_phone', { length: 40 }),
+
+    productName: varchar('product_name', { length: 180 })
+      .notNull(),
+
+    serialNumber: varchar('serial_number', { length: 160 }),
+
+    coveredQuantity: integer('covered_quantity')
+      .notNull()
+      .default(1),
+
+    coverage: text('coverage').notNull(),
+    terms: text('terms').notNull(),
+
+    startDate: date('start_date').notNull(),
+    expiryDate: date('expiry_date').notNull(),
+
+    issuedAt: timestamp('issued_at', {
+      withTimezone: true,
+    }).defaultNow().notNull(),
+  },
+  (table) => [
+    index('warranties_sale_idx').on(table.saleId),
+    index('warranties_sale_item_idx').on(table.saleItemId),
+  ],
+);
+
+export type Warranty = typeof warranties.$inferSelect;
+export type NewWarranty = typeof warranties.$inferInsert;
 
 export type SaleItem = typeof saleItems.$inferSelect;
 export type NewSaleItem = typeof saleItems.$inferInsert;

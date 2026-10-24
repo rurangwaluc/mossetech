@@ -1,3 +1,4 @@
+import AsyncSubmitButton from '@/components/async-submit-button';
 import Link from 'next/link';
 import { desc, eq, ilike, or } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
@@ -166,12 +167,10 @@ export default async function SupplierDetailsPage({
           </label>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="rounded-lg bg-[var(--primary-action)] px-5 py-3 text-sm font-bold text-white"
-            >
-              Save changes
-            </button>
+            <AsyncSubmitButton
+              idleLabel="Save changes"
+              pendingLabel="Saving changes…"
+            />
           </div>
         </form>
       </section>
@@ -323,10 +322,10 @@ export default async function SupplierDetailsPage({
                 className={fieldClass} />
             </label>
             <div className="sm:col-span-2 flex justify-end">
-              <button type="submit"
-                className="rounded-lg bg-[var(--primary-action)] px-5 py-3 text-sm font-bold text-white">
-                Record payment
-              </button>
+              <AsyncSubmitButton
+                idleLabel="Record payment"
+                pendingLabel="Recording payment…"
+              />
             </div>
           </form>
         ) : (

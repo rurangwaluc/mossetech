@@ -7,6 +7,7 @@ import {
 import { db } from '@mossetech/db/client';
 import {
   corrections,
+  productImages,
   products,
   saleItems,
   stockArrivals,
@@ -33,6 +34,7 @@ export default async function EditProductPage({
     stockUse,
     saleUse,
     pendingRequest,
+    existingGallery,
   ] = await Promise.all([
     db.query.products.findFirst({
       where: eq(
@@ -89,6 +91,13 @@ export default async function EditProductPage({
         ),
       )
       .limit(1),
+
+    db
+      .select({
+        id: productImages.id,
+      })
+      .from(productImages)
+      .where(eq(productImages.productId, id)),
   ]);
 
   if (
@@ -126,6 +135,7 @@ export default async function EditProductPage({
       hasPendingRequest={
         pendingRequest.length > 0
       }
+      existingGalleryCount={existingGallery.length}
     />
   );
 }

@@ -636,6 +636,7 @@ export function ReceiveStockForm({
           </section>
         ) : null}
 
+        <div className="grid grid-cols-1 gap-x-5 gap-y-5 md:grid-cols-2 md:items-start">
         <div>
           <label
             htmlFor="quantityReceived"
@@ -691,7 +692,7 @@ export function ReceiveStockForm({
         ) : null}
 
         {isOwner ? (
-          <div className="mb-4">
+          <div className="min-w-0">
             <label
               htmlFor="supplierAmountOwed"
               className="text-sm font-black text-[var(--text)]"
@@ -712,7 +713,7 @@ export function ReceiveStockForm({
             </p>
           </div>
         ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="min-w-0">
           <div>
             <label
               htmlFor="supplierName"
@@ -793,6 +794,8 @@ export function ReceiveStockForm({
               </p>
             </div>
           </div>
+        </div>
+
         </div>
 
         <div>

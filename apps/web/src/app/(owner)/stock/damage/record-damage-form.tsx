@@ -57,7 +57,7 @@ function unitLabel(
       string
     > = {
       stem: 'stems',
-      bouquet: 'bouquets',
+
       bunch: 'bunches',
       piece: 'pieces',
       pack: 'packs',
@@ -282,7 +282,7 @@ export function RecordDamageForm({
         </h2>
 
         <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-          Record flowers that can
+          Record products that can
           no longer be sold.
         </p>
       </div>

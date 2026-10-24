@@ -1,4 +1,8 @@
 import { StorefrontHeader } from '@/components/storefront-header';
+import { eq } from 'drizzle-orm';
+import { db } from '@mossetech/db/client';
+import { productImages } from '@mossetech/db/schema';
+import { PublicProductGallery } from './public-product-gallery';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -25,6 +29,12 @@ export default async function PublicProductPage({
   if (!product) {
     notFound();
   }
+
+  const galleryImages = await db
+    .select({ id: productImages.id })
+    .from(productImages)
+    .where(eq(productImages.productId, product.id))
+    .orderBy(productImages.position, productImages.createdAt);
 
   const specifications =
     product.specifications &&
@@ -64,22 +74,12 @@ export default async function PublicProductPage({
         </Link>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2 lg:gap-10">
-          <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)]">
-            {product.imageKey ? (
-              <div
-                role="img"
-                aria-label={product.name}
-                className="absolute inset-0 bg-contain bg-center bg-no-repeat"
-                style={{
-                  backgroundImage: `url("/api/public/product-image/${product.id}")`,
-                }}
-              />
-            ) : (
-              <span className="text-7xl font-black text-[var(--primary)]">
-                {product.name.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
+          <PublicProductGallery
+            productId={product.id}
+            productName={product.name}
+            hasMainImage={Boolean(product.imageKey)}
+            additionalImageIds={galleryImages.map((image) => image.id)}
+          />
 
           <section>
             <p className="text-xs font-black uppercase tracking-wider text-[var(--primary)]">

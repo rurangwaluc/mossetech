@@ -1260,6 +1260,9 @@ export async function executeSaleCreateSync(
               ? user.id
               : null,
 
+          unitCost:
+            toMoney(Number(line.item.buyingPrice)),
+
           lineTotal:
             toMoney(
               line.lineTotal,

@@ -89,8 +89,7 @@ function unitLabel(
       string
     > = {
       stem: 'stems',
-      bouquet:
-        'bouquets',
+
       bunch: 'bunches',
       piece: 'pieces',
       pack: 'packs',

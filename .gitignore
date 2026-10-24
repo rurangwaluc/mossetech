@@ -70,3 +70,4 @@ temp/
 *.key
 *.crt
 .vercel
+.env*

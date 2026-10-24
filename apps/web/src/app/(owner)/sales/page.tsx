@@ -1,5 +1,6 @@
 import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
+import { sql, gte, lt } from 'drizzle-orm';
 
 import {
   and,
@@ -341,7 +342,15 @@ function statusClass(
 }
 
 
-export default async function SalesPage() {
+const SALES_PAGE_SIZE = 25;
+
+type SalesPageProps = {
+  searchParams?: Promise<{ page?: string }>;
+};
+
+export default async function SalesPage({
+  searchParams,
+}: SalesPageProps) {
   const user =
     await requirePermission('sales.view');
 
@@ -349,15 +358,30 @@ export default async function SalesPage() {
     user.role ===
     'OWNER';
 
-  const saleList =
-    await db
-      .select()
-      .from(sales)
-      .orderBy(
-        desc(
-          sales.saleDate,
-        ),
-      );
+  const params = await searchParams;
+  const rawPage = params?.page ?? '1';
+  const requestedPage =
+    /^\\d{1,6}$/.test(rawPage)
+      ? Math.max(1, Number(rawPage))
+      : 1;
+
+  const [totalRow] = await db
+    .select({ count: sql<number>`count(*)::integer` })
+    .from(sales);
+
+  const totalSales = totalRow?.count ?? 0;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalSales / SALES_PAGE_SIZE),
+  );
+  const currentPage = Math.min(requestedPage, totalPages);
+
+  const saleList = await db
+    .select()
+    .from(sales)
+    .orderBy(desc(sales.saleDate), desc(sales.id))
+    .limit(SALES_PAGE_SIZE)
+    .offset((currentPage - 1) * SALES_PAGE_SIZE);
 
   const saleIds =
     saleList.map(
@@ -486,13 +510,29 @@ export default async function SalesPage() {
       new Date(),
     );
 
-  const todaySales =
-    saleList.filter(
-      (sale) =>
-        kigaliDayKey(
-          sale.saleDate,
-        ) ===
-        todayKey,
+  // Kigali is UTC+02:00 throughout the year.
+  // Query only the current Kigali day, independently
+  // of the paginated sales history.
+  const todayStart = new Date(
+    new Date(`${todayKey}T00:00:00.000Z`).getTime()
+      - 2 * 60 * 60 * 1000,
+  );
+  const tomorrowStart = new Date(
+    todayStart.getTime() + 24 * 60 * 60 * 1000,
+  );
+
+  const todaySales = await db
+    .select({
+      saleDate: sales.saleDate,
+      totalAmount: sales.totalAmount,
+      balanceAmount: sales.balanceAmount,
+    })
+    .from(sales)
+    .where(
+      and(
+        gte(sales.saleDate, todayStart),
+        lt(sales.saleDate, tomorrowStart),
+      ),
     );
 
   const totalToday =
@@ -588,8 +628,7 @@ export default async function SalesPage() {
       )}
 
       {/* LIST */}
-      {saleList.length ===
-      0 ? (
+      {totalSales === 0 ? (
         <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-10 text-center">
           <h2 className="font-display text-xl font-black text-[var(--text)]">
             No sales yet
@@ -620,9 +659,9 @@ export default async function SalesPage() {
 
               <p className="mt-1 text-xs font-bold text-[var(--muted)]">
                 {
-                  saleList.length
+                  totalSales
                 }{' '}
-                {saleList.length ===
+                {totalSales ===
                 1
                   ? 'sale'
                   : 'sales'}
@@ -1025,6 +1064,51 @@ export default async function SalesPage() {
           </div>
         </section>
       )}
+
+      {totalSales > SALES_PAGE_SIZE ? (
+        <nav
+          aria-label="Sales history pages"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 py-3 sm:px-5"
+        >
+          <p className="text-xs font-semibold text-[var(--muted)]">
+            Showing{' '}
+            {(currentPage - 1) * SALES_PAGE_SIZE + 1}
+            {'–'}
+            {Math.min(currentPage * SALES_PAGE_SIZE, totalSales)}
+            {' of '}
+            {totalSales} sales
+          </p>
+          <div className="flex items-center gap-2">
+            {currentPage > 1 ? (
+              <Link
+                href={`/sales?page=${currentPage - 1}`}
+                className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--text)] hover:bg-[var(--surface)]"
+              >
+                Previous
+              </Link>
+            ) : (
+              <span className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--muted)] opacity-50">
+                Previous
+              </span>
+            )}
+            <span className="px-2 text-xs font-bold text-[var(--muted)]">
+              {currentPage} / {totalPages}
+            </span>
+            {currentPage < totalPages ? (
+              <Link
+                href={`/sales?page=${currentPage + 1}`}
+                className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--text)] hover:bg-[var(--surface)]"
+              >
+                Next
+              </Link>
+            ) : (
+              <span className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--muted)] opacity-50">
+                Next
+              </span>
+            )}
+          </div>
+        </nav>
+      ) : null}
     </section>
   );
 }

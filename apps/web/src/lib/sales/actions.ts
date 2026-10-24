@@ -961,10 +961,9 @@ export async function createSaleAction(
         }
 
         /*
-         * unit_cost and profit_amount are intentionally
-         * omitted. Their physical columns remain only for
-         * legacy compatibility and therefore receive DB
-         * defaults of zero.
+         * Preserve the product's recorded cost at the time
+         * of sale for historical gross profit reporting.
+         * The legacy profit_amount column is not used.
          */
         await tx
           .insert(
@@ -1004,6 +1003,9 @@ export async function createSaleAction(
                   Math.round(line.baseUnitPrice * 100)
                     ? user.id
                     : null,
+
+                unitCost:
+                  toMoney(Number(line.item.buyingPrice)),
 
                 lineTotal:
                   toMoney(

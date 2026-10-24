@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mossetech-static-v1';
+const CACHE_NAME = 'mossetech-static-v2';
 const OFFLINE_URL = '/offline';
 
 const IS_LOCAL_DEVELOPMENT =
@@ -8,6 +8,8 @@ const IS_LOCAL_DEVELOPMENT =
 const STATIC_ASSETS = [
   OFFLINE_URL,
   '/manifest.webmanifest',
+  '/icons/site-icon-light.png',
+  '/icons/site-icon-dark.png',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/icons/icon-maskable-192.png',

@@ -1459,9 +1459,7 @@ export function SaleForm({
                                           quantity:
                                             1,
                                           unitPrice:
-                                            minimumPriceEnforcementEnabled
-                                              ? ''
-                                              : item.sellingPrice,
+                                            item.sellingPrice,
                                           searchText:
                                             itemSearchLabel(
                                               item,
@@ -1600,7 +1598,7 @@ export function SaleForm({
 
                       <div>
                         <label className="text-xs font-black text-[var(--muted)]">
-                          Selling price
+                          Actual selling price (RWF)
                         </label>
 
                         <input

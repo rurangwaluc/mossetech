@@ -23,11 +23,11 @@ export function CostPriceForm({
   return (
     <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
       <h2 className="text-lg font-black text-[var(--text)]">
-        Product cost price
+        Private Product Pricing
       </h2>
 
       <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
-        Private financial information. Only Moses can access it.
+        Only the owner can view or change these prices. They are never shown to customers.
       </p>
 
       <p className="mt-4 text-sm font-bold text-[var(--text)]">
@@ -85,7 +85,7 @@ export function CostPriceForm({
         </h3>
 
         <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
-          Employees cannot sell below this amount.
+          The lowest price staff can accept, including discounts.
           Only Moses can change the limit.
         </p>
 

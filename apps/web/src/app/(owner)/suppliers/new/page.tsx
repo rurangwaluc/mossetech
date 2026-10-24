@@ -1,3 +1,4 @@
+import AsyncSubmitButton from '@/components/async-submit-button';
 import Link from 'next/link';
 import { requireOwner } from '@/lib/auth/session';
 import { createSupplierAction } from '@/lib/suppliers/actions';
@@ -74,12 +75,10 @@ export default async function NewSupplierPage() {
             >
               Cancel
             </Link>
-            <button
-              type="submit"
-              className="rounded-lg bg-[var(--primary-action)] px-5 py-3 text-sm font-bold text-white"
-            >
-              Save supplier
-            </button>
+            <AsyncSubmitButton
+              idleLabel="Save supplier"
+              pendingLabel="Saving supplier…"
+            />
           </div>
         </form>
       </section>

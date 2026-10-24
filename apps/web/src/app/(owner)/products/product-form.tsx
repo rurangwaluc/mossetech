@@ -1,5 +1,12 @@
 'use client';
 
+import {
+  ProductGalleryPicker,
+  type SelectedGalleryPhoto,
+} from './product-gallery-picker';
+import { uploadGalleryImage } from '@/lib/products/gallery-upload';
+
+
 import Link from 'next/link';
 import {
   useActionState,
@@ -44,6 +51,7 @@ type ProductFormProps = {
     | 'EMPLOYEE';
   unitLocked?: boolean;
   hasPendingRequest?: boolean;
+  existingGalleryCount?: number;
 
   product?: {
     id: string;
@@ -148,6 +156,7 @@ export function ProductForm({
   userRole = 'OWNER',
   unitLocked = false,
   hasPendingRequest = false,
+  existingGalleryCount = 0,
 }: ProductFormProps) {
   const router =
     useRouter();
@@ -168,6 +177,17 @@ export function ProductForm({
   ] = useState<File | null>(
     null,
   );
+
+  const [
+    galleryPhotos,
+    setGalleryPhotos,
+  ] = useState<SelectedGalleryPhoto[]>([]);
+
+  const [
+    uploadingGallery,
+    setUploadingGallery,
+  ] = useState(false);
+
 
   const [
     previewUrl,
@@ -260,6 +280,7 @@ export function ProductForm({
     pending ||
     preparingPhoto ||
     completing ||
+    uploadingGallery ||
     savingLocally ||
     queuedLocally;
 
@@ -316,6 +337,24 @@ export function ProductForm({
                 }
 
                 if (
+                  galleryPhotos.length > 0 &&
+                  !state.requestSent
+                ) {
+                  setUploadingGallery(true);
+
+                  try {
+                    for (const photo of galleryPhotos) {
+                      await uploadGalleryImage(
+                        state.productId!,
+                        photo.file,
+                      );
+                    }
+                  } finally {
+                    setUploadingGallery(false);
+                  }
+                }
+
+                if (
                   state.requestSent
                 ) {
                   router.replace(
@@ -365,6 +404,7 @@ export function ProductForm({
     reason,
     router,
     selectedImage,
+    galleryPhotos,
     state.completionId,
     state.productId,
     state.requestSent,
@@ -518,6 +558,15 @@ export function ProductForm({
     }
 
     event.preventDefault();
+
+    if (galleryPhotos.length > 0) {
+      setClientError(
+        'Additional product photos require an internet connection. ' +
+        'Reconnect and save to keep these photos, or remove the ' +
+        'additional photos to save the product offline.',
+      );
+      return;
+    }
 
     if (
       savingLocally ||
@@ -1032,8 +1081,12 @@ export function ProductForm({
                   labelClass
                 }
               >
-                Product photo
+                Product photos
               </label>
+              <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                Up to 8 photos per product. Choose a main photo and
+                add other views of the product.
+              </p>
 
               {isEmployeeEdit ? (
                 <div className="mt-2 grid gap-4 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center sm:p-4">
@@ -1195,6 +1248,34 @@ export function ProductForm({
                 </div>
               )}
             </div>
+
+            {userRole === 'OWNER' ? (
+              <div className="border-t border-[var(--border)] pt-4">
+                <ProductGalleryPicker
+                  value={galleryPhotos}
+                  onChange={setGalleryPhotos}
+                  disabled={busy || hasPendingRequest}
+                  maxPhotos={Math.max(
+                    0,
+                    7 - existingGalleryCount,
+                  )}
+                />
+
+                <p className="mt-3 text-xs font-semibold text-[var(--muted)]">
+                  Additional photos upload after the product is saved.
+                  An internet connection is required.
+                </p>
+
+                {uploadingGallery ? (
+                  <p
+                    role="status"
+                    className="mt-2 text-xs font-bold text-[var(--primary)]"
+                  >
+                    Uploading additional photos…
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div>
               <label
@@ -1505,7 +1586,7 @@ export function ProductForm({
               </p>
 
               <h2 className="mt-1 text-lg font-black text-[var(--text)]">
-                Price & stock alert
+                Selling price & stock alert
               </h2>
             </header>
 
@@ -1517,7 +1598,7 @@ export function ProductForm({
                     labelClass
                   }
                 >
-                  Default selling price (optional)
+                  Asking Price (RWF)
                 </label>
 
                 <div className="mt-2 flex h-12 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] transition focus-within:border-[var(--primary)]">
@@ -1539,7 +1620,7 @@ export function ProductForm({
                           )
                         : ''
                     }
-                    placeholder="Enter during sale (optional)"
+                    placeholder="Price shown to customers"
                     className="min-w-0 flex-1 bg-transparent px-4 text-sm font-black text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
                   />
                 </div>

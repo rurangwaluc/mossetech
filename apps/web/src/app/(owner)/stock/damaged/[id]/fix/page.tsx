@@ -75,7 +75,7 @@ function unitLabel(
   const plurals:
     Record<string, string> = {
       stem: 'stems',
-      bouquet: 'bouquets',
+
       bunch: 'bunches',
       piece: 'pieces',
       pack: 'packs',

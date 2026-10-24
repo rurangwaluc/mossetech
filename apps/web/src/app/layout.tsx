@@ -32,21 +32,20 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/favicon.ico',
-      },
-      {
-        url: '/icons/icon-192.png',
+        url: '/icons/site-icon-light.png',
         type: 'image/png',
         sizes: '192x192',
+        media: '(prefers-color-scheme: light)',
       },
       {
-        url: '/icons/icon-512.png',
+        url: '/icons/site-icon-dark.png',
         type: 'image/png',
-        sizes: '512x512',
+        sizes: '192x192',
+        media: '(prefers-color-scheme: dark)',
       },
     ],
     apple: '/apple-touch-icon.png',
-    shortcut: '/favicon.ico',
+    shortcut: '/icons/site-icon-light.png',
   },
   applicationName: 'Mosse Tech',
   appleWebApp: {
@@ -69,6 +68,7 @@ export const viewport: Viewport = {
   ],
   width: 'device-width',
   initialScale: 1,
+  viewportFit: 'cover',
 };
 
 

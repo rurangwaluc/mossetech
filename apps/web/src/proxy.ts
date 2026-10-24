@@ -40,8 +40,18 @@ export function proxy(request: NextRequest) {
       pathname,
     );
 
+  const isPublicProductGallery =
+    /^\/api\/public\/product-gallery\/[0-9a-f-]{36}\/[0-9a-f-]{36}$/i.test(
+      pathname,
+    );
+
   if (
-    (isPublic || isPublicCatalog || isPublicProductImage) &&
+    (
+      isPublic ||
+      isPublicCatalog ||
+      isPublicProductImage ||
+      isPublicProductGallery
+    ) &&
     (request.method === 'GET' || request.method === 'HEAD')
   ) {
     return NextResponse.next();
@@ -52,7 +62,9 @@ export function proxy(request: NextRequest) {
   const enabledOperationalApi =
     pathname === '/api/sync/outbox' ||
     pathname === '/api/media/product-image' ||
-    pathname.startsWith('/api/media/product-image/');
+    pathname.startsWith('/api/media/product-image/') ||
+    pathname === '/api/media/product-gallery' ||
+    pathname.startsWith('/api/media/product-gallery/');
 
   if (enabledOperationalApi) {
     return NextResponse.next();

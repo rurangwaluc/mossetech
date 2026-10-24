@@ -914,6 +914,28 @@ export async function getReport(
       0,
     );
 
+  // Sale-time cost snapshots; never use today's product cost
+  // to recalculate historical profit.
+  const missingCostItems = itemList.filter(
+    (item) => Number(item.unitCost) <= 0,
+  ).length;
+
+  const costOfGoodsSold = itemList.reduce(
+    (sum, item) =>
+      sum + Number(item.unitCost) * Number(item.quantity),
+    0,
+  );
+
+  const grossProfit =
+    missingCostItems === 0
+      ? salesTotal - costOfGoodsSold
+      : null;
+
+  const netProfit =
+    grossProfit === null
+      ? null
+      : grossProfit - expensesTotal;
+
   const moneyReceived =
     paymentList.reduce(
       (
@@ -1466,6 +1488,10 @@ export async function getReport(
       discountTotal,
       salesTotal,
       expensesTotal,
+      costOfGoodsSold,
+      missingCostItems,
+      grossProfit,
+      netProfit,
       moneyReceived,
       salesCount:
         saleList.length,

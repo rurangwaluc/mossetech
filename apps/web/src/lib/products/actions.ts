@@ -1218,7 +1218,7 @@ export async function updateProductCostAction(
   }
 
   if (
-    !/^[0-9]+(\\.[0-9]{1,2})?$/.test(cost) ||
+    !/^[0-9]+(\.[0-9]{1,2})?$/.test(cost) ||
     !Number.isFinite(Number(cost)) ||
     Number(cost) <= 0 ||
     Number(cost) > 9999999999.99

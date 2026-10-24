@@ -251,6 +251,39 @@ export default async function ReportsPage({
       tone: 'normal',
     },
     {
+      key: 'cost-of-sales',
+      label: 'Cost of products sold',
+      value: money(summary.costOfGoodsSold),
+      detail: summary.missingCostItems > 0
+        ? `${summary.missingCostItems} sale item(s) missing cost`
+        : 'Recorded cost when products were sold',
+      tone: 'normal',
+    },
+    {
+      key: 'gross-profit',
+      label: 'Gross profit / loss',
+      value: summary.grossProfit === null
+        ? 'Cost missing'
+        : money(summary.grossProfit),
+      detail: summary.grossProfit === null
+        ? 'Record missing product costs before relying on profit'
+        : 'Sales after discounts minus product costs',
+      tone: summary.grossProfit === null
+        ? 'normal'
+        : summary.grossProfit < 0 ? 'negative' : 'positive',
+    },
+    {
+      key: 'net-profit',
+      label: 'Net profit / loss',
+      value: summary.netProfit === null
+        ? 'Cost missing'
+        : money(summary.netProfit),
+      detail: 'Gross profit minus recorded business expenses',
+      tone: summary.netProfit === null
+        ? 'normal'
+        : summary.netProfit < 0 ? 'negative' : 'positive',
+    },
+    {
       key: 'received',
       label:
         'Money received',
