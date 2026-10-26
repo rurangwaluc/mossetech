@@ -43,6 +43,12 @@ const navigation = [
     roles: ['OWNER', 'EMPLOYEE'],
   },
   {
+    label: 'Proforma',
+    href: '/quotations',
+    icon: ReceiptText,
+    roles: ['OWNER', 'EMPLOYEE'],
+  },
+  {
     label: 'Products',
     href: '/products',
     icon: Package,
@@ -149,6 +155,10 @@ export function AppSidebar({
     '/sales': [
       { permission: 'sales.view', href: '/sales' },
       { permission: 'sales.create', href: '/sales/new' },
+    ],
+    '/quotations': [
+      { permission: 'sales.view', href: '/quotations' },
+      { permission: 'sales.create', href: '/quotations/new' },
     ],
     '/products': [
       { permission: 'products.view', href: '/products' },

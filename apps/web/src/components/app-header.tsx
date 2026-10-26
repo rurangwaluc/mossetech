@@ -79,6 +79,27 @@ function getPageName(pathname: string) {
     };
   }
 
+  if (pathname === '/quotations/new') {
+    return {
+      eyebrow: 'Proforma',
+      title: 'New proforma',
+    };
+  }
+
+  if (pathname.startsWith('/quotations/')) {
+    return {
+      eyebrow: 'Proforma',
+      title: 'Proforma details',
+    };
+  }
+
+  if (pathname === '/quotations') {
+    return {
+      eyebrow: 'Proforma',
+      title: 'Proforma invoices',
+    };
+  }
+
   if (pathname === '/sales/new') {
     return {
       eyebrow: 'Sales',

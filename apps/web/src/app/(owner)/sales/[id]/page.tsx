@@ -1,6 +1,7 @@
 import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import WarrantyHistory from './warranty-history';
+import SaleDocuments from './sale-documents';
 import {
   and,
   asc,
@@ -681,20 +682,6 @@ export default async function SaleDetailPage({
               </Link>
             )}
 
-            <a
-              href={`/sales/${sale.id}/receipt?mode=inline`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--border)] px-4 text-sm font-black text-[var(--text)] transition hover:border-[var(--primary)]"
-            >
-              View / Print
-            </a>
-            <a
-              href={`/sales/${sale.id}/receipt`}
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-4 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
-            >
-              Download receipt
-            </a>
             {isOwner ? (
               <Link
                 href={`/sales/${sale.id}/warranty/new`}
@@ -1140,6 +1127,7 @@ export default async function SaleDetailPage({
           </div>
         ) : null}
       </section>
+      <SaleDocuments saleId={sale.id} />
       <WarrantyHistory saleId={sale.id} />
     </section>
   );

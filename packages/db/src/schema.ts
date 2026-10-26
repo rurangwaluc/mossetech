@@ -1229,3 +1229,91 @@ export type NewCashDrawer = typeof cashDrawers.$inferInsert;
 
 export type CashDrawerMovement = typeof cashDrawerMovements.$inferSelect;
 export type NewCashDrawerMovement = typeof cashDrawerMovements.$inferInsert;
+
+
+// Quotation records are independent of sales.
+// Creating or updating a quotation must not change
+// inventory, payments, revenue, or customer debt.
+export const quotations = pgTable('quotations', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  reference: varchar('reference', { length: 32 })
+    .notNull()
+    .unique(),
+
+  customerId: uuid('customer_id')
+    .references(() => customers.id, { onDelete: 'set null' }),
+
+  customerName: varchar('customer_name', { length: 160 }).notNull(),
+  customerPhone: varchar('customer_phone', { length: 40 }),
+
+  status: varchar('status', { length: 24 })
+    .notNull()
+    .default('DRAFT'),
+
+  issueDate: timestamp('issue_date', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+
+  validUntil: date('valid_until'),
+
+  subtotalAmount: numeric('subtotal_amount', {
+    precision: 12,
+    scale: 2,
+  }).notNull().default('0'),
+
+  discountAmount: numeric('discount_amount', {
+    precision: 12,
+    scale: 2,
+  }).notNull().default('0'),
+
+  totalAmount: numeric('total_amount', {
+    precision: 12,
+    scale: 2,
+  }).notNull().default('0'),
+
+  notes: text('notes'),
+
+  convertedSaleId: uuid('converted_sale_id')
+    .unique()
+    .references(() => sales.id, { onDelete: 'set null' }),
+
+  convertedAt: timestamp('converted_at', { withTimezone: true }),
+
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const quotationItems = pgTable('quotation_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  quotationId: uuid('quotation_id')
+    .notNull()
+    .references(() => quotations.id, { onDelete: 'cascade' }),
+
+  productId: uuid('product_id')
+    .references(() => products.id, { onDelete: 'set null' }),
+
+  itemName: varchar('item_name', { length: 180 }).notNull(),
+
+  quantity: integer('quantity').notNull(),
+
+  unitPrice: numeric('unit_price', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  lineTotal: numeric('line_total', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});

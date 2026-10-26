@@ -302,6 +302,20 @@
       "when": 1792769731780,
       "tag": "0042_fantastic_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793002613550,
+      "tag": "0043_quotations",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1793008284368,
+      "tag": "0044_quotation_reference",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,16 @@
+import Link from 'next/link';
+import { asc, eq } from 'drizzle-orm';
+import { notFound } from 'next/navigation';
+import { db } from '@mossetech/db/client';
+import { quotationItems, quotations } from '@mossetech/db/schema';
+import { requirePermission } from '@/lib/auth/require-permission';
+export default async function QuotationDetails({ params }: { params: Promise<{ id: string }> }) {
+  await requirePermission('sales.view');
+  const { id } = await params;
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  const [q] = await db.select().from(quotations).where(eq(quotations.id, id)).limit(1);
+  if (!q) notFound();
+  const items = await db.select().from(quotationItems).where(eq(quotationItems.quotationId, id)).orderBy(asc(quotationItems.createdAt));
+  const money = (s: string) => Number(s).toLocaleString('en-RW', {maximumFractionDigits:2});
+  return <section className="space-y-5"><div className="flex flex-wrap items-center justify-between gap-3"><div><Link href="/quotations" className="text-sm font-bold text-[var(--primary)]">← All proformas</Link><h1 className="mt-2 font-display text-2xl font-black text-[var(--text)]">Proforma invoice</h1><p className="break-all text-xs text-[var(--muted)]">Reference: {q.reference}</p></div><div className="flex flex-wrap gap-2"><a href={`/quotations/${q.id}/pdf?mode=inline`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-lg border border-[var(--border)] px-4 font-black text-[var(--text)]">View / print PDF</a><a href={`/quotations/${q.id}/pdf`} className="inline-flex min-h-11 items-center rounded-lg bg-[var(--primary-action)] px-4 font-black text-white">Download PDF</a></div></div><div className="space-y-5 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-6"><div><p className="text-xs uppercase text-[var(--muted)]">Prepared for</p><p className="font-black text-[var(--text)]">{q.customerName}</p><p className="text-sm text-[var(--muted)]">{q.customerPhone || ''}</p><p className="text-sm text-[var(--muted)]">Status: {q.status} · Issue: {q.issueDate.toLocaleDateString('en-GB', {timeZone:'Africa/Kigali'})}{q.validUntil ? ` · Valid until: ${q.validUntil}` : ''}</p></div><div className="overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead><tr className="border-b border-[var(--border)]"><th className="py-3">Product</th><th>Qty</th><th>Unit price</th><th className="text-right">Amount</th></tr></thead><tbody>{items.map(item => <tr key={item.id} className="border-b border-[var(--border)]"><td className="py-3">{item.itemName}</td><td>{item.quantity}</td><td>{money(item.unitPrice)}</td><td className="text-right">{money(item.lineTotal)}</td></tr>)}</tbody></table></div><div className="text-right text-sm text-[var(--text)]"><p>Subtotal: RWF {money(q.subtotalAmount)}</p><p>Discount: RWF {money(q.discountAmount)}</p><p className="mt-2 text-xl font-black">Total: RWF {money(q.totalAmount)}</p></div>{q.notes && <p className="border-t border-[var(--border)] pt-4 text-sm text-[var(--muted)]">{q.notes}</p>}<p className="text-xs text-[var(--muted)]">This is a quotation, not a receipt or confirmation of payment or delivery.</p></div></section>;
+}
