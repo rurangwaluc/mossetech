@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@mossetech/db/client';
 import { productImages } from '@mossetech/db/schema';
 import { PublicProductGallery } from './public-product-gallery';
+import { ShareProductButton } from './share-product-button';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -57,7 +58,7 @@ export default async function PublicProductPage({
     `I am interested in ${product.name}.`,
     `Product link: ${productUrl}`,
     'Is it still available?',
-  ].join('\\n');
+  ].join('\n');
 
   const whatsappUrl =
     `https://wa.me/250785147371?text=${encodeURIComponent(whatsappMessage)}`;
@@ -100,6 +101,10 @@ export default async function PublicProductPage({
 
             <p className="mt-6 text-3xl font-black text-[var(--primary)]">
               {money(product.sellingPrice)}
+            </p>
+
+            <p className="mt-4 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+              In stock
             </p>
 
             {product.condition ? (
@@ -159,12 +164,7 @@ export default async function PublicProductPage({
                 Enquire on WhatsApp
               </a>
 
-              <a
-                href={productUrl}
-                className="inline-flex h-12 items-center justify-center rounded-lg border border-[var(--border)] px-6 text-sm font-black text-[var(--text)] transition hover:border-[var(--primary)]"
-              >
-                Product link
-              </a>
+              <ShareProductButton url={productUrl} name={product.name} />
             </div>
           </section>
         </div>

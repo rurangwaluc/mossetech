@@ -26,6 +26,7 @@ const PUBLIC_PRODUCT_COLUMNS = {
   notes: products.notes,
   unit: products.unit,
   sellingPrice: products.sellingPrice,
+  quantity: products.quantity,
   imageKey: products.imageKey,
 } as const;
 

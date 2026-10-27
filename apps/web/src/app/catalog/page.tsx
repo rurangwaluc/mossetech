@@ -106,12 +106,18 @@ export default async function CatalogPage({ searchParams }: Props) {
             </button>
           </div>
 
-          <details
-            className="catalog-responsive-filters mt-4"
-          >
-            <summary className="cursor-pointer rounded-lg border border-[var(--border)] px-4 py-3 text-sm font-bold lg:hidden">
+          <div className="catalog-responsive-filters mt-4">
+            <input
+              type="checkbox"
+              id="catalog-filter-toggle"
+              className="catalog-filter-toggle sr-only"
+            />
+            <label
+              htmlFor="catalog-filter-toggle"
+              className="catalog-filter-label block cursor-pointer rounded-lg border border-[var(--border)] px-4 py-3 text-sm font-bold lg:hidden"
+            >
               Filters & sorting
-            </summary>
+            </label>
             <div className="catalog-responsive-filters-content mt-3 lg:mt-0">
 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div>
@@ -196,7 +202,7 @@ export default async function CatalogPage({ searchParams }: Props) {
             </div>
 
             </div>
-          </details>
+          </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4">
             <button
@@ -295,6 +301,10 @@ export default async function CatalogPage({ searchParams }: Props) {
 
                   <p className="mt-3 text-base font-black text-[var(--primary)] sm:text-lg">
                     {money(product.sellingPrice)}
+                  </p>
+
+                  <p className="mt-3 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                    In stock
                   </p>
 
                   <div className="mt-auto pt-4">

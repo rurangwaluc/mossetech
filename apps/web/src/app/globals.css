@@ -174,10 +174,24 @@ button {
   }
 }
 
-/* Public catalog: collapsed mobile filters, visible desktop filters. */
+/* Public catalog: mobile disclosure; desktop filters always visible. */
+@media (max-width: 1023px) {
+  .catalog-responsive-filters-content {
+    display: none;
+  }
+
+  .catalog-filter-toggle:checked ~ .catalog-responsive-filters-content {
+    display: block;
+  }
+
+  .catalog-filter-toggle:focus-visible + .catalog-filter-label {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+  }
+}
+
 @media (min-width: 1024px) {
-  .catalog-responsive-filters:not([open])
-    > .catalog-responsive-filters-content {
+  .catalog-responsive-filters-content {
     display: block;
   }
 }
