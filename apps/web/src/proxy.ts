@@ -102,6 +102,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/money/') ||
     pathname === '/products' ||
     pathname.startsWith('/products/') ||
+    pathname === '/quotations' ||
+    pathname.startsWith('/quotations/') ||
     pathname === '/reports' ||
     pathname.startsWith('/reports/') ||
     pathname === '/requests' ||
@@ -111,7 +113,9 @@ export function proxy(request: NextRequest) {
     pathname === '/settings' ||
     pathname.startsWith('/settings/') ||
     pathname === '/stock' ||
-    pathname.startsWith('/stock/')
+    pathname.startsWith('/stock/') ||
+    pathname === '/suppliers' ||
+    pathname.startsWith('/suppliers/')
   ) {
     return NextResponse.next();
   }
