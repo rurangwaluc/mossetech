@@ -34,12 +34,17 @@ import {
 } from './hide-item-button';
 
 import {
+  RestoreItemButton,
+} from './restore-item-button';
+
+import {
   ProductsFlash,
 } from './products-flash';
 
 type ProductsPageProps = {
   searchParams?: Promise<{
     q?: string;
+    status?: string;
     created?: string;
     updated?: string;
     request?: string;
@@ -130,6 +135,12 @@ export default async function ProductsPage({
     params?.q?.trim() ||
     '';
 
+  const selectedStatus =
+    user.role === 'OWNER' &&
+    params?.status === 'archived'
+      ? 'ARCHIVED'
+      : 'ACTIVE';
+
   const baseCondition =
     and(
       eq(
@@ -162,7 +173,14 @@ export default async function ProductsPage({
 
   const filteredCondition =
     and(
-      baseCondition,
+      eq(
+        products.itemType,
+        'PRODUCT',
+      ),
+      eq(
+        products.status,
+        selectedStatus,
+      ),
       searchCondition,
     );
 
@@ -369,6 +387,22 @@ export default async function ProductsPage({
             />
           </div>
 
+          {user.role === 'OWNER' ? (
+            <select
+              name="status"
+              defaultValue={
+                selectedStatus === 'ARCHIVED'
+                  ? 'archived'
+                  : 'active'
+              }
+              aria-label="Product status"
+              className="h-11 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 text-sm font-bold text-[var(--text)]"
+            >
+              <option value="active">Active products</option>
+              <option value="archived">Archived products</option>
+            </select>
+          ) : null}
+
           <button className="h-11 rounded-lg border border-[var(--border)] px-5 text-sm font-black text-[var(--text)] transition hover:border-[var(--primary)]">
             Search
           </button>
@@ -527,7 +561,7 @@ export default async function ProductsPage({
                               <Edit className="h-3.5 w-3.5" />
                             </Link>
 
-                            {canHideProducts ? (
+                            {canHideProducts && selectedStatus === 'ACTIVE' ? (
                               <HideItemButton
                                 itemId={
                                   item.id
@@ -535,6 +569,12 @@ export default async function ProductsPage({
                                 itemName={
                                   item.name
                                 }
+                              />
+                            ) : null}
+                            {canHideProducts && selectedStatus === 'ARCHIVED' ? (
+                              <RestoreItemButton
+                                itemId={item.id}
+                                itemName={item.name}
                               />
                             ) : null}
                           </div>
@@ -658,7 +698,7 @@ export default async function ProductsPage({
                           : 'Ask owner to edit'}
                       </Link>
 
-                      {canHideProducts ? (
+                      {canHideProducts && selectedStatus === 'ACTIVE' ? (
                         <div className="[&_button]:h-10 [&_button]:w-full">
                           <HideItemButton
                             itemId={
@@ -670,6 +710,12 @@ export default async function ProductsPage({
                           />
                         </div>
                       ) : null}
+                            {canHideProducts && selectedStatus === 'ARCHIVED' ? (
+                              <RestoreItemButton
+                                itemId={item.id}
+                                itemName={item.name}
+                              />
+                            ) : null}
                     </div>
                   </article>
                 );

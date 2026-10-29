@@ -1300,6 +1300,47 @@ export async function updateProductMinimumPriceAction(
   revalidatePath(`/products/${productId}`);
 }
 
+export async function restoreProductAction(
+  formData: FormData,
+) {
+  await requireOwner();
+
+  const productId = String(
+    formData.get('productId') || '',
+  );
+
+  if (!PRODUCT_ID_PATTERN.test(productId)) {
+    throw new Error('Invalid product ID.');
+  }
+
+  const restored = await db
+    .update(products)
+    .set({
+      status: 'ACTIVE',
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(products.id, productId),
+        eq(products.status, 'ARCHIVED'),
+        eq(products.itemType, 'PRODUCT'),
+      ),
+    )
+    .returning({ id: products.id });
+
+  if (restored.length !== 1) {
+    throw new Error(
+      'Product could not be restored. Check its current status.',
+    );
+  }
+
+  revalidateProductPaths();
+  revalidatePath(`/products/${productId}`);
+  revalidatePath('/stock');
+
+  redirect('/products?status=archived');
+}
+
 export async function archiveProductAction(
   formData: FormData,
 ) {
