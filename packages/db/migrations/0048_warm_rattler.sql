@@ -1,0 +1,2 @@
+ALTER TYPE "public"."cash_drawer_movement_type" ADD VALUE 'EXTERNAL_CUSTOMER_PAYMENT' BEFORE 'CUSTOMER_EXTRA_KEPT';--> statement-breakpoint
+ALTER TYPE "public"."cash_drawer_movement_type" ADD VALUE 'EXTERNAL_SUPPLIER_PAYMENT' BEFORE 'CUSTOMER_EXTRA_KEPT';

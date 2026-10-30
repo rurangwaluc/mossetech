@@ -358,7 +358,22 @@ export default async function NewSalePage() {
           </Link>
         </section>
       ) : (
-        <SaleForm
+        <>
+      <div className="mb-5 flex flex-wrap gap-2">
+        <span
+          aria-current="page"
+          className="rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-bold text-white"
+        >
+          Our Stock
+        </span>
+        <Link
+          href="/sales/external/new"
+          className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 py-2 text-sm font-bold text-[var(--text)] hover:border-[var(--primary)]"
+        >
+          External Stock
+        </Link>
+      </div>
+      <SaleForm
           userId={
             user.id
           }
@@ -382,6 +397,7 @@ export default async function NewSalePage() {
               'EMPLOYEE'
           }
         />
+      </>
       )}
     </section>
   );

@@ -23,6 +23,8 @@ import {
   cashDrawerMovements,
   corrections,
   expenses,
+  externalCustomerPayments,
+  externalSupplierSettlements,
   moneyAdditions,
   moneyTransfers,
   salePayments,
@@ -120,6 +122,16 @@ async function getPaymentMethodBalanceInTransaction(
         ),
       );
 
+  const externalCustomerList =
+    await tx
+      .select()
+      .from(externalCustomerPayments);
+
+  const externalSupplierList =
+    await tx
+      .select()
+      .from(externalSupplierSettlements);
+
   const customerIn =
     paymentList
       .filter(
@@ -216,12 +228,38 @@ async function getPaymentMethodBalanceInTransaction(
         0,
       );
 
+  const externalCustomerIn =
+    externalCustomerList
+      .filter(
+        (payment) =>
+          payment.paymentMethod === method,
+      )
+      .reduce(
+        (sum, payment) =>
+          sum + Number(payment.amount),
+        0,
+      );
+
+  const externalSupplierOut =
+    externalSupplierList
+      .filter(
+        (payment) =>
+          payment.paymentMethod === method,
+      )
+      .reduce(
+        (sum, payment) =>
+          sum + Number(payment.amount),
+        0,
+      );
+
   return (
     addedMoney +
     customerIn +
+    externalCustomerIn +
     transferIn -
     customerReturnsOut -
     expensesOut -
+    externalSupplierOut -
     transferOut
   );
 }

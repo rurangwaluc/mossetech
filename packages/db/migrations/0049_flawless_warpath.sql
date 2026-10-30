@@ -1,0 +1,6 @@
+ALTER TABLE "cash_drawer_movements" ADD COLUMN "external_customer_payment_id" uuid;--> statement-breakpoint
+ALTER TABLE "cash_drawer_movements" ADD COLUMN "external_supplier_settlement_id" uuid;--> statement-breakpoint
+ALTER TABLE "cash_drawer_movements" ADD CONSTRAINT "cash_drawer_movements_external_customer_payment_id_external_customer_payments_id_fk" FOREIGN KEY ("external_customer_payment_id") REFERENCES "public"."external_customer_payments"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cash_drawer_movements" ADD CONSTRAINT "cash_drawer_movements_external_supplier_settlement_id_external_supplier_settlements_id_fk" FOREIGN KEY ("external_supplier_settlement_id") REFERENCES "public"."external_supplier_settlements"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "cash_drawer_movements" ADD CONSTRAINT "cash_drawer_movements_external_customer_payment_id_unique" UNIQUE("external_customer_payment_id");--> statement-breakpoint
+ALTER TABLE "cash_drawer_movements" ADD CONSTRAINT "cash_drawer_movements_external_supplier_settlement_id_unique" UNIQUE("external_supplier_settlement_id");

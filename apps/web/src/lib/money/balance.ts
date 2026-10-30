@@ -7,6 +7,8 @@ import { db } from '@mossetech/db/client';
 
 import {
   expenses,
+  externalCustomerPayments,
+  externalSupplierSettlements,
   moneyAdditions,
   moneyTransfers,
   salePayments,
@@ -49,6 +51,8 @@ export async function getMoneyBalances() {
     expenseList,
     transferList,
     additionList,
+    externalCustomerList,
+    externalSupplierList,
   ] = await Promise.all([
     db
       .select()
@@ -81,6 +85,14 @@ export async function getMoneyBalances() {
           moneyAdditions.reversedAt,
         ),
       ),
+
+    db
+      .select()
+      .from(externalCustomerPayments),
+
+    db
+      .select()
+      .from(externalSupplierSettlements),
   ]);
 
   return paymentMethods.map(
@@ -189,14 +201,40 @@ export async function getMoneyBalances() {
             0,
           );
 
+      const externalCustomerIn =
+        externalCustomerList
+          .filter(
+            (payment) =>
+              payment.paymentMethod === method,
+          )
+          .reduce(
+            (sum, payment) =>
+              sum + Number(payment.amount),
+            0,
+          );
+
+      const externalSupplierOut =
+        externalSupplierList
+          .filter(
+            (payment) =>
+              payment.paymentMethod === method,
+          )
+          .reduce(
+            (sum, payment) =>
+              sum + Number(payment.amount),
+            0,
+          );
+
       const moneyIn =
         addedMoney +
         customerIn +
+        externalCustomerIn +
         transferIn;
 
       const moneyOut =
         customerReturnsOut +
         expensesOut +
+        externalSupplierOut +
         transferOut;
 
       return {

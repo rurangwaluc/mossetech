@@ -4,7 +4,9 @@ import {
 } from 'drizzle-orm';
 import {
   boolean,
+  check,
   date,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -39,6 +41,8 @@ export const cashDrawerStatusEnum = pgEnum('cash_drawer_status', ['OPEN', 'CLOSE
 export const cashDrawerMovementTypeEnum = pgEnum('cash_drawer_movement_type', [
   'OPENING_CASH',
   'CASH_SALE',
+  'EXTERNAL_CUSTOMER_PAYMENT',
+  'EXTERNAL_SUPPLIER_PAYMENT',
   'CUSTOMER_EXTRA_KEPT',
   'CASH_ADDED',
   'CASH_REMOVED',
@@ -522,6 +526,206 @@ export const supplierPayments = pgTable('supplier_payments', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+/*
+ * External stock sales.
+ *
+ * Items sourced from another shop are not owned inventory.
+ * These records must never create stock arrivals or reduce
+ * owned-product quantities.
+ *
+ * DRAFT records are not posted financial transactions.
+ * Customer payments and supplier settlements will have
+ * separate immutable records in subsequent implementation.
+ */
+export const externalSales = pgTable('external_sales', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  idempotencyKey: uuid('idempotency_key')
+    .notNull()
+    .unique(),
+
+  supplierId: uuid('supplier_id')
+    .notNull()
+    .references(() => suppliers.id, { onDelete: 'restrict' }),
+
+  customerId: uuid('customer_id')
+    .references(() => customers.id, { onDelete: 'set null' }),
+
+  customerName: varchar('customer_name', { length: 160 }),
+
+  createdByUserId: uuid('created_by_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+
+  productName: varchar('product_name', { length: 180 })
+    .notNull(),
+
+  quantity: integer('quantity').notNull(),
+
+  agreedSupplierTotal: numeric('agreed_supplier_total', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  customerTotal: numeric('customer_total', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  status: varchar('status', { length: 20 })
+    .notNull()
+    .default('DRAFT'),
+
+  notes: text('notes'),
+
+  createdAt: timestamp('created_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
+
+  updatedAt: timestamp('updated_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex('external_sales_id_supplier_unique').on(
+    table.id,
+    table.supplierId,
+  ),
+  check(
+    'external_sales_quantity_positive',
+    sql`${table.quantity} > 0`,
+  ),
+  check(
+    'external_sales_supplier_total_nonnegative',
+    sql`${table.agreedSupplierTotal} >= 0`,
+  ),
+  check(
+    'external_sales_customer_total_nonnegative',
+    sql`${table.customerTotal} >= 0`,
+  ),
+  check(
+    'external_sales_status_valid',
+    sql`${table.status} IN ('DRAFT', 'POSTED', 'CANCELLED')`,
+  ),
+]);
+
+
+/*
+ * Money received from customers for external-stock sales.
+ *
+ * Financial posting must be transactional and idempotent.
+ * These rows must not affect owned-stock inventory.
+ */
+export const externalCustomerPayments = pgTable(
+  'external_customer_payments',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    idempotencyKey: uuid('idempotency_key')
+      .notNull()
+      .unique(),
+
+    externalSaleId: uuid('external_sale_id')
+      .notNull()
+      .references(() => externalSales.id, {
+        onDelete: 'restrict',
+      }),
+
+    receivedByUserId: uuid('received_by_user_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'restrict',
+      }),
+
+    amount: numeric('amount', {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+
+    paymentMethod: paymentMethodEnum('payment_method')
+      .notNull(),
+
+    notes: text('notes'),
+
+    paidAt: timestamp('paid_at', {
+      withTimezone: true,
+    }).defaultNow().notNull(),
+
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+    }).defaultNow().notNull(),
+  },
+  (table) => [
+    check(
+      'external_customer_payment_amount_positive',
+      sql`${table.amount} > 0`,
+    ),
+  ],
+);
+
+/*
+ * Payments made to the source shop for an external sale.
+ *
+ * Payments are linked to one supplier and one external sale.
+ * Financial posting must prevent overpayment and duplicates.
+ */
+export const externalSupplierSettlements = pgTable(
+  'external_supplier_settlements',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+
+    idempotencyKey: uuid('idempotency_key')
+      .notNull()
+      .unique(),
+
+    externalSaleId: uuid('external_sale_id')
+      .notNull()
+      .references(() => externalSales.id, {
+        onDelete: 'restrict',
+      }),
+
+    supplierId: uuid('supplier_id')
+      .notNull()
+      .references(() => suppliers.id, {
+        onDelete: 'restrict',
+      }),
+
+    paidByUserId: uuid('paid_by_user_id')
+      .notNull()
+      .references(() => users.id, {
+        onDelete: 'restrict',
+      }),
+
+    amount: numeric('amount', {
+      precision: 12,
+      scale: 2,
+    }).notNull(),
+
+    paymentMethod: paymentMethodEnum('payment_method')
+      .notNull(),
+
+    notes: text('notes'),
+
+    paidAt: timestamp('paid_at', {
+      withTimezone: true,
+    }).defaultNow().notNull(),
+
+    createdAt: timestamp('created_at', {
+      withTimezone: true,
+    }).defaultNow().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      name: 'external_settlement_sale_supplier_fk',
+      columns: [table.externalSaleId, table.supplierId],
+      foreignColumns: [externalSales.id, externalSales.supplierId],
+    }).onDelete('restrict'),
+    check(
+      'external_supplier_settlement_amount_positive',
+      sql`${table.amount} > 0`,
+    ),
+  ],
+);
+
 export const stockArrivals = pgTable('stock_arrivals', {
   id: uuid('id').defaultRandom().primaryKey(),
   supplierId: uuid('supplier_id')
@@ -867,6 +1071,18 @@ export const cashDrawerMovements = pgTable('cash_drawer_movements', {
   moneyTransferId: uuid('money_transfer_id').references(() => moneyTransfers.id, {
     onDelete: 'set null',
   }),
+  externalCustomerPaymentId: uuid('external_customer_payment_id')
+    .unique()
+    .references(() => externalCustomerPayments.id, {
+      onDelete: 'restrict',
+    }),
+
+  externalSupplierSettlementId: uuid('external_supplier_settlement_id')
+    .unique()
+    .references(() => externalSupplierSettlements.id, {
+      onDelete: 'restrict',
+    }),
+
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
