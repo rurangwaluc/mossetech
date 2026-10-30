@@ -17,12 +17,25 @@ export const saleLineItemSchema = z.object({
   unitPrice: optionalMoneySchema,
 });
 
+export const saleMixedPaymentsSchema = z.array(
+  z.object({
+    method: z.enum([
+      'CASH',
+      'MOBILE_MONEY',
+      'BANK',
+      'CARD',
+    ]),
+    amount: moneySchema,
+  }),
+).max(4);
+
 export const saleFormSchema = z.object({
   customerMode: z.enum(['WALK_IN', 'EXISTING', 'NEW']),
   customerId: z.string().uuid().optional(),
   newCustomerName: z.string().trim().max(160).optional(),
   newCustomerPhone: z.string().trim().max(40).optional(),
   paymentMethod: z.enum(['CASH', 'MOBILE_MONEY', 'BANK', 'CARD']),
+  payments: saleMixedPaymentsSchema.optional(),
   discountAmount: moneySchema.default('0'),
   discountReason: z.string().trim().max(1000).optional(),
   amountReceived: moneySchema,

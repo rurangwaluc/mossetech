@@ -298,6 +298,17 @@ export function SaleForm({
     setAmountReceived,
   ] = useState('');
 
+  const [splitPaymentMode, setSplitPaymentMode] = useState(false);
+
+  const [splitAmounts, setSplitAmounts] = useState<
+    Record<PaymentMethod, string>
+  >({
+    CASH: '',
+    MOBILE_MONEY: '',
+    BANK: '',
+    CARD: '',
+  });
+
   const [
     changeReturned,
     setChangeReturned,
@@ -462,20 +473,35 @@ export function SaleForm({
     0,
   );
 
-  const received =
-    numberValue(
-      amountReceived,
-    );
+  const splitPayments = paymentMethods.map((method) => ({
+    method: method.value,
+    amount: splitAmounts[method.value].trim() || '0',
+  }));
 
-  const change =
-    numberValue(
-      changeReturned,
-    );
+  const splitAmountsValid = splitPayments.every(
+    (payment) => /^[0-9]+(\.[0-9]{1,2})?$/.test(payment.amount),
+  );
 
-  const extra =
-    numberValue(
-      extraKept,
-    );
+  const splitReceivedCents = splitAmountsValid
+    ? splitPayments.reduce(
+        (sum, payment) => sum + roundedMoney(Number(payment.amount)),
+        0,
+      )
+    : 0;
+
+  const splitReceived = splitReceivedCents / 100;
+
+  const received = splitPaymentMode
+    ? splitReceived
+    : numberValue(amountReceived);
+
+  const change = splitPaymentMode
+    ? 0
+    : numberValue(changeReturned);
+
+  const extra = splitPaymentMode
+    ? 0
+    : numberValue(extraKept);
 
   const paidBeforeCap =
     Math.max(
@@ -525,8 +551,9 @@ export function SaleForm({
     extra > 0 &&
     !extraReason.trim();
 
-  const hasPaymentEntry =
-    amountReceived.trim() !== '';
+  const hasPaymentEntry = splitPaymentMode
+    ? splitAmountsValid
+    : amountReceived.trim() !== '';
 
   const creditNeedsCustomer =
     hasPaymentEntry &&
@@ -535,9 +562,14 @@ export function SaleForm({
       'WALK_IN';
 
   const cashDrawerBlocked =
-    paymentMethod === 'CASH' &&
-    received > 0 &&
+    (splitPaymentMode
+      ? numberValue(splitAmounts.CASH) > 0
+      : paymentMethod === 'CASH' && received > 0) &&
     !hasOpenDrawer;
+
+  const splitOverpaid =
+    splitPaymentMode &&
+    splitReceivedCents > roundedMoney(total);
 
   const canSave =
     selectedRows.length > 0 &&
@@ -548,6 +580,7 @@ export function SaleForm({
     (minimumPriceEnforcementEnabled || !priceBelowNormal) &&
     hasPaymentEntry &&
     received >= 0 &&
+    !splitOverpaid &&
     !cashDrawerBlocked &&
     !extraAllocationWrong &&
     !extraNeedsReason &&
@@ -710,6 +743,20 @@ export function SaleForm({
       .slice(0, 8);
   }
 
+  function selectSplitPaymentMode(next: boolean) {
+    setSplitPaymentMode(next);
+    setAmountReceived('');
+    setChangeReturned('0');
+    setExtraKept('0');
+    setExtraReason('');
+    setSplitAmounts({
+      CASH: '',
+      MOBILE_MONEY: '',
+      BANK: '',
+      CARD: '',
+    });
+  }
+
   function selectPaymentMethod(
     next: PaymentMethod,
   ) {
@@ -839,6 +886,12 @@ export function SaleForm({
             value(
               'paymentMethod',
             ),
+
+          ...(splitPaymentMode
+            ? {
+                payments: JSON.parse(value('paymentsJson', '[]')),
+              }
+            : {}),
 
           discountAmount:
             value(
@@ -1092,6 +1145,36 @@ export function SaleForm({
         name="paymentMethod"
         value={paymentMethod}
       />
+
+      {splitPaymentMode ? (
+        <>
+          <input
+            type="hidden"
+            name="paymentsJson"
+            value={JSON.stringify(splitPayments)}
+          />
+          <input
+            type="hidden"
+            name="amountReceived"
+            value="0"
+          />
+          <input
+            type="hidden"
+            name="changeReturned"
+            value="0"
+          />
+          <input
+            type="hidden"
+            name="extraKept"
+            value="0"
+          />
+          <input
+            type="hidden"
+            name="extraReason"
+            value=""
+          />
+        </>
+      ) : null}
 
       <div className="space-y-4">
         {/* CUSTOMER */}
@@ -1719,6 +1802,111 @@ export function SaleForm({
           </div>
 
           <div className="space-y-5 px-5 py-4 sm:px-6">
+            <div className="grid grid-cols-2 gap-2 rounded-lg bg-[var(--surface)] p-1">
+              <button
+                type="button"
+                onClick={() => selectSplitPaymentMode(false)}
+                aria-pressed={!splitPaymentMode}
+                className={`h-10 rounded-md px-3 text-sm font-black ${
+                  !splitPaymentMode
+                    ? 'bg-[var(--card)] text-[var(--text)]'
+                    : 'text-[var(--muted)]'
+                }`}
+              >
+                One method
+              </button>
+              <button
+                type="button"
+                onClick={() => selectSplitPaymentMode(true)}
+                aria-pressed={splitPaymentMode}
+                className={`h-10 rounded-md px-3 text-sm font-black ${
+                  splitPaymentMode
+                    ? 'bg-[var(--card)] text-[var(--text)]'
+                    : 'text-[var(--muted)]'
+                }`}
+              >
+                Mixed payment
+              </button>
+            </div>
+
+            {splitPaymentMode ? (
+              <div className="space-y-4">
+                <p className="text-sm font-semibold text-[var(--muted)]">
+                  Enter the amount received through each method.
+                  Leave unused methods at zero.
+                </p>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {paymentMethods.map((method) => (
+                    <label
+                      key={method.value}
+                      className="block text-sm font-bold text-[var(--text)]"
+                    >
+                      {method.label} (RWF)
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={splitAmounts[method.value]}
+                        onChange={(event) =>
+                          setSplitAmounts((current) => ({
+                            ...current,
+                            [method.value]: event.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                        className={`${fieldClass} mt-2`}
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-[var(--border)] p-4 text-sm">
+                  <div className="flex justify-between gap-4">
+                    <span className="font-semibold text-[var(--muted)]">
+                      Total received
+                    </span>
+                    <strong className="tabular-nums text-[var(--text)]">
+                      RWF {money(splitReceived)}
+                    </strong>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="font-semibold text-[var(--muted)]">
+                      Remaining balance
+                    </span>
+                    <strong className="tabular-nums text-[var(--text)]">
+                      RWF {money(balance)}
+                    </strong>
+                  </div>
+                </div>
+
+                {!splitAmountsValid ? (
+                  <p className="text-sm font-bold text-[var(--danger)]">
+                    Enter valid amounts with no more than two decimal places.
+                  </p>
+                ) : null}
+
+                {splitOverpaid ? (
+                  <p className="text-sm font-bold text-[var(--danger)]">
+                    Total payments cannot exceed the sale amount.
+                  </p>
+                ) : null}
+
+                {cashDrawerBlocked ? (
+                  <p className="text-sm font-bold text-[var(--danger)]">
+                    Open the cash drawer before receiving Cash.
+                    <Link href="/money" className="ml-2 underline">
+                      Go to Money
+                    </Link>
+                  </p>
+                ) : null}
+
+                <p className="text-xs font-semibold text-[var(--muted)]">
+                  For change returned or extra money kept, use the
+                  existing single-method payment flow.
+                </p>
+              </div>
+            ) : (
+              <>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {paymentMethods.map(
                 (method) => {
@@ -2126,6 +2314,9 @@ export function SaleForm({
                     />
                   </>
                 )}
+              </>
+            )}
+
               </>
             )}
 

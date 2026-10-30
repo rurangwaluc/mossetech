@@ -251,6 +251,27 @@ export default async function ReportsPage({
       tone: 'normal',
     },
     {
+      key: 'external-sales',
+      label: 'External stock sales',
+      value: money(report.external.salesTotal),
+      detail: `${report.external.salesCount} completed external sale(s) / included in Sales above`,
+      tone: 'normal',
+    },
+    {
+      key: 'external-shop-cost',
+      label: 'External shop costs',
+      value: money(report.external.supplierCost),
+      detail: 'Agreed cost of completed external sales / included in product costs',
+      tone: 'normal',
+    },
+    {
+      key: 'external-shop-due',
+      label: 'Outstanding source shop debt',
+      value: money(report.external.supplierOutstanding),
+      detail: 'Current unpaid amount owed to source shops',
+      tone: report.external.supplierOutstanding > 0 ? 'negative' : 'normal',
+    },
+    {
       key: 'cost-of-sales',
       label: 'Cost of products sold',
       value: money(summary.costOfGoodsSold),

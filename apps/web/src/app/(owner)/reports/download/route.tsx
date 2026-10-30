@@ -235,6 +235,24 @@ function SummaryTable({
       negative: false,
     },
     {
+      label: 'External stock sales (included above)',
+      value: money(report.external.salesTotal),
+      detail: `${report.external.salesCount} completed external sale(s)`,
+      negative: false,
+    },
+    {
+      label: 'External source shop costs',
+      value: money(report.external.supplierCost),
+      detail: 'Included in total cost of goods sold',
+      negative: false,
+    },
+    {
+      label: 'Outstanding source shop debt',
+      value: money(report.external.supplierOutstanding),
+      detail: 'Current unpaid supplier obligations',
+      negative: report.external.supplierOutstanding > 0,
+    },
+    {
       label:
         'Money received',
       value:

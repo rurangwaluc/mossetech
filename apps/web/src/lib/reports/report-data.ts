@@ -9,6 +9,9 @@ import {
 import { db } from '@mossetech/db/client';
 import {
   expenses,
+  externalSales,
+  externalCustomerPayments,
+  externalSupplierSettlements,
   products,
   saleItems,
   salePayments,
@@ -708,6 +711,11 @@ export async function getReport(
     allArrivalList,
     allSoldItemList,
     allDamageList,
+    externalSaleList,
+    externalReceiptList,
+    externalSettlementList,
+    allExternalPosted,
+    allExternalReceipts,
   ] = await Promise.all([
     db
       .select()
@@ -837,6 +845,25 @@ export async function getReport(
     db
       .select()
       .from(stockDamages),
+
+    // Posted obligations are recognized in the period they are completed.
+    db.select().from(externalSales).where(and(
+      eq(externalSales.status, 'POSTED'),
+      gte(externalSales.updatedAt, period.start),
+      lte(externalSales.updatedAt, period.end),
+    )),
+
+    // Receipts and supplier payments follow their own transaction dates.
+    db.select().from(externalCustomerPayments).where(and(
+      gte(externalCustomerPayments.paidAt, period.start),
+      lte(externalCustomerPayments.paidAt, period.end),
+    )),
+    db.select().from(externalSupplierSettlements).where(and(
+      gte(externalSupplierSettlements.paidAt, period.start),
+      lte(externalSupplierSettlements.paidAt, period.end),
+    )),
+    db.select().from(externalSales).where(eq(externalSales.status, 'POSTED')),
+    db.select().from(externalCustomerPayments),
   ]);
 
   const saleIds =
@@ -861,6 +888,39 @@ export async function getReport(
         ),
       );
   }
+
+  const externalSalesTotal = externalSaleList.reduce(
+    (sum, sale) => sum + Number(sale.customerTotal), 0,
+  );
+  const externalSupplierCost = externalSaleList.reduce(
+    (sum, sale) => sum + Number(sale.agreedSupplierTotal), 0,
+  );
+  const externalGrossProfit = externalSalesTotal - externalSupplierCost;
+  const externalReceived = externalReceiptList.reduce(
+    (sum, payment) => sum + Number(payment.amount), 0,
+  );
+  const supplierPaid = externalSettlementList.reduce(
+    (sum, payment) => sum + Number(payment.amount), 0,
+  );
+  const totalSupplierDebt = allExternalPosted.reduce(
+    (sum, sale) => sum + Number(sale.agreedSupplierTotal), 0,
+  );
+  const supplierPaidAll = await db.select().from(externalSupplierSettlements);
+  const currentSupplierOutstanding = Math.max(0,
+    totalSupplierDebt - supplierPaidAll.reduce(
+      (sum, payment) => sum + Number(payment.amount), 0,
+    ),
+  );
+  const paidByExternalSale = new Map<string, number>();
+  for (const payment of allExternalReceipts) {
+    paidByExternalSale.set(payment.externalSaleId,
+      (paidByExternalSale.get(payment.externalSaleId) || 0) + Number(payment.amount));
+  }
+  const externalUnpaid = allExternalPosted.map(sale => Math.max(0,
+    Number(sale.customerTotal) - (paidByExternalSale.get(sale.id) || 0),
+  ));
+  const externalOutstanding = externalUnpaid.reduce((sum, value) => sum + value, 0);
+  const externalUnpaidSalesCount = externalUnpaid.filter(value => value > 0.00001).length;
 
   const salesBeforeDiscount =
     saleList.reduce(
@@ -888,7 +948,7 @@ export async function getReport(
       0,
     );
 
-  const salesTotal =
+  const ownedSalesTotal =
     saleList.reduce(
       (
         sum,
@@ -900,6 +960,8 @@ export async function getReport(
         ),
       0,
     );
+
+  const salesTotal = ownedSalesTotal + externalSalesTotal;
 
   const expensesTotal =
     expenseList.reduce(
@@ -924,7 +986,7 @@ export async function getReport(
     (sum, item) =>
       sum + Number(item.unitCost) * Number(item.quantity),
     0,
-  );
+  ) + externalSupplierCost;
 
   const grossProfit =
     missingCostItems === 0
@@ -937,7 +999,7 @@ export async function getReport(
       : grossProfit - expensesTotal;
 
   const moneyReceived =
-    paymentList.reduce(
+    externalReceived + paymentList.reduce(
       (
         sum,
         payment,
@@ -953,7 +1015,7 @@ export async function getReport(
     );
 
   const currentOutstanding =
-    receivableList.reduce(
+    externalOutstanding + receivableList.reduce(
       (
         sum,
         sale,
@@ -966,7 +1028,7 @@ export async function getReport(
     );
 
   const currentUnpaidSalesCount =
-    receivableList.length;
+    receivableList.length + externalUnpaidSalesCount;
 
   const atSaleMoneyReceived =
     paymentList
@@ -991,7 +1053,7 @@ export async function getReport(
       );
 
   const laterMoneyReceived =
-    paymentList
+    externalReceived + paymentList
       .filter(
         (payment) =>
           payment.paymentType ===
@@ -1089,7 +1151,13 @@ export async function getReport(
             },
           );
 
-        return {
+         const externalByMethod = externalReceiptList
+           .filter(payment => payment.paymentMethod === method)
+           .reduce((sum, payment) => sum + Number(payment.amount), 0);
+         values.received += externalByMethod;
+         values.total += externalByMethod;
+         values.later += externalByMethod;
+         return {
           method,
           name:
             paymentName(
@@ -1484,7 +1552,7 @@ export async function getReport(
     period,
 
     summary: {
-      salesBeforeDiscount,
+      salesBeforeDiscount: salesBeforeDiscount + externalSalesTotal,
       discountTotal,
       salesTotal,
       expensesTotal,
@@ -1494,7 +1562,18 @@ export async function getReport(
       netProfit,
       moneyReceived,
       salesCount:
-        saleList.length,
+        saleList.length + externalSaleList.length,
+    },
+
+    external: {
+      salesCount: externalSaleList.length,
+      salesTotal: externalSalesTotal,
+      supplierCost: externalSupplierCost,
+      grossProfit: externalGrossProfit,
+      moneyReceived: externalReceived,
+      supplierPaid,
+      customerOutstanding: externalOutstanding,
+      supplierOutstanding: currentSupplierOutstanding,
     },
 
     receivables: {

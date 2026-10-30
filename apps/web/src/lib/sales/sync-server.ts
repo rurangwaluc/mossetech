@@ -25,6 +25,10 @@ import {
 } from '@mossetech/validators/sale';
 
 import {
+  calculateSalePaymentSplit,
+} from '@mossetech/validators/sale-payment-split';
+
+import {
   validateMinimumSellingPrices,
 } from '@mossetech/validators/minimum-selling-price';
 
@@ -56,6 +60,7 @@ type SaleCreatePayload = {
   newCustomerPhone?: unknown;
 
   paymentMethod?: unknown;
+  payments?: unknown;
 
   discountAmount?: unknown;
   discountReason?: unknown;
@@ -576,6 +581,9 @@ export async function executeSaleCreateSync(
       paymentMethod:
         raw.paymentMethod,
 
+      payments:
+        raw.payments,
+
       discountAmount:
         raw.discountAmount ||
         '0',
@@ -617,6 +625,8 @@ export async function executeSaleCreateSync(
       400,
     );
   }
+
+
 
   const cashDrawerId =
     validDrawerId(
@@ -916,11 +926,31 @@ export async function executeSaleCreateSync(
         discountAmount,
     );
 
-  const amountReceived =
-    moneyNumber(
-      parsed.data
-        .amountReceived,
+  const mixedPayments =
+    parsed.data.payments !== undefined
+      ? calculateSalePaymentSplit(
+          totalAmount.toFixed(2),
+          parsed.data.payments,
+        )
+      : null;
+
+  if (
+    mixedPayments &&
+    (
+      Number(parsed.data.amountReceived) !== 0 ||
+      Number(parsed.data.changeReturned) !== 0 ||
+      Number(parsed.data.extraKept) !== 0
+    )
+  ) {
+    throw new Error(
+      'Do not combine mixed payments with the old payment amounts.',
     );
+  }
+
+  const amountReceived =
+    mixedPayments
+      ? Number(mixedPayments.received)
+      : moneyNumber(parsed.data.amountReceived);
 
   const changeReturned =
     moneyNumber(
@@ -1067,9 +1097,9 @@ export async function executeSaleCreateSync(
     | null = null;
 
   if (
-    parsed.data
-      .paymentMethod ===
-      'CASH' &&
+    (mixedPayments
+      ? mixedPayments.hasCash
+      : parsed.data.paymentMethod === 'CASH') &&
     (
       paidAmount > 0 ||
       extraKept > 0
@@ -1096,8 +1126,8 @@ export async function executeSaleCreateSync(
         customerPhone,
 
         paymentMethod:
-          parsed.data
-            .paymentMethod,
+          mixedPayments?.payments[0]?.method ??
+          parsed.data.paymentMethod,
 
         subtotalAmount:
           toMoney(
@@ -1164,7 +1194,25 @@ export async function executeSaleCreateSync(
           sales.id,
       });
 
-  if (
+  if (mixedPayments) {
+    if (mixedPayments.payments.length > 0) {
+      await tx.insert(salePayments).values(
+        mixedPayments.payments.map((payment) => ({
+          saleId: sale.id,
+          receivedByUserId: user.id,
+          paymentType: 'AT_SALE' as const,
+          paymentMethod: payment.method,
+          receivedAmount: payment.amount,
+          appliedAmount: payment.amount,
+          returnedAmount: '0',
+          returnMethod: null,
+          extraKeptAmount: '0',
+          extraReason: null,
+          paidAt: clientCreatedAt,
+        })),
+      );
+    }
+  } else if (
     amountReceived > 0
   ) {
     await tx
@@ -1271,9 +1319,18 @@ export async function executeSaleCreateSync(
       ),
     );
 
+  const cashSaleAmount =
+    mixedPayments
+      ? Number(
+          mixedPayments.payments.find(
+            (payment) => payment.method === 'CASH',
+          )?.amount ?? '0',
+        )
+      : paidAmount;
+
   if (
     drawer &&
-    paidAmount > 0
+    cashSaleAmount > 0
   ) {
     await tx
       .insert(
@@ -1294,7 +1351,7 @@ export async function executeSaleCreateSync(
 
         amount:
           toMoney(
-            paidAmount,
+            cashSaleAmount,
           ),
 
         reason:

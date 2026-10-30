@@ -34,6 +34,10 @@ import {
 } from '@mossetech/validators/sale';
 
 import {
+  calculateSalePaymentSplit,
+} from '@mossetech/validators/sale-payment-split';
+
+import {
   validateMinimumSellingPrices,
 } from '@mossetech/validators/minimum-selling-price';
 
@@ -269,6 +273,19 @@ export async function createSaleAction(
         formData.get(
           'paymentMethod',
         ),
+
+      payments:
+        formData.has('paymentsJson')
+          ? (() => {
+              try {
+                return JSON.parse(
+                  String(formData.get('paymentsJson')),
+                );
+              } catch {
+                return null;
+              }
+            })()
+          : undefined,
 
       discountAmount:
         formData.get(
@@ -634,11 +651,31 @@ export async function createSaleAction(
             ).toFixed(2),
           );
 
-        const amountReceived =
-          moneyNumber(
-            parsed.data
-              .amountReceived,
+        const mixedPayments =
+          parsed.data.payments !== undefined
+            ? calculateSalePaymentSplit(
+                totalAmount.toFixed(2),
+                parsed.data.payments,
+              )
+            : null;
+
+        if (
+          mixedPayments &&
+          (
+            Number(parsed.data.amountReceived) !== 0 ||
+            Number(parsed.data.changeReturned) !== 0 ||
+            Number(parsed.data.extraKept) !== 0
+          )
+        ) {
+          throw new Error(
+            'Do not combine mixed payments with the old payment amounts.',
           );
+        }
+
+        const amountReceived =
+          mixedPayments
+            ? Number(mixedPayments.received)
+            : moneyNumber(parsed.data.amountReceived);
 
         const changeReturned =
           moneyNumber(
@@ -788,9 +825,9 @@ export async function createSaleAction(
           | undefined;
 
         if (
-          parsed.data
-            .paymentMethod ===
-            'CASH' &&
+          (mixedPayments
+            ? mixedPayments.hasCash
+            : parsed.data.paymentMethod === 'CASH') &&
           (
             paidAmount > 0 ||
             extraKept > 0
@@ -822,8 +859,8 @@ export async function createSaleAction(
               customerPhone,
 
               paymentMethod:
-                parsed.data
-                  .paymentMethod,
+                mixedPayments?.payments[0]?.method ??
+                parsed.data.paymentMethod,
 
               subtotalAmount:
                 toMoney(
@@ -899,7 +936,26 @@ export async function createSaleAction(
         /*
          * A completely unpaid sale has no payment event.
          */
-        if (
+        if (mixedPayments) {
+          if (mixedPayments.payments.length > 0) {
+            await tx.insert(salePayments).values(
+              mixedPayments.payments.map((payment) => ({
+                saleId: sale.id,
+                receivedByUserId: user.id,
+                paymentType: 'AT_SALE' as const,
+                paymentMethod: payment.method,
+                receivedAmount: payment.amount,
+                appliedAmount: payment.amount,
+                returnedAmount: '0',
+                returnMethod: null,
+                extraKeptAmount: '0',
+                extraReason: null,
+                paidAt: sale.saleDate,
+                createdAt: sale.createdAt,
+              })),
+            );
+          }
+        } else if (
           amountReceived > 0
         ) {
           await tx
@@ -1015,9 +1071,18 @@ export async function createSaleAction(
             ),
           );
 
+        const cashSaleAmount =
+          mixedPayments
+            ? Number(
+                mixedPayments.payments.find(
+                  (payment) => payment.method === 'CASH',
+                )?.amount ?? '0',
+              )
+            : paidAmount;
+
         if (
           openDrawer &&
-          paidAmount > 0
+          cashSaleAmount > 0
         ) {
           await tx
             .insert(
@@ -1038,7 +1103,7 @@ export async function createSaleAction(
 
               amount:
                 toMoney(
-                  paidAmount,
+                  cashSaleAmount,
                 ),
 
               reason:

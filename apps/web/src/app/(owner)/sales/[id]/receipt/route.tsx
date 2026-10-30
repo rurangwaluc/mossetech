@@ -9,13 +9,14 @@ import {
   View,
   renderToBuffer,
 } from '@react-pdf/renderer';
-import { eq, asc } from 'drizzle-orm';
+import { and, eq, asc } from 'drizzle-orm';
 
 import { requirePermission } from '@/lib/auth/require-permission';
 import { db } from '@mossetech/db/client';
 import {
   businessSettings,
   saleItems,
+  salePayments,
   sales,
 } from '@mossetech/db/schema';
 
@@ -129,10 +130,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   bottomSummary: {
-    position: 'absolute',
-    left: 42,
-    right: 42,
-    bottom: 74,
+    marginTop: 28,
+    marginBottom: 36,
   },
   totals: {
     width: '56%',
@@ -232,6 +231,10 @@ type ReceiptData = {
   total: string;
   paid: string;
   balance: string;
+  payments: Array<{
+    method: string;
+    amount: string;
+  }>;
 };
 
 function ReceiptPdf({
@@ -260,7 +263,11 @@ function ReceiptPdf({
         <View style={styles.header}>
           <View style={{ maxWidth: '52%' }}>
             {logoSource ? (
-              <Image src={logoSource} style={styles.logo} />
+              <>
+                {/* React PDF Image does not support HTML alt. */}
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                <Image src={logoSource} style={styles.logo} />
+              </>
             ) : (
               <Text style={styles.brand}>{data.business.name}</Text>
             )}
@@ -372,6 +379,13 @@ function ReceiptPdf({
             <Text>RWF {money(data.paid)}</Text>
           </View>
 
+          {data.payments.map((payment) => (
+            <View key={payment.method} style={styles.totalRow}>
+              <Text>{payment.method}</Text>
+              <Text>RWF {money(payment.amount)}</Text>
+            </View>
+          ))}
+
           <View style={styles.totalRow}>
             <Text style={styles.totalStrong}>Balance due</Text>
             <Text style={styles.totalAccent}>
@@ -433,7 +447,7 @@ export async function GET(
     return new Response('Sale not found.', { status: 404 });
   }
 
-  const [items, settings] = await Promise.all([
+  const [items, settings, payments] = await Promise.all([
     db
       .select({
         id: saleItems.id,
@@ -446,7 +460,44 @@ export async function GET(
       .where(eq(saleItems.saleId, sale.id))
       .orderBy(asc(saleItems.createdAt)),
     db.select().from(businessSettings).limit(1),
+    db
+      .select({
+        paymentMethod: salePayments.paymentMethod,
+        appliedAmount: salePayments.appliedAmount,
+      })
+      .from(salePayments)
+      .where(
+        and(
+          eq(salePayments.saleId, sale.id),
+          eq(salePayments.isActive, true),
+        ),
+      )
+      .orderBy(asc(salePayments.paidAt)),
   ]);
+
+  const paymentTotals = new Map<string, number>();
+
+  for (const payment of payments) {
+    paymentTotals.set(
+      payment.paymentMethod,
+      (paymentTotals.get(payment.paymentMethod) ?? 0) +
+        Number(payment.appliedAmount),
+    );
+  }
+
+  const paymentNames: Record<string, string> = {
+    CASH: 'Cash',
+    MOBILE_MONEY: 'Mobile Money',
+    BANK: 'Bank',
+    CARD: 'Card',
+  };
+
+  const paymentBreakdown = Array.from(paymentTotals.entries())
+    .filter(([, amount]) => amount > 0)
+    .map(([method, amount]) => ({
+      method: paymentNames[method] ?? method,
+      amount: amount.toFixed(2),
+    }));
 
   const business = settings[0];
 
@@ -484,6 +535,7 @@ export async function GET(
         total: sale.totalAmount,
         paid: sale.paidAmount,
         balance: sale.balanceAmount,
+        payments: paymentBreakdown,
       }}
     />,
   );
