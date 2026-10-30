@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useTransition } from 'react';
+import { createExternalSourceShopAction } from '@/lib/external-sales/shop-actions';
 import {
   useActionState,
   useState,
@@ -34,6 +36,48 @@ export function ExternalSaleForm({
   const [key] = useState(() => crypto.randomUUID());
   const [supplierTotal, setSupplierTotal] = useState('');
   const [customerTotal, setCustomerTotal] = useState('');
+  const [shopList, setShopList] = useState(suppliers);
+  const [selectedShopId, setSelectedShopId] = useState('');
+  const [addingShop, setAddingShop] = useState(false);
+  const [newShopName, setNewShopName] = useState('');
+  const [newShopPhone, setNewShopPhone] = useState('');
+  const [shopError, setShopError] = useState('');
+  const [savingShop, startShopTransition] = useTransition();
+
+  function saveSourceShop() {
+    setShopError('');
+
+    startShopTransition(async () => {
+      try {
+        const result = await createExternalSourceShopAction({
+          name: newShopName,
+          phone: newShopPhone,
+        });
+
+        if (!result.shop) {
+          setShopError(result.error || 'Could not save this shop.');
+          return;
+        }
+
+        setShopList((current) => {
+          if (current.some((shop) => shop.id === result.shop!.id)) {
+            return current;
+          }
+
+          return [...current, result.shop!].sort(
+            (a, b) => a.name.localeCompare(b.name),
+          );
+        });
+
+        setSelectedShopId(result.shop.id);
+        setAddingShop(false);
+        setNewShopName('');
+        setNewShopPhone('');
+      } catch {
+        setShopError('Could not save this shop. Check owner access.');
+      }
+    });
+  }
 
   const supplierAmount = Number(supplierTotal);
   const customerAmount = Number(customerTotal);
@@ -98,18 +142,29 @@ export function ExternalSaleForm({
           <select
             name="supplierId"
             className={inputClass}
-            defaultValue=""
+            value={selectedShopId}
+            onChange={(event) => setSelectedShopId(event.target.value)}
             required
           >
             <option value="" disabled>
               Select source shop
             </option>
-            {suppliers.map((supplier) => (
+            {shopList.map((supplier) => (
               <option key={supplier.id} value={supplier.id}>
                 {supplier.name}
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => {
+              setAddingShop((current) => !current);
+              setShopError('');
+            }}
+            className="mt-3 text-sm font-bold text-[var(--primary)]"
+          >
+            {addingShop ? 'Cancel adding shop' : '+ Add new shop'}
+          </button>
         </label>
 
         <label className="text-sm font-semibold text-[var(--text)]">
@@ -121,6 +176,47 @@ export function ExternalSaleForm({
             className={inputClass}
           />
         </label>
+
+        {addingShop ? (
+          <div className="space-y-3 rounded-lg border border-[var(--border)] p-4 sm:col-span-2">
+            <h2 className="font-bold text-[var(--text)]">
+              Add source shop
+            </h2>
+            <label className="block text-sm font-semibold text-[var(--text)]">
+              Shop name
+              <input
+                value={newShopName}
+                onChange={(event) => setNewShopName(event.target.value)}
+                maxLength={160}
+                placeholder="Enter shop name"
+                className={inputClass}
+              />
+            </label>
+            <label className="block text-sm font-semibold text-[var(--text)]">
+              Phone number (optional)
+              <input
+                type="tel"
+                value={newShopPhone}
+                onChange={(event) => setNewShopPhone(event.target.value)}
+                maxLength={40}
+                className={inputClass}
+              />
+            </label>
+            {shopError ? (
+              <p role="alert" className="text-sm text-red-600">
+                {shopError}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={saveSourceShop}
+              disabled={savingShop || !newShopName.trim()}
+              className="rounded-lg bg-[var(--primary)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+            >
+              {savingShop ? 'Saving shop...' : 'Save and select shop'}
+            </button>
+          </div>
+        ) : null}
 
         <label className="text-sm font-semibold text-[var(--text)] sm:col-span-2">
           Product
@@ -210,15 +306,22 @@ export function ExternalSaleForm({
         </p>
       ) : null}
 
-      {suppliers.length === 0 ? (
+      {shopList.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">
-          Add an active supplier before recording this sale.
+          No source shops yet. Use + Add new shop above.
         </p>
       ) : null}
 
+      <Link
+        href="/suppliers"
+        className="inline-block text-sm font-semibold text-[var(--primary)]"
+      >
+        Manage suppliers
+      </Link>
+
       <button
         type="submit"
-        disabled={pending || !key || suppliers.length === 0}
+        disabled={pending || savingShop || !key || !selectedShopId}
         className="w-full rounded-lg bg-[var(--primary)] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
       >
         {pending ? 'Saving sale...' : 'Save sale draft'}
