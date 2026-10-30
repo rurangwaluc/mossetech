@@ -36,6 +36,14 @@ export function ExternalPaymentActions({
   const [supplierKey, setSupplierKey] = useState(() => crypto.randomUUID());
 
   function completeSale() {
+    const confirmed = window.confirm(
+      'Complete this external sale? This records the sale and the agreed ' +
+      'amount owed to the source shop. No customer or supplier payment ' +
+      'will be recorded automatically.'
+    );
+
+    if (!confirmed) return;
+
     setMessage('');
 
     startTransition(async () => {
@@ -105,7 +113,10 @@ export function ExternalPaymentActions({
           </h2>
 
           <p className="mt-2 text-sm text-[var(--muted)]">
-            Confirm this sale to record the amount owed to the source shop.
+            Completing this sale records the selling amount and the cost owed
+            to the source shop. Customer payments and payments to the
+            source shop are recorded separately afterward. Your own stock
+            will not be reduced.
           </p>
 
           <button

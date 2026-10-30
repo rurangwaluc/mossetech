@@ -119,7 +119,7 @@ export function ExternalSaleForm({
           href={`/sales/external/${state.externalSaleId}`}
           className="mt-6 inline-flex rounded-lg bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white"
         >
-          Back to Sales
+          Open saved draft
         </Link>
       </section>
     );

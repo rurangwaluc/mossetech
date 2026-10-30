@@ -265,6 +265,13 @@ export default async function ReportsPage({
       tone: 'normal',
     },
     {
+      key: 'external-gross-profit',
+      label: 'External stock gross profit / loss',
+      value: money(report.external.grossProfit),
+      detail: 'Completed external sales minus agreed source shop costs / included in gross profit below',
+      tone: report.external.grossProfit < 0 ? 'negative' : 'positive',
+    },
+    {
       key: 'external-shop-due',
       label: 'Outstanding source shop debt',
       value: money(report.external.supplierOutstanding),

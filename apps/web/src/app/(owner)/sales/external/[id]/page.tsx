@@ -79,8 +79,8 @@ export default async function ExternalSaleDetailsPage({
   return (
     <main className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
       <div>
-        <Link href="/sales" className="text-sm font-semibold text-[var(--primary)]">
-          ← Sales
+        <Link href="/sales/external" className="text-sm font-semibold text-[var(--primary)]">
+          ← External Sales
         </Link>
         <h1 className="mt-3 text-2xl font-bold text-[var(--text)]">
           External Stock Sale
@@ -95,7 +95,12 @@ export default async function ExternalSaleDetailsPage({
           ['Customer total', sale.customerTotal],
           ['Customer owes', balances.customerBalanceCents / 100],
           ['Supplier owed', balances.supplierBalanceCents / 100],
-          ['Gross profit', balances.grossProfitCents / 100],
+          [
+            sale.status === 'DRAFT'
+              ? 'Expected gross profit'
+              : 'Gross profit',
+            balances.grossProfitCents / 100,
+          ],
         ].map(([label, value]) => (
           <div key={label} className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
             <p className="text-xs font-semibold text-[var(--muted)]">{label}</p>
@@ -128,6 +133,15 @@ export default async function ExternalSaleDetailsPage({
           </div>
         </div>
       </section>
+
+      {sale.status === 'DRAFT' ? (
+        <Link
+          href={`/sales/external/${sale.id}/edit`}
+          className="inline-flex rounded-lg border border-[var(--border)] bg-[var(--card)] px-5 py-3 text-sm font-semibold text-[var(--primary)]"
+        >
+          Edit draft
+        </Link>
+      ) : null}
 
       <ExternalPaymentActions
         saleId={sale.id}

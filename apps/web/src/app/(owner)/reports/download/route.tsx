@@ -247,6 +247,12 @@ function SummaryTable({
       negative: false,
     },
     {
+      label: 'External stock gross profit / loss',
+      value: money(report.external.grossProfit),
+      detail: 'Completed external sales minus source shop costs / included in total gross profit',
+      negative: report.external.grossProfit < 0,
+    },
+    {
       label: 'Outstanding source shop debt',
       value: money(report.external.supplierOutstanding),
       detail: 'Current unpaid supplier obligations',
@@ -1163,10 +1169,14 @@ function ReportPdf({
           }
         >
           {logoSource ? (
+            <>
+            {/* React PDF Image does not support HTML alt. */}
+            {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image
               src={logoSource}
               style={styles.logo}
             />
+            </>
           ) : (
             <Text style={styles.brand}>
               MOSSE TECH LTD

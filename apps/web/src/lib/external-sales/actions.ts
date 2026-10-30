@@ -1,5 +1,7 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
+
 import { db } from '@mossetech/db/client';
 import {
   cashDrawerMovements,
@@ -373,5 +375,106 @@ export async function receiveExternalCustomerPaymentAction(
       success: false,
       error: 'Could not record payment. Please try again.',
     };
+  }
+}
+
+
+/**
+ * Update only an unposted external-sale draft.
+ * No stock, payment, drawer or supplier-settlement writes.
+ */
+export async function updateExternalSaleDraftAction(
+  _previousState: ExternalSaleDraftState,
+  formData: FormData,
+): Promise<ExternalSaleDraftState> {
+  await requirePermission('sales.create');
+
+  const id = textValue(formData, 'externalSaleId');
+  const supplierId = textValue(formData, 'supplierId');
+  const productName = textValue(formData, 'productName');
+  const customerName = textValue(formData, 'customerName');
+  const quantityText = textValue(formData, 'quantity');
+  const notes = textValue(formData, 'notes');
+
+  if (!UUID_PATTERN.test(id) || !UUID_PATTERN.test(supplierId)) {
+    return { error: 'Invalid draft or source shop.' };
+  }
+  if (!productName || productName.length > 180 ||
+      customerName.length > 160 || notes.length > 2000) {
+    return { error: 'Check the product, customer and notes.' };
+  }
+  if (!/^[1-9]\d*$/.test(quantityText)) {
+    return { error: 'Enter a valid quantity.' };
+  }
+
+  const quantity = Number(quantityText);
+  if (!Number.isSafeInteger(quantity) || quantity > 100000) {
+    return { error: 'Enter a valid quantity.' };
+  }
+
+  let sourceCents: number;
+  let sellingCents: number;
+
+  try {
+    sourceCents = parseMoney(
+      textValue(formData, 'agreedSupplierTotal'),
+    );
+    sellingCents = parseMoney(
+      textValue(formData, 'customerTotal'),
+    );
+    if (sourceCents <= 0 || sellingCents <= 0) {
+      return { error: 'Both prices must be above zero.' };
+    }
+  } catch {
+    return { error: 'Enter valid source and selling prices.' };
+  }
+
+  try {
+    const saved = await db.transaction(async (tx) => {
+      const [shop] = await tx
+        .select({ id: suppliers.id })
+        .from(suppliers)
+        .where(and(
+          eq(suppliers.id, supplierId),
+          eq(suppliers.status, 'ACTIVE'),
+        ))
+        .limit(1);
+
+      if (!shop) return false;
+
+      const updated = await tx
+        .update(externalSales)
+        .set({
+          supplierId,
+          productName,
+          customerName: customerName || null,
+          quantity,
+          agreedSupplierTotal: formatMoney(sourceCents),
+          customerTotal: formatMoney(sellingCents),
+          notes: notes || null,
+          updatedAt: new Date(),
+        })
+        .where(and(
+          eq(externalSales.id, id),
+          eq(externalSales.status, 'DRAFT'),
+        ))
+        .returning({ id: externalSales.id });
+
+      return updated.length === 1;
+    });
+
+    if (!saved) {
+      return {
+        error: 'Draft not updated. Check that the source shop is active and the sale is still a draft.',
+      };
+    }
+
+    revalidatePath('/sales/external');
+    revalidatePath(`/sales/external/${id}`);
+    revalidatePath(`/sales/external/${id}/edit`);
+
+    return { externalSaleId: id };
+  } catch {
+    return { error: 'Could not save the draft. Please try again.' };
   }
 }
