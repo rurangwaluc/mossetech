@@ -1026,7 +1026,11 @@ async function applyPaymentFix(
 
       if (
         before.paymentType ===
-        'AT_SALE'
+          'AT_SALE' &&
+        activePayments.filter(
+          (payment) =>
+            payment.paymentType === 'AT_SALE',
+        ).length === 1
       ) {
         await tx
           .update(
@@ -1313,16 +1317,23 @@ export async function submitAtSalePaymentFixAction(
           'AT_SALE',
       );
 
-    if (
-      atSalePayments.length !== 1
-    ) {
-      throw new PaymentFixError(
-        'The original sale payment could not be found.',
-      );
-    }
+    const selectedPaymentId =
+      String(formData.get('paymentId') || '').trim();
 
     const payment =
-      atSalePayments[0];
+      selectedPaymentId
+        ? atSalePayments.find(
+            (item) => item.id === selectedPaymentId,
+          )
+        : atSalePayments.length === 1
+          ? atSalePayments[0]
+          : undefined;
+
+    if (!payment) {
+      throw new PaymentFixError(
+        'The selected original payment could not be found.',
+      );
+    }
 
     const {
       before,

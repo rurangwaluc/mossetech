@@ -33,6 +33,7 @@ type PageProps = {
   searchParams?:
     Promise<{
       error?: string;
+      paymentId?: string;
     }>;
 };
 
@@ -112,15 +113,21 @@ export default async function PaymentFixPage({
         'AT_SALE',
     );
 
-  if (
-    atSalePayments.length !==
-    1
-  ) {
-    notFound();
-  }
+  const selectedPaymentId =
+    query?.paymentId || '';
 
   const payment =
-    atSalePayments[0];
+    selectedPaymentId
+      ? atSalePayments.find(
+          (item) => item.id === selectedPaymentId,
+        )
+      : atSalePayments.length === 1
+        ? atSalePayments[0]
+        : undefined;
+
+  if (!payment) {
+    notFound();
+  }
 
   const otherApplied =
     activePayments
@@ -202,6 +209,7 @@ export default async function PaymentFixPage({
       </header>
 
       <PaymentFixForm
+        paymentId={payment.id}
         saleId={
           sale.id
         }

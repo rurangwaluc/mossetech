@@ -346,6 +346,25 @@ export default async function SaleDetailPage({
       ),
   ]);
 
+  const originalPayments = await db
+    .select({
+      id: salePayments.id,
+      paymentMethod: salePayments.paymentMethod,
+      amount: salePayments.appliedAmount,
+    })
+    .from(salePayments)
+    .where(
+      and(
+        eq(salePayments.saleId, sale.id),
+        eq(salePayments.paymentType, 'AT_SALE'),
+        eq(salePayments.isActive, true),
+      ),
+    )
+    .orderBy(
+      asc(salePayments.paidAt),
+      asc(salePayments.id),
+    );
+
   const isOwner =
     user.role === 'OWNER';
 
@@ -934,7 +953,7 @@ export default async function SaleDetailPage({
             Payments
           </p>
 
-          {paidAtSale > 0 ? (
+          {paidAtSale > 0 && originalPayments.length === 1 ? (
             pendingAtSalePaymentRequest ? (
               <span className="inline-flex h-9 items-center justify-center border-l-2 border-[var(--primary)] pl-3 text-xs font-black text-[var(--primary)]">
                 Payment fix requested
@@ -1013,6 +1032,44 @@ export default async function SaleDetailPage({
                   paidAtSale,
                 )}
               </p>
+            </div>
+          ) : null}
+
+          {originalPayments.length > 1 ? (
+            <div className="space-y-2 border-t border-[var(--border)] py-4">
+              <p className="text-xs font-bold text-[var(--muted)]">
+                Original payment breakdown
+              </p>
+              {originalPayments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between gap-4 text-sm"
+                >
+                  <span className="font-semibold text-[var(--text)]">
+                    {paymentName(payment.paymentMethod)}
+                  </span>
+                  <div className="text-right">
+                    <strong className="block tabular-nums text-[var(--text)]">
+                      {money(payment.amount)}
+                    </strong>
+                    {pendingAtSalePaymentRequest ? (
+                      pendingAtSalePaymentRequest.beforeValues.paymentId ===
+                      payment.id ? (
+                        <span className="mt-1 block text-xs font-semibold text-[var(--muted)]">
+                          Fix requested
+                        </span>
+                      ) : null
+                    ) : (
+                      <Link
+                        href={`/sales/${sale.id}/payment-fix?paymentId=${payment.id}`}
+                        className="mt-1 inline-block text-xs font-bold text-[var(--primary)] hover:underline"
+                      >
+                        {isOwner ? 'Fix payment mistake' : 'Ask owner to fix payment'}
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           ) : null}
 

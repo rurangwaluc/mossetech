@@ -21,6 +21,7 @@ type PaymentMethod =
 
 
 type Props = {
+  paymentId: string;
   saleId: string;
 
   role:
@@ -170,6 +171,7 @@ function SubmitButton({
 
 
 export default function PaymentFixForm({
+  paymentId,
   saleId,
   role,
   saleTotal,
@@ -411,6 +413,12 @@ export default function PaymentFixForm({
       }
       className="space-y-4"
     >
+      <input
+        type="hidden"
+        name="paymentId"
+        value={paymentId}
+      />
+
       <input
         type="hidden"
         name="saleId"
