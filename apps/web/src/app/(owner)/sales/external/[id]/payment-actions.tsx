@@ -32,6 +32,7 @@ export function ExternalPaymentActions({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('error');
   const [customerKey, setCustomerKey] = useState(() => crypto.randomUUID());
   const [supplierKey, setSupplierKey] = useState(() => crypto.randomUUID());
 
@@ -50,10 +51,13 @@ export function ExternalPaymentActions({
       const result = await completeExternalSaleAction(saleId);
 
       if (!result.success) {
+        setMessageType('error');
         setMessage(result.error || 'Could not complete sale.');
         return;
       }
 
+      setMessageType('success');
+      setMessage('Sale completed successfully.');
       router.refresh();
     });
   }
@@ -67,11 +71,14 @@ export function ExternalPaymentActions({
       const result = await receiveExternalCustomerPaymentAction(formData);
 
       if (!result.success) {
+        setMessageType('error');
         setMessage(result.error || 'Could not receive payment.');
         return;
       }
 
       setCustomerKey(crypto.randomUUID());
+      setMessageType('success');
+      setMessage('Customer payment recorded successfully.');
       router.refresh();
     });
   }
@@ -86,11 +93,14 @@ export function ExternalPaymentActions({
       const result = await payExternalSupplierAction(formData);
 
       if (!result.success) {
+        setMessageType('error');
         setMessage(result.error || 'Could not pay supplier.');
         return;
       }
 
       setSupplierKey(crypto.randomUUID());
+      setMessageType('success');
+      setMessage('Supplier payment recorded successfully.');
       router.refresh();
     });
   }
@@ -100,7 +110,11 @@ export function ExternalPaymentActions({
       {message ? (
         <p
           role="alert"
-          className="rounded-lg border border-[var(--border)] p-3 text-sm font-semibold text-red-600"
+          className={`rounded-lg border border-[var(--border)] p-3 text-sm font-semibold ${
+            messageType === 'success'
+              ? 'text-emerald-600'
+              : 'text-red-600'
+          }`}
         >
           {message}
         </p>
@@ -132,6 +146,7 @@ export function ExternalPaymentActions({
 
       {status === 'POSTED' ? (
         <div className="grid gap-4 md:grid-cols-2">
+          {customerBalance > 0 ? (
           <form
             action={receivePayment}
             className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5"
@@ -179,7 +194,18 @@ export function ExternalPaymentActions({
               {pending ? 'Processing...' : 'Record customer payment'}
             </button>
           </form>
+          ) : (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+              <h2 className="text-lg font-bold text-[var(--text)]">
+                Customer payment
+              </h2>
+              <p className="mt-2 text-sm font-semibold text-[var(--muted)]">
+                Fully paid. No outstanding customer balance.
+              </p>
+            </div>
+          )}
 
+          {supplierBalance > 0 ? (
           <form
             action={paySupplier}
             className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5"
@@ -219,6 +245,16 @@ export function ExternalPaymentActions({
               {pending ? 'Processing...' : 'Record supplier payment'}
             </button>
           </form>
+          ) : (
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+              <h2 className="text-lg font-bold text-[var(--text)]">
+                Supplier payment
+              </h2>
+              <p className="mt-2 text-sm font-semibold text-[var(--muted)]">
+                Fully paid. No outstanding supplier balance.
+              </p>
+            </div>
+          )}
         </div>
       ) : null}
     </section>
