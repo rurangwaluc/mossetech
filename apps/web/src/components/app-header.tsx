@@ -107,6 +107,48 @@ function getPageName(pathname: string) {
     };
   }
 
+  if (pathname === '/sales/external') {
+    return {
+      eyebrow: 'Sales',
+      title: 'External Sales',
+    };
+  }
+
+  if (pathname === '/sales/external/new') {
+    return {
+      eyebrow: 'External Sales',
+      title: 'New external sale',
+    };
+  }
+
+  if (pathname.startsWith('/sales/external/')) {
+    return {
+      eyebrow: 'External Sales',
+      title: 'External sale',
+    };
+  }
+
+  if (pathname === '/sales/external') {
+    return {
+      eyebrow: 'Sales',
+      title: 'External Sales',
+    };
+  }
+
+  if (pathname === '/sales/external/new') {
+    return {
+      eyebrow: 'External Sales',
+      title: 'New external sale',
+    };
+  }
+
+  if (pathname.startsWith('/sales/external/')) {
+    return {
+      eyebrow: 'External Sales',
+      title: 'External sale',
+    };
+  }
+
   if (
     pathname.startsWith('/sales/') &&
     pathname !== '/sales/new'
