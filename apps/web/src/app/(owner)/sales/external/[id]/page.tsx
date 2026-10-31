@@ -15,6 +15,7 @@ import { calculateExternalSaleBalances, parseMoney } from '@/lib/external-sales/
 
 import { ExternalPaymentActions } from './payment-actions';
 import { CancelExternalSaleForm } from './cancel-sale-form';
+import { PaidDuplicateForm } from './paid-duplicate-form';
 import { getCurrentUser } from '@/lib/auth/session';
 
 function rwf(value: string | number) {
@@ -217,6 +218,12 @@ export default async function ExternalSaleDetailsPage({
           ))}
         </div>
       </section>
+
+      {currentUser?.role === 'OWNER' &&
+       sale.id === '80a08afd-14d9-416d-9f52-3b2318e23d15' &&
+       sale.status === 'POSTED' ? (
+        <PaidDuplicateForm />
+      ) : null}
 
       {currentUser?.role === 'OWNER' &&
        customerPayments.length === 0 &&
