@@ -674,6 +674,13 @@ export default async function SalesPage({
               </p>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/sales/external"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 text-sm font-bold text-[var(--text)] transition hover:border-[var(--primary)] hover:bg-[var(--surface)]"
+              >
+                External Sales
+              </Link>
             <Link
               href="/sales/new"
               prefetch
@@ -682,6 +689,7 @@ export default async function SalesPage({
               <Plus className="h-4 w-4" />
               New sale
             </Link>
+            </div>
           </header>
 
           {/* DESKTOP TABLE */}
