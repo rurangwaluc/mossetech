@@ -282,75 +282,209 @@ export default async function ExternalSalesPage({
       </p>
 
       {sales.length === 0 ? (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
-          <p className="font-semibold text-[var(--text)]">
-            No external sales found.
-          </p>
-          <p className="mt-2 text-sm text-[var(--muted)]">
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-10 text-center">
+          <h2 className="font-display text-xl font-black text-[var(--text)]">
+            No external sales found
+          </h2>
+          <p className="mt-2 text-sm font-semibold text-[var(--muted)]">
             Try another search or clear the filters.
           </p>
-        </div>
+        </section>
       ) : (
-        <div className="grid gap-3">
-          {sales.map((sale) => {
-            const balance = calculateExternalSaleBalances({
-              customerTotalCents: parseMoney(sale.customerTotal),
-              supplierTotalCents: parseMoney(sale.supplierTotal),
-              customerPaidCents: paidBySale.get(sale.id) || 0,
-              supplierPaidCents: settledBySale.get(sale.id) || 0,
-            });
+        <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
+          <header className="border-b border-[var(--border)] px-5 py-4 sm:px-6">
+            <h2 className="font-display text-xl font-black text-[var(--text)]">
+              External sales history
+            </h2>
+            <p className="mt-1 text-xs font-bold text-[var(--muted)]">
+              {total} {total === 1 ? 'sale' : 'sales'} matching
+            </p>
+          </header>
 
-            const isDraft = sale.status === 'DRAFT';
-
-            return (
-              <Link
-                key={sale.id}
-                href={`/sales/external/${sale.id}`}
-                className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 transition hover:border-[var(--primary)] sm:p-5"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-bold text-[var(--text)]">
-                      {sale.productName} / Qty {sale.quantity}
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--muted)]">
-                      {sale.supplierName} / {sale.customerName || 'Walk-in customer'}
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-[var(--muted)]">
-                    {statusLabel(sale.status)}
-                  </span>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-[var(--border)] pt-4 sm:grid-cols-4">
+          {/* DESKTOP TABLE */}
+          <div className="hidden overflow-x-auto xl:block">
+            <table className="w-full min-w-[1100px] border-collapse">
+              <thead>
+                <tr className="bg-[var(--surface)]">
                   {[
-                    [isDraft ? 'Expected sale total' : 'Sale total',
-                      parseMoney(sale.customerTotal)],
-                    [isDraft ? 'Customer payment' : 'Customer owes',
-                      isDraft ? 0 : balance.customerBalanceCents],
-                    [isDraft ? 'Supplier payment' : 'Supplier owed',
-                      isDraft ? 0 : balance.supplierBalanceCents],
-                    [isDraft ? 'Expected gross profit' : 'Gross profit',
-                      balance.grossProfitCents],
-                  ].map(([label, cents]) => (
-                    <div key={String(label)}>
-                      <p className="text-xs text-[var(--muted)]">{label}</p>
-                      <p className="mt-1 text-sm font-bold tabular-nums text-[var(--text)]">
-                        {rwf(Number(cents))}
+                    ['Date', 'text-left'],
+                    ['Customer', 'text-left'],
+                    ['Item / Source shop', 'text-left'],
+                    ['Total', 'text-right'],
+                    ['Paid', 'text-right'],
+                    ['Balance', 'text-right'],
+                    ['Status', 'text-left'],
+                    ['Actions', 'text-center'],
+                  ].map(([heading, alignment]) => (
+                    <th
+                      key={heading}
+                      scope="col"
+                      className={`border-b border-r border-[var(--border)] px-4 py-3 ${alignment} text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)] last:border-r-0`}
+                    >
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {sales.map((sale) => {
+                  const isDraft = sale.status === 'DRAFT';
+                  const balances = calculateExternalSaleBalances({
+                    customerTotalCents: parseMoney(sale.customerTotal),
+                    supplierTotalCents: parseMoney(sale.supplierTotal),
+                    customerPaidCents: paidBySale.get(sale.id) || 0,
+                    supplierPaidCents: settledBySale.get(sale.id) || 0,
+                  });
+                  const totalCents = parseMoney(sale.customerTotal);
+                  const paidCents = paidBySale.get(sale.id) || 0;
+                  const balanceCents = balances.customerBalanceCents;
+                  const href = `/sales/external/${sale.id}`;
+                  const date = new Intl.DateTimeFormat('en-RW', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                    timeZone: 'Africa/Kigali',
+                  }).format(sale.createdAt);
+
+                  return (
+                    <tr key={sale.id} className="transition hover:bg-[var(--surface)]">
+                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
+                        <Link href={href} className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]">
+                          {date}
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
+                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
+                          {sale.customerName || 'Walk-in customer'}
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
+                        <Link href={href} className="block min-w-0 px-4 py-4">
+                          <span className="block text-sm font-bold text-[var(--text)]">
+                            {sale.productName} ×{sale.quantity}
+                          </span>
+                          <span className="mt-1 block text-xs font-semibold text-[var(--muted)]">
+                            {sale.supplierName}
+                          </span>
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 text-right align-top">
+                        <Link href={href} className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]">
+                          {rwf(totalCents)}
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 text-right align-top">
+                        <Link href={href} className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]">
+                          {isDraft ? '—' : rwf(paidCents)}
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 text-right align-top">
+                        <Link
+                          href={href}
+                          className={`block px-4 py-4 text-sm font-black tabular-nums ${
+                            !isDraft && balanceCents > 0
+                              ? 'text-[#C88C18] dark:text-[#E8B449]'
+                              : 'text-[var(--muted)]'
+                          }`}
+                        >
+                          {isDraft ? '—' : rwf(balanceCents)}
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
+                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
+                          {statusLabel(sale.status)}
+                        </Link>
+                      </td>
+                      <td className="border-b border-[var(--border)] px-3 py-3 text-center align-top">
+                        <Link
+                          href={href}
+                          className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--border)] px-3 text-xs font-black text-[var(--text)] transition hover:border-[var(--primary)]"
+                        >
+                          {isDraft ? 'Continue' : 'View'}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* MOBILE / TABLET */}
+          <div className="divide-y divide-[var(--border)] xl:hidden">
+            {sales.map((sale) => {
+              const isDraft = sale.status === 'DRAFT';
+              const balances = calculateExternalSaleBalances({
+                customerTotalCents: parseMoney(sale.customerTotal),
+                supplierTotalCents: parseMoney(sale.supplierTotal),
+                customerPaidCents: paidBySale.get(sale.id) || 0,
+                supplierPaidCents: settledBySale.get(sale.id) || 0,
+              });
+              const date = new Intl.DateTimeFormat('en-RW', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'Africa/Kigali',
+              }).format(sale.createdAt);
+
+              return (
+                <Link
+                  key={sale.id}
+                  href={`/sales/external/${sale.id}`}
+                  className="block p-4 transition hover:bg-[var(--surface)] sm:p-5"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-[var(--text)]">
+                        {sale.customerName || 'Walk-in customer'}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                        {date}
                       </p>
                     </div>
-                  ))}
-                </div>
-                <p className="mt-4 border-t border-[var(--border)] pt-3 text-sm font-semibold text-[var(--primary)]">
-                  {isDraft ? 'Continue draft' :
-                    sale.status === 'POSTED'
-                      ? 'View completed sale'
-                      : 'View cancelled sale'}
-                </p>
-              </Link>
-            );
-          })}
-        </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-black tabular-nums text-[var(--text)]">
+                        {rwf(parseMoney(sale.customerTotal))}
+                      </p>
+                      <p className="mt-1 text-xs font-black text-[var(--primary)]">
+                        {statusLabel(sale.status)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-xs font-bold text-[var(--text)]">
+                    {sale.productName} ×{sale.quantity}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                    Source shop: {sale.supplierName}
+                  </p>
+
+                  <div className="mt-3 grid grid-cols-2 gap-x-5 gap-y-3 border-t border-[var(--border)] pt-3">
+                    {[
+                      ['Paid', isDraft ? null : paidBySale.get(sale.id) || 0],
+                      ['Customer owes', isDraft ? null : balances.customerBalanceCents],
+                      ['Supplier owed', isDraft ? null : balances.supplierBalanceCents],
+                      [isDraft ? 'Expected profit' : 'Gross profit', balances.grossProfitCents],
+                    ].map(([label, amount]) => (
+                      <div key={String(label)} className="min-w-0">
+                        <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
+                          {label}
+                        </p>
+                        <p className="mt-1 text-sm font-black tabular-nums text-[var(--text)]">
+                          {amount === null ? '—' : rwf(Number(amount))}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {isDraft ? (
+                    <p className="mt-3 text-xs font-black text-[var(--primary)]">
+                      Continue draft
+                    </p>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {totalPages > 1 ? (
