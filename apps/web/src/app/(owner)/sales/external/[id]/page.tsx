@@ -14,6 +14,8 @@ import { requirePermission } from '@/lib/auth/require-permission';
 import { calculateExternalSaleBalances, parseMoney } from '@/lib/external-sales/money';
 
 import { ExternalPaymentActions } from './payment-actions';
+import { CancelExternalSaleForm } from './cancel-sale-form';
+import { getCurrentUser } from '@/lib/auth/session';
 
 function rwf(value: string | number) {
   return `${new Intl.NumberFormat('en-RW', {
@@ -29,6 +31,7 @@ export default async function ExternalSaleDetailsPage({
   await requirePermission('sales.view');
 
   const { id } = await params;
+  const currentUser = await getCurrentUser();
 
   if (!/^[0-9a-f-]{36}$/i.test(id)) {
     notFound();
@@ -214,6 +217,13 @@ export default async function ExternalSaleDetailsPage({
           ))}
         </div>
       </section>
+
+      {currentUser?.role === 'OWNER' &&
+       customerPayments.length === 0 &&
+       supplierPayments.length === 0 &&
+       sale.status !== 'CANCELLED' ? (
+        <CancelExternalSaleForm externalSaleId={sale.id} />
+      ) : null}
 
       {sale.status === 'POSTED' ? (
         <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
