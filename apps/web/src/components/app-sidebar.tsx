@@ -43,6 +43,12 @@ const navigation = [
     roles: ['OWNER', 'EMPLOYEE'],
   },
   {
+    label: 'External Sales',
+    href: '/sales/external',
+    icon: Truck,
+    roles: ['OWNER', 'EMPLOYEE'],
+  },
+  {
     label: 'Proforma',
     href: '/quotations',
     icon: ReceiptText,
@@ -112,6 +118,10 @@ function routeIsActive(
     return pathname === '/dashboard';
   }
 
+  if (href === '/sales' && pathname.startsWith('/sales/external')) {
+    return false;
+  }
+
   return (
     pathname === href ||
     pathname.startsWith(`${href}/`)
@@ -155,6 +165,10 @@ export function AppSidebar({
     '/sales': [
       { permission: 'sales.view', href: '/sales' },
       { permission: 'sales.create', href: '/sales/new' },
+    ],
+    '/sales/external': [
+      { permission: 'sales.view', href: '/sales/external' },
+      { permission: 'sales.create', href: '/sales/external/new' },
     ],
     '/quotations': [
       { permission: 'sales.view', href: '/quotations' },
