@@ -1080,7 +1080,7 @@ export default async function MoneyPage({
             <div className="flex flex-col gap-3 border-b border-[var(--border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--primary)]">
-                  Current drawer
+                  Current cash session
                 </p>
 
                 <h3 className="mt-1 text-lg font-black text-[var(--text)]">
@@ -1157,7 +1157,7 @@ export default async function MoneyPage({
                     : 'inline-flex h-9 items-center rounded-lg border border-[var(--border)] px-4 text-xs font-black text-[var(--text)] hover:border-[var(--primary)]'
                 }
               >
-                Cash expense
+                Pay expense
               </Link>
 
               <Link
@@ -1200,7 +1200,7 @@ export default async function MoneyPage({
                 </h3>
 
                 <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-                  Use when the owner physically puts cash into the drawer.
+                  Record cash the owner physically adds. Cash sales are recorded automatically.
                 </p>
               </div>
 
