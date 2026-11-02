@@ -1,3 +1,4 @@
+import { publicProductPath } from '@/lib/products/public-product-url';
 import { StorefrontHeader } from '@/components/storefront-header';
 import { eq } from 'drizzle-orm';
 import { db } from '@mossetech/db/client';
@@ -51,7 +52,7 @@ export default async function PublicProductPage({
       : [];
 
   const productUrl =
-    `https://mossetech.store/catalog/${product.id}`;
+    `https://mossetech.store${publicProductPath(product)}`;
 
   const whatsappMessage = [
     'Hello Mosse Tech,',

@@ -1,4 +1,4 @@
-import {
+import { sql,
   and,
   asc,
   count,
@@ -141,7 +141,47 @@ export async function getPublicProduct(productId: string) {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   if (!UUID_PATTERN.test(productId)) {
-    return null;
+    const fullId = productId.match(
+      /-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i,
+    );
+
+    if (fullId) {
+      const [product] = await db
+        .select(PUBLIC_PRODUCT_COLUMNS)
+        .from(products)
+        .where(
+          and(
+            publicProductFilter,
+            eq(products.id, fullId[1]),
+          ),
+        )
+        .limit(1);
+
+      return product ?? null;
+    }
+
+    // Backward compatibility for short links generated
+    // during development. Reject ambiguous matches.
+    const shortId = productId.match(/-([0-9a-f]{8})$/i);
+
+    if (!shortId) {
+      return null;
+    }
+
+    const candidates = await db
+      .select(PUBLIC_PRODUCT_COLUMNS)
+      .from(products)
+      .where(
+        and(
+          publicProductFilter,
+          sql`${products.id}::text LIKE ${shortId[1].toLowerCase() + '%'}`,
+        ),
+      )
+      .limit(2);
+
+    return candidates.length === 1
+      ? candidates[0]
+      : null;
   }
 
   const [product] = await db

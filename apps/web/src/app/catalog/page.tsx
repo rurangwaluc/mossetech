@@ -1,3 +1,4 @@
+import { publicProductPath } from '@/lib/products/public-product-url';
 import { StorefrontHeader } from '@/components/storefront-header';
 import Link from 'next/link';
 import {
@@ -262,7 +263,7 @@ export default async function CatalogPage({ searchParams }: Props) {
             {result.items.map((product) => (
               <Link
                 key={product.id}
-                href={`/catalog/${product.id}`}
+                href={publicProductPath(product)}
                 className="group flex min-w-0 flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] transition hover:border-[var(--primary)] hover:shadow-md"
               >
                 <div className="relative aspect-square overflow-hidden bg-white">
