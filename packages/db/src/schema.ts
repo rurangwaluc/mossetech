@@ -274,6 +274,7 @@ export const products = pgTable('products', {
   id: uuid('id').defaultRandom().primaryKey(),
   itemType: itemTypeEnum('item_type').notNull().default('PRODUCT'),
   name: varchar('name', { length: 180 }).notNull(),
+  slug: varchar('slug', { length: 160 }).notNull().unique().$defaultFn(() => ''),
   category: varchar('category', { length: 120 }).notNull(),
   brand: varchar('brand', { length: 120 }),
   model: varchar('model', { length: 160 }),
@@ -301,6 +302,17 @@ export const products = pgTable('products', {
   status: productStatusEnum('status').notNull().default('ACTIVE'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+// Reserve current and previously shared product slugs.
+export const productSlugHistory = pgTable('product_slug_history', {
+  slug: varchar('slug', { length: 160 }).primaryKey(),
+  productId: uuid('product_id')
+    .notNull()
+    .references(() => products.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 // Additional product photos.

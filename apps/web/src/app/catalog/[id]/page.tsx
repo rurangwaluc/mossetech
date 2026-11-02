@@ -6,7 +6,7 @@ import { productImages } from '@mossetech/db/schema';
 import { PublicProductGallery } from './public-product-gallery';
 import { ShareProductButton } from './share-product-button';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import {
   getPublicProduct,
@@ -30,6 +30,10 @@ export default async function PublicProductPage({
 
   if (!product) {
     notFound();
+  }
+
+  if (product.slug && id !== product.slug) {
+    redirect(publicProductPath(product));
   }
 
   const galleryImages = await db

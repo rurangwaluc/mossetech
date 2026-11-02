@@ -3,19 +3,22 @@ const UUID_PATTERN =
 
 export function productSlug(name: string): string {
   return name
-    .normalize('NFKD')
-    .replace(/[\\u0300-\\u036f]/g, '')
+    .replace(/[^A-Za-z0-9]+/g, '-')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 100)
     .replace(/-+$/g, '') || 'product';
 }
 
 export function publicProductPath(
-  product: { id: string; name: string },
+  product: { id: string; slug: string | null },
 ): string {
-  return `/catalog/${productSlug(product.name)}-${product.id}`;
+  if (product.slug && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.slug)) {
+    return `/catalog/${product.slug}`;
+  }
+
+  // Temporary compatibility until existing products have slugs.
+  return `/catalog/${product.id}`;
 }
 
 export function isProductUuid(value: string): boolean {

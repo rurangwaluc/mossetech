@@ -12,10 +12,11 @@ import { sql,
 } from 'drizzle-orm';
 
 import { db } from '@mossetech/db/client';
-import { products } from '@mossetech/db/schema';
+import { products, productSlugHistory } from '@mossetech/db/schema';
 
 const PUBLIC_PRODUCT_COLUMNS = {
   id: products.id,
+  slug: products.slug,
   name: products.name,
   category: products.category,
   brand: products.brand,
@@ -141,6 +142,31 @@ export async function getPublicProduct(productId: string) {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   if (!UUID_PATTERN.test(productId)) {
+    const [slugMatch] = await db
+      .select({
+        productId: productSlugHistory.productId,
+      })
+      .from(productSlugHistory)
+      .where(
+        eq(productSlugHistory.slug, productId),
+      )
+      .limit(1);
+
+    if (slugMatch) {
+      const [matchedProduct] = await db
+        .select(PUBLIC_PRODUCT_COLUMNS)
+        .from(products)
+        .where(
+          and(
+            publicProductFilter,
+            eq(products.id, slugMatch.productId),
+          ),
+        )
+        .limit(1);
+
+      return matchedProduct ?? null;
+    }
+
     const fullId = productId.match(
       /-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i,
     );
