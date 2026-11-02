@@ -849,7 +849,7 @@ export default async function MoneyPage({
             </h2>
 
             <p className="mt-1 text-sm font-bold text-[var(--muted)]">
-              Physical cash used for cash sales.
+              Manage physical cash received and paid out during the current shift.
             </p>
           </div>
 
@@ -873,8 +873,8 @@ export default async function MoneyPage({
         </div>
 
         {currentDrawer ? (
-          <div className="grid grid-cols-3 border-t border-[var(--border)]">
-            <div className="border-r border-[var(--border)] px-4 py-3 sm:px-6">
+          <div className="grid grid-cols-1 border-t border-[var(--border)] sm:grid-cols-3">
+            <div className="border-b border-[var(--border)] px-4 py-4 sm:border-b-0 sm:border-r sm:px-6">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
                 Expected cash
               </p>
@@ -886,9 +886,9 @@ export default async function MoneyPage({
               </p>
             </div>
 
-            <div className="border-r border-[var(--border)] px-4 py-3 sm:px-6">
+            <div className="border-b border-[var(--border)] px-4 py-4 sm:border-b-0 sm:border-r sm:px-6">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
-                Cash in
+                Cash received
               </p>
 
               <p className="mt-1 text-lg font-black tabular-nums text-[var(--success)]">
@@ -898,7 +898,7 @@ export default async function MoneyPage({
 
             <div className="px-4 py-3 sm:px-6">
               <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
-                Cash out
+                Cash paid out
               </p>
 
               <p className="mt-1 text-lg font-black tabular-nums text-[var(--danger)]">
@@ -937,7 +937,7 @@ export default async function MoneyPage({
                   ? `The previous drawer closed with ${money(
                       lastClosedDrawer.countedCash,
                     )}. Count the physical cash before opening again.`
-                  : 'Count the physical cash before taking cash payments.'}
+                  : 'Count the cash in your drawer and enter the amount to start receiving cash payments.'}
               </p>
             </div>
 
