@@ -1,3 +1,4 @@
+import { CashDrawerSubmit } from './cash-drawer-submit';
 import { requirePermission } from '@/lib/auth/require-permission';
 import Link from 'next/link';
 import {
@@ -992,9 +993,10 @@ export default async function MoneyPage({
             </div>
 
             <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-              <button className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]">
-                Open drawer
-              </button>
+              <CashDrawerSubmit
+                  label="Open drawer"
+                  className="inline-flex h-10 items-center justify-center rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
+                />
             </div>
           </form>
 
@@ -1234,9 +1236,10 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white">
-                  Add cash
-                </button>
+                <CashDrawerSubmit
+                  label="Add cash"
+                  className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white"
+                />
               </div>
             </form>
           ) : null}
@@ -1290,9 +1293,10 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg border border-[var(--danger)] px-5 text-sm font-black text-[var(--danger)]">
-                  Remove cash
-                </button>
+                <CashDrawerSubmit
+                  label="Remove cash"
+                  className="h-10 rounded-lg border border-[var(--danger)] px-5 text-sm font-black text-[var(--danger)]"
+                />
               </div>
             </form>
           ) : null}
@@ -1366,9 +1370,10 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white">
-                  Record deposit
-                </button>
+                <CashDrawerSubmit
+                  label="Record deposit"
+                  className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white"
+                />
               </div>
             </form>
           ) : null}
@@ -1447,9 +1452,10 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg border border-[var(--danger)] px-5 text-sm font-black text-[var(--danger)]">
-                  Record expense
-                </button>
+                <CashDrawerSubmit
+                  label="Record expense"
+                  className="h-10 rounded-lg border border-[var(--danger)] px-5 text-sm font-black text-[var(--danger)]"
+                />
               </div>
             </form>
           ) : null}
@@ -1534,9 +1540,10 @@ export default async function MoneyPage({
               </div>
 
               <div className="border-t border-[var(--border)] px-5 py-3 sm:px-6">
-                <button className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white">
-                  Close drawer
-                </button>
+                <CashDrawerSubmit
+                  label="Close drawer"
+                  className="h-10 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white"
+                />
               </div>
             </form>
           ) : null}
