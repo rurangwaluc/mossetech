@@ -231,10 +231,24 @@ export function ExternalPaymentActions({
               />
             </label>
 
-            <input type="hidden" name="paymentMethod" value="CASH" />
+            <label className="mt-4 block text-sm font-semibold text-[var(--text)]">
+              Payment method
+              <select
+                name="paymentMethod"
+                defaultValue="CASH"
+                className={inputClass}
+                required
+              >
+                <option value="CASH">Cash</option>
+                <option value="MOBILE_MONEY">Mobile money</option>
+                <option value="BANK">Bank transfer</option>
+                <option value="CARD">Card</option>
+              </select>
+            </label>
 
-            <p className="mt-4 text-sm text-[var(--muted)]">
-              Cash payment from the open drawer.
+            <p className="mt-3 text-xs text-[var(--muted)]">
+              Cash requires an open drawer. Other methods use their
+              corresponding payment account.
             </p>
 
             <button

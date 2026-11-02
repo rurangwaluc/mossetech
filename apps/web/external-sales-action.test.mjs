@@ -63,6 +63,7 @@ let employeeId;
 let supplierId;
 let saleId;
 let drawerId;
+let cardFundingId;
 
 const results = [];
 
@@ -658,6 +659,172 @@ try {
     assert.equal(items.total, 0);
   });
 
+
+  await check('22 | Supplier Bank payment', async () => {
+    const key = randomUUID();
+
+    const result = await settlement.payExternalSupplierAction(
+      form({
+        externalSaleId: saleId,
+        supplierId,
+        idempotencyKey: key,
+        amount: '50000',
+        paymentMethod: 'BANK',
+      })
+    );
+
+    assert.equal(result.success, true, result.error);
+
+    const row = await one(
+      `SELECT s.payment_method,
+              m.id AS movement_id
+       FROM external_supplier_settlements s
+       LEFT JOIN cash_drawer_movements m
+         ON m.external_supplier_settlement_id=s.id
+       WHERE s.idempotency_key=$1`,
+      [key]
+    );
+
+    assert.equal(row.payment_method, 'BANK');
+    assert.equal(row.movement_id, null);
+  });
+
+  await check('23 | Supplier Mobile Money payment', async () => {
+    const key = randomUUID();
+
+    const result = await settlement.payExternalSupplierAction(
+      form({
+        externalSaleId: saleId,
+        supplierId,
+        idempotencyKey: key,
+        amount: '25000',
+        paymentMethod: 'MOBILE_MONEY',
+      })
+    );
+
+    assert.equal(result.success, true, result.error);
+
+    const row = await one(
+      `SELECT s.payment_method,
+              m.id AS movement_id
+       FROM external_supplier_settlements s
+       LEFT JOIN cash_drawer_movements m
+         ON m.external_supplier_settlement_id=s.id
+       WHERE s.idempotency_key=$1`,
+      [key]
+    );
+
+    assert.equal(row.payment_method, 'MOBILE_MONEY');
+    assert.equal(row.movement_id, null);
+  });
+
+  await check('24 | Reject unfunded Card payment', async () => {
+    const result = await settlement.payExternalSupplierAction(
+      form({
+        externalSaleId: saleId,
+        supplierId,
+        idempotencyKey: randomUUID(),
+        amount: '1000',
+        paymentMethod: 'CARD',
+      })
+    );
+
+    assert.equal(result.success, false);
+    assert.match(result.error || '', /insufficient funds/i);
+  });
+
+  await check('25 | Fund test Card account', async () => {
+    const row = await one(
+      `INSERT INTO money_additions
+         (added_by_user_id, payment_method, amount, notes)
+       VALUES ($1, 'CARD', 20000, 'Isolated test Card funding')
+       RETURNING id`,
+      [ownerId]
+    );
+
+    assert.ok(row.id);
+    cardFundingId = row.id;
+  });
+
+  const cardSettlementKey = randomUUID();
+
+  await check('26 | Supplier Card payment', async () => {
+    const result = await settlement.payExternalSupplierAction(
+      form({
+        externalSaleId: saleId,
+        supplierId,
+        idempotencyKey: cardSettlementKey,
+        amount: '10000',
+        paymentMethod: 'CARD',
+      })
+    );
+
+    assert.equal(result.success, true, result.error);
+
+    const row = await one(
+      `SELECT s.payment_method,
+              m.id AS movement_id
+       FROM external_supplier_settlements s
+       LEFT JOIN cash_drawer_movements m
+         ON m.external_supplier_settlement_id=s.id
+       WHERE s.idempotency_key=$1`,
+      [cardSettlementKey]
+    );
+
+    assert.equal(row.payment_method, 'CARD');
+    assert.equal(row.movement_id, null);
+  });
+
+  await check('27 | Reject duplicate Card payment', async () => {
+    const result = await settlement.payExternalSupplierAction(
+      form({
+        externalSaleId: saleId,
+        supplierId,
+        idempotencyKey: cardSettlementKey,
+        amount: '10000',
+        paymentMethod: 'CARD',
+      })
+    );
+
+    assert.equal(result.success, false);
+  });
+
+  await check('28 | Reject insufficient Bank balance', async () => {
+    const result = await settlement.payExternalSupplierAction(
+      form({
+        externalSaleId: saleId,
+        supplierId,
+        idempotencyKey: randomUUID(),
+        amount: '150001',
+        paymentMethod: 'BANK',
+      })
+    );
+
+    assert.equal(result.success, false);
+    assert.match(result.error || '', /insufficient funds/i);
+  });
+
+  await check('29 | Verify four payment account balances', async () => {
+    const values = await balances.getMoneyBalances();
+    const amount = method =>
+      Number(values.find(v => v.method === method)?.balance);
+
+    assert.equal(amount('CASH'), 50000);
+    assert.equal(amount('MOBILE_MONEY'), 75000);
+    assert.equal(amount('BANK'), 150000);
+    assert.equal(amount('CARD'), 10000);
+
+    const supplier = await one(
+      `SELECT COALESCE(SUM(amount),0) AS paid
+       FROM external_supplier_settlements
+       WHERE external_sale_id=$1`,
+      [saleId]
+    );
+
+    assert.equal(Number(supplier.paid), 135000);
+    assert.equal(350000 - Number(supplier.paid), 215000);
+  });
+
 } catch (error) {
   console.error('FATAL:', error?.stack || error);
   results.push(['FAIL', 'Setup or application import']);
@@ -707,6 +874,13 @@ try {
         await client.query(
           'DELETE FROM suppliers WHERE id=$1',
           [supplierId]
+        );
+      }
+
+      if (cardFundingId) {
+        await client.query(
+          'DELETE FROM money_additions WHERE id=$1',
+          [cardFundingId]
         );
       }
 

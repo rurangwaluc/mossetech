@@ -14,6 +14,15 @@ import {
 } from '@/lib/cash-drawer/locking';
 
 import { formatMoney, parseMoney } from './money';
+import {
+  paymentMethods,
+} from '@/lib/money/balance';
+import type {
+  PaymentMethod,
+} from '@/lib/money/balance';
+import {
+  getPaymentMethodBalanceInTransaction,
+} from '@/lib/money/transaction-balance';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -54,10 +63,10 @@ export async function payExternalSupplierAction(
     return { success: false, error: 'Invalid supplier payment.' };
   }
 
-  if (paymentMethod !== 'CASH') {
+  if (!paymentMethods.includes(paymentMethod as PaymentMethod)) {
     return {
       success: false,
-      error: 'This payment method is not yet available.',
+      error: 'Choose a valid payment method.',
     };
   }
 
@@ -149,8 +158,14 @@ export async function payExternalSupplierAction(
         };
       }
 
-      // Lock the active drawer and verify physical cash.
-      const drawerState = await getLockedCurrentDrawerState(tx);
+      // Cash affects the physical drawer. Non-cash payments
+      // affect only their selected financial account.
+      let drawerState: Awaited<
+        ReturnType<typeof getLockedCurrentDrawerState>
+      > = null;
+
+      if (paymentMethod === 'CASH') {
+        drawerState = await getLockedCurrentDrawerState(tx);
 
       if (!drawerState) {
         return {
@@ -173,6 +188,40 @@ export async function payExternalSupplierAction(
         };
       }
 
+      } else {
+        // Serialize supplier settlements against the same
+        // non-cash account across different external sales.
+        const accountLockIds: Record<string, number> = {
+          MOBILE_MONEY: 1,
+          BANK: 2,
+          CARD: 3,
+        };
+
+        await tx.execute(sql`
+          SELECT pg_advisory_xact_lock(
+            556,
+            ${accountLockIds[paymentMethod]}
+          )
+        `);
+
+        const available = await getPaymentMethodBalanceInTransaction(
+          tx,
+          paymentMethod as PaymentMethod,
+        );
+
+        const availableCents = Math.round(available * 100);
+
+        if (
+          !Number.isSafeInteger(availableCents) ||
+          paymentCents > availableCents
+        ) {
+          return {
+            success: false,
+            error: 'Insufficient funds in the selected payment account.',
+          };
+        }
+      }
+
       const [settlement] = await tx
         .insert(externalSupplierSettlements)
         .values({
@@ -181,7 +230,7 @@ export async function payExternalSupplierAction(
           supplierId,
           paidByUserId: user.id,
           amount: formatMoney(paymentCents),
-          paymentMethod: 'CASH',
+          paymentMethod: paymentMethod as PaymentMethod,
           notes: notes || null,
         })
         .onConflictDoNothing({
@@ -196,7 +245,8 @@ export async function payExternalSupplierAction(
         };
       }
 
-      await tx.insert(cashDrawerMovements).values({
+      if (drawerState) {
+        await tx.insert(cashDrawerMovements).values({
         drawerId: drawerState.drawer.id,
         createdByUserId: user.id,
         movementType: 'EXTERNAL_SUPPLIER_PAYMENT',
@@ -204,7 +254,8 @@ export async function payExternalSupplierAction(
         amount: formatMoney(paymentCents),
         externalSupplierSettlementId: settlement.id,
         reason: `External sale ${externalSaleId}; settlement ${settlement.id}`,
-      });
+        });
+      }
 
       return { success: true };
     });
