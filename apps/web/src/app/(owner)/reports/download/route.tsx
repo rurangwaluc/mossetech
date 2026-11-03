@@ -247,15 +247,15 @@ function SummaryTable({
       negative: false,
     },
     {
-      label: 'External stock gross profit / loss',
+      label: 'Profit or Loss From External Stock',
       value: money(report.external.grossProfit),
       detail: 'Completed external sales minus source shop costs / included in total gross profit',
       negative: report.external.grossProfit < 0,
     },
     {
-      label: 'Outstanding source shop debt',
+      label: 'Money We Still Owe Suppliers',
       value: money(report.external.supplierOutstanding),
-      detail: 'Current unpaid supplier obligations',
+      detail: 'Total amount we still need to pay suppliers',
       negative: report.external.supplierOutstanding > 0,
     },
     {
@@ -518,20 +518,20 @@ function MoneyTable({
       key:
         'outstanding',
       label:
-        'Outstanding',
+        'Money Customers Still Owe',
       value:
         money(
           report.receivables.currentOutstanding,
         ),
       detail:
-        'Current total across all unpaid sales',
+        'Total customers still owe us, including earlier sales',
       negative: false,
     },
     {
       key:
         'unpaid-sales',
       label:
-        'Unpaid sales',
+        'Sales Not Fully Paid',
       value:
         String(
           report.receivables.unpaidSalesCount,
@@ -539,7 +539,7 @@ function MoneyTable({
       detail:
         report.receivables.unpaidSalesCount ===
         0
-          ? 'No customer balances are outstanding'
+          ? 'Customers have no unpaid balances'
           : report.receivables.unpaidSalesCount ===
               1
             ? '1 sale still has money owed'
@@ -704,11 +704,10 @@ function MoneyTable({
           styles.note
         }
       >
-        Outstanding and unpaid
-        sales show the current
-        business position and are
-        not limited to the selected
-        report period.
+        Money customers still owe and
+        sales not fully paid include
+        unpaid sales from earlier
+        report periods.
       </Text>
     </View>
   );

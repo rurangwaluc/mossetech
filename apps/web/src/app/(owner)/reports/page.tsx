@@ -266,16 +266,16 @@ export default async function ReportsPage({
     },
     {
       key: 'external-gross-profit',
-      label: 'External stock gross profit / loss',
+      label: 'Profit or Loss From External Stock',
       value: money(report.external.grossProfit),
       detail: 'Completed external sales minus agreed source shop costs / included in gross profit below',
       tone: report.external.grossProfit < 0 ? 'negative' : 'positive',
     },
     {
       key: 'external-shop-due',
-      label: 'Outstanding source shop debt',
+      label: 'Money We Still Owe Suppliers',
       value: money(report.external.supplierOutstanding),
-      detail: 'Current unpaid amount owed to source shops',
+      detail: 'Total amount we still need to pay suppliers',
       tone: report.external.supplierOutstanding > 0 ? 'negative' : 'normal',
     },
     {
@@ -289,7 +289,7 @@ export default async function ReportsPage({
     },
     {
       key: 'gross-profit',
-      label: 'Gross profit / loss',
+      label: 'Profit or Loss Before Business Expenses',
       value: summary.grossProfit === null
         ? 'Cost missing'
         : money(summary.grossProfit),
@@ -302,11 +302,11 @@ export default async function ReportsPage({
     },
     {
       key: 'net-profit',
-      label: 'Net profit / loss',
+      label: 'Profit or Loss After Business Expenses',
       value: summary.netProfit === null
         ? 'Cost missing'
         : money(summary.netProfit),
-      detail: 'Gross profit minus recorded business expenses',
+      detail: 'Profit after subtracting recorded business expenses',
       tone: summary.netProfit === null
         ? 'normal'
         : summary.netProfit < 0 ? 'negative' : 'positive',
@@ -670,7 +670,7 @@ export default async function ReportsPage({
       <section>
         <SectionHeading
           eyebrow="Money"
-          title="Money and receivables"
+          title="Customer Payments and Unpaid Sales"
           action={
             <Link
               href="/debts"
@@ -706,7 +706,7 @@ export default async function ReportsPage({
           )}
 
           <MobileRow
-            label="Outstanding"
+            label="Money Customers Still Owe"
             value={money(
               receivables.currentOutstanding,
             )}
@@ -721,7 +721,7 @@ export default async function ReportsPage({
             detail={
               receivables.unpaidSalesCount ===
               0
-                ? 'No customer balances are outstanding'
+                ? 'Customers have no unpaid balances'
                 : receivables.unpaidSalesCount ===
                     1
                   ? '1 sale still has money owed'
@@ -786,7 +786,7 @@ export default async function ReportsPage({
 
               <tr className="border-t-2 border-neutral-300 dark:border-[#454545]">
                 <td className="px-4 py-3.5 text-sm font-black text-[#222222] dark:text-[#F5F5F5]">
-                  Outstanding
+                  Money Customers Still Owe
                 </td>
 
                 <td className="px-4 py-3.5 text-right text-sm">
@@ -806,7 +806,7 @@ export default async function ReportsPage({
 
               <tr className="border-t border-neutral-200 dark:border-[#343434]">
                 <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                  Unpaid sales
+                  Sales Not Fully Paid
                 </td>
 
                 <td className="px-4 py-3.5 text-right text-sm">
@@ -820,7 +820,7 @@ export default async function ReportsPage({
                 <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
                   {receivables.unpaidSalesCount ===
                   0
-                    ? 'No customer balances are outstanding'
+                    ? 'Customers have no unpaid balances'
                     : receivables.unpaidSalesCount ===
                         1
                       ? '1 sale still has money owed'
