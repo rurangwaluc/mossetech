@@ -3,7 +3,7 @@ import SoldProductSearch from './sold-product-search';
 import { db } from '@mossetech/db/client';
 import { saleItems, sales } from '@mossetech/db/schema';
 import { eq } from 'drizzle-orm';
-import { requireOwner } from '@/lib/auth/session';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { issueWarrantyAction } from '@/lib/warranties/actions';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -27,7 +27,7 @@ export default async function NewWarrantyPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireOwner();
+  await requirePermission('sales.create');
 
   const { id } = await params;
 

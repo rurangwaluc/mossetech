@@ -1,4 +1,5 @@
 import { requirePermission } from '@/lib/auth/require-permission';
+import { hasEmployeePermission } from '@/lib/auth/permissions';
 import Link from 'next/link';
 import WarrantyHistory from './warranty-history';
 import SaleDocuments from './sale-documents';
@@ -368,6 +369,8 @@ export default async function SaleDetailPage({
   const isOwner =
     user.role === 'OWNER';
 
+  const canIssueWarranty = await hasEmployeePermission(user, 'sales.create');
+
   const priceChangeUserIds = [
     ...new Set(
       items
@@ -701,7 +704,7 @@ export default async function SaleDetailPage({
               </Link>
             )}
 
-            {isOwner ? (
+            {canIssueWarranty ? (
               <Link
                 href={`/sales/${sale.id}/warranty/new`}
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--border)] px-4 text-sm font-black text-[var(--text)] hover:border-[var(--primary)]"

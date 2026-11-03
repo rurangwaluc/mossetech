@@ -3,7 +3,7 @@
 import { db } from '@mossetech/db/client';
 import { saleItems, sales, warranties } from '@mossetech/db/schema';
 import { and, eq } from 'drizzle-orm';
-import { requireOwner } from '@/lib/auth/session';
+import { requirePermission } from '@/lib/auth/require-permission';
 import { redirect } from 'next/navigation';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -24,7 +24,7 @@ function kigaliDate(value: Date): string {
 }
 
 export async function issueWarrantyAction(formData: FormData) {
-  const user = await requireOwner();
+  const user = await requirePermission('sales.create');
 
   const saleId = String(formData.get('saleId') ?? '');
   const saleItemId = String(formData.get('saleItemId') ?? '');
@@ -87,7 +87,7 @@ export async function issueWarrantyAction(formData: FormData) {
     throw new Error('Warranty cannot start before the sale date.');
   }
 
-  const [issued] = await db.insert(warranties).values({
+  await db.insert(warranties).values({
     saleId: sale.id,
     saleItemId: item.id,
     issuedByUserId: user.id,
@@ -100,7 +100,7 @@ export async function issueWarrantyAction(formData: FormData) {
     terms,
     startDate,
     expiryDate,
-  }).returning({ id: warranties.id });
+  });
 
   redirect(`/sales/${sale.id}?warrantyIssued=1`);
 }
