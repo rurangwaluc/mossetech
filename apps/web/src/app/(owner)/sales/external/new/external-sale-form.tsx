@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import SourceShopSearch from './source-shop-search';
+
 import { useTransition } from 'react';
 import { createExternalSourceShopAction } from '@/lib/external-sales/shop-actions';
 import {
@@ -137,24 +139,12 @@ export function ExternalSaleForm({
       />
 
       <div className="grid gap-5 sm:grid-cols-2">
-        <label className="text-sm font-semibold text-[var(--text)]">
-          Source shop
-          <select
-            name="supplierId"
-            className={inputClass}
+        <div>
+          <SourceShopSearch
+            shops={shopList}
             value={selectedShopId}
-            onChange={(event) => setSelectedShopId(event.target.value)}
-            required
-          >
-            <option value="" disabled>
-              Select source shop
-            </option>
-            {shopList.map((supplier) => (
-              <option key={supplier.id} value={supplier.id}>
-                {supplier.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedShopId}
+          />
           <button
             type="button"
             onClick={() => {
@@ -165,7 +155,7 @@ export function ExternalSaleForm({
           >
             {addingShop ? 'Cancel adding shop' : '+ Add new shop'}
           </button>
-        </label>
+        </div>
 
         <label className="text-sm font-semibold text-[var(--text)]">
           Customer name

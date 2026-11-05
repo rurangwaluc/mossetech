@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import SourceShopSearch from '../../new/source-shop-search';
+
 import { useActionState, useState } from 'react';
 
 import {
@@ -33,6 +35,7 @@ export function EditExternalDraftForm({
     updateExternalSaleDraftAction,
     {} as ExternalSaleDraftState,
   );
+  const [selectedShopId, setSelectedShopId] = useState(sale.supplierId);
   const [sourcePrice, setSourcePrice] = useState(sale.supplierTotal);
   const [sellingPrice, setSellingPrice] = useState(sale.customerTotal);
 
@@ -70,21 +73,11 @@ export function EditExternalDraftForm({
     >
       <input type="hidden" name="externalSaleId" value={sale.id} />
 
-      <label className="block text-sm font-semibold text-[var(--text)]">
-        Source shop
-        <select
-          name="supplierId"
-          defaultValue={sale.supplierId}
-          required
-          className={fieldClass}
-        >
-          {shops.map((shop) => (
-            <option key={shop.id} value={shop.id}>
-              {shop.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SourceShopSearch
+        shops={shops}
+        value={selectedShopId}
+        onChange={setSelectedShopId}
+      />
 
       <label className="block text-sm font-semibold text-[var(--text)]">
         Customer name (optional)
@@ -178,7 +171,7 @@ export function EditExternalDraftForm({
 
       <button
         type="submit"
-        disabled={pending || !validPrices}
+        disabled={pending || !validPrices || !selectedShopId}
         className="w-full rounded-lg bg-[var(--primary)] px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
       >
         {pending ? 'Saving changes...' : 'Save draft changes'}
