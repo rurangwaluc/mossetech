@@ -312,47 +312,49 @@ export default async function ExternalSalesPage({
             </p>
           </header>
 
-          {/* DESKTOP TABLE */}
-          <div className="hidden overflow-x-auto xl:block">
-            <table className="w-full min-w-[1320px] border-collapse">
+          {/* DESKTOP TABLE / COMPACT WITHOUT HORIZONTAL SCROLL */}
+          <div className="hidden xl:block">
+            <table className="w-full table-fixed border-collapse">
+              <colgroup>
+                <col className="w-[16%]" />
+                <col className="w-[32%]" />
+                <col className="w-[15%]" />
+                <col className="w-[25%]" />
+                <col className="w-[12%]" />
+              </colgroup>
               <thead>
-                <tr className="bg-[var(--surface)]">
-                  {[
-                    ['Date', 'text-left'],
-                    ['Customer', 'text-left'],
-                    ['Item / Source shop', 'text-left'],
-                    ['Total', 'text-right'],
-                    ['Paid', 'text-right'],
-                    ['Balance', 'text-right'],
-                    ['Customer Payment', 'text-left'],
-                    ['Supplier Payment', 'text-left'],
-                    ['Status', 'text-left'],
-                    ['Actions', 'text-center'],
-                  ].map(([heading, alignment]) => (
-                    <th
-                      key={heading}
-                      scope="col"
-                      className={`border-b border-r border-[var(--border)] px-4 py-3 ${alignment} text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)] last:border-r-0`}
-                    >
-                      {heading}
-                    </th>
-                  ))}
+                <tr className="bg-[var(--surface)] text-left">
+                  {['Date', 'Sale details', 'Total', 'Payments', 'Action'].map(
+                    (heading) => (
+                      <th
+                        key={heading}
+                        scope="col"
+                        className="border-b border-r border-[var(--border)] px-3 py-3 text-[10px] font-black uppercase tracking-[0.08em] text-[var(--muted)] last:border-r-0"
+                      >
+                        {heading}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
-
               <tbody>
                 {sales.map((sale) => {
                   const isDraft = sale.status === 'DRAFT';
-                  const balances = calculateExternalSaleBalances({
-                    customerTotalCents: parseMoney(sale.customerTotal),
-                    supplierTotalCents: parseMoney(sale.supplierTotal),
-                    customerPaidCents: paidBySale.get(sale.id) || 0,
-                    supplierPaidCents: settledBySale.get(sale.id) || 0,
-                  });
-                  const totalCents = parseMoney(sale.customerTotal);
-                  const paidCents = paidBySale.get(sale.id) || 0;
-                  const balanceCents = balances.customerBalanceCents;
+                  const isCompleted = sale.status === 'POSTED';
                   const href = `/sales/external/${sale.id}`;
+
+                  const totalCents = parseMoney(sale.customerTotal);
+                  const supplierTotalCents = parseMoney(sale.supplierTotal);
+                  const customerPaidCents = paidBySale.get(sale.id) || 0;
+                  const supplierPaidCents = settledBySale.get(sale.id) || 0;
+
+                  const balances = calculateExternalSaleBalances({
+                    customerTotalCents: totalCents,
+                    supplierTotalCents,
+                    customerPaidCents,
+                    supplierPaidCents,
+                  });
+
                   const date = new Intl.DateTimeFormat('en-RW', {
                     dateStyle: 'medium',
                     timeStyle: 'short',
@@ -360,72 +362,83 @@ export default async function ExternalSalesPage({
                   }).format(sale.createdAt);
 
                   return (
-                    <tr key={sale.id} className="transition hover:bg-[var(--surface)]">
-                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]">
+                    <tr
+                      key={sale.id}
+                      className="border-b border-[var(--border)] last:border-b-0 hover:bg-[var(--surface)]"
+                    >
+                      <td className="px-3 py-4 align-top">
+                        <span className="block text-xs font-bold leading-relaxed text-[var(--text)]">
                           {date}
-                        </Link>
+                        </span>
                       </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
-                          {sale.customerName || 'Walk-in customer'}
-                        </Link>
-                      </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                        <Link href={href} className="block min-w-0 px-4 py-4">
-                          <span className="block text-sm font-bold text-[var(--text)]">
+
+                      <td className="px-3 py-4 align-top">
+                        <Link
+                          href={href}
+                          className="block min-w-0 space-y-1.5"
+                        >
+                          <span className="block break-words text-sm font-black text-[var(--text)]">
+                            {sale.customerName || 'Walk-in customer'}
+                          </span>
+                          <span className="block break-words text-xs font-semibold text-[var(--text)]">
                             {sale.productName} ×{sale.quantity}
                           </span>
-                          <span className="mt-1 block text-xs font-semibold text-[var(--muted)]">
+                          <span className="block break-words text-xs text-[var(--muted)]">
                             {sale.supplierName}
+                          </span>
+                          <span className="block text-[11px] font-semibold text-[var(--muted)]">
+                            {statusLabel(sale.status)}
                           </span>
                         </Link>
                       </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 text-right align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]">
+
+                      <td className="px-3 py-4 align-top">
+                        <span className="block break-words text-right text-xs font-black tabular-nums text-[var(--text)]">
                           {rwf(totalCents)}
-                        </Link>
+                        </span>
                       </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 text-right align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]">
-                          {isDraft ? '—' : rwf(paidCents)}
-                        </Link>
+
+                      <td className="px-3 py-4 align-top">
+                        {isCompleted ? (
+                          <div className="space-y-2 text-xs">
+                            <div>
+                              <span className="block text-[11px] text-[var(--muted)]">
+                                Customer
+                              </span>
+                              <span className="font-bold text-[var(--text)]">
+                                {paymentStatus(sale.status, totalCents, customerPaidCents)}
+                              </span>
+                              {balances.customerBalanceCents > 0 ? (
+                                <span className="block text-[11px] font-semibold text-[var(--muted)]">
+                                  Owes {rwf(balances.customerBalanceCents)}
+                                </span>
+                              ) : null}
+                            </div>
+                            <div>
+                              <span className="block text-[11px] text-[var(--muted)]">
+                                Supplier
+                              </span>
+                              <span className="font-bold text-[var(--text)]">
+                                {paymentStatus(sale.status, supplierTotalCents, supplierPaidCents)}
+                              </span>
+                              {balances.supplierBalanceCents > 0 ? (
+                                <span className="block text-[11px] font-semibold text-[#A66B09] dark:text-[#E8B449]">
+                                  Owe {rwf(balances.supplierBalanceCents)}
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-[var(--muted)]">
+                            {isDraft ? 'Not completed' : 'Cancelled'}
+                          </span>
+                        )}
                       </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 text-right align-top">
+
+                      <td className="px-2 py-4 text-center align-top">
                         <Link
                           href={href}
-                          className={`block px-4 py-4 text-sm font-black tabular-nums ${
-                            !isDraft && balanceCents > 0
-                              ? 'text-[#C88C18] dark:text-[#E8B449]'
-                              : 'text-[var(--muted)]'
-                          }`}
-                        >
-                          {isDraft ? '—' : rwf(balanceCents)}
-                        </Link>
-                      </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
-                          {paymentStatus(sale.status, totalCents, paidCents)}
-                        </Link>
-                      </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
-                          {paymentStatus(
-                            sale.status,
-                            parseMoney(sale.supplierTotal),
-                            settledBySale.get(sale.id) || 0,
-                          )}
-                        </Link>
-                      </td>
-                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
-                          {statusLabel(sale.status)}
-                        </Link>
-                      </td>
-                      <td className="border-b border-[var(--border)] px-3 py-3 text-center align-top">
-                        <Link
-                          href={href}
-                          className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--border)] px-3 text-xs font-black text-[var(--text)] transition hover:border-[var(--primary)]"
+                          className="inline-flex min-h-9 w-full items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 text-xs font-bold text-[var(--primary)] hover:border-[var(--primary)] hover:bg-[var(--surface)]"
                         >
                           {isDraft ? 'Continue' : 'View'}
                         </Link>
