@@ -316,15 +316,16 @@ export default async function ExternalSalesPage({
           <div className="hidden xl:block">
             <table className="w-full table-fixed border-collapse">
               <colgroup>
-                <col className="w-[16%]" />
-                <col className="w-[32%]" />
-                <col className="w-[15%]" />
+                <col className="w-[14%]" />
+                <col className="w-[17%]" />
                 <col className="w-[25%]" />
-                <col className="w-[12%]" />
+                <col className="w-[13%]" />
+                <col className="w-[22%]" />
+                <col className="w-[9%]" />
               </colgroup>
               <thead>
                 <tr className="bg-[var(--surface)] text-left">
-                  {['Date', 'Sale details', 'Total', 'Payments', 'Action'].map(
+                  {['Date', 'Customer', 'Product / Source Shop', 'Total', 'Payments', 'Action'].map(
                     (heading) => (
                       <th
                         key={heading}
@@ -370,24 +371,27 @@ export default async function ExternalSalesPage({
                         <span className="block text-xs font-bold leading-relaxed text-[var(--text)]">
                           {date}
                         </span>
+                        <span className="mt-2 block text-[11px] font-semibold text-[var(--muted)]">
+                          {statusLabel(sale.status)}
+                        </span>
                       </td>
 
                       <td className="px-3 py-4 align-top">
                         <Link
                           href={href}
-                          className="block min-w-0 space-y-1.5"
+                          className="block break-words text-sm font-black text-[var(--text)]"
                         >
-                          <span className="block break-words text-sm font-black text-[var(--text)]">
-                            {sale.customerName || 'Walk-in customer'}
-                          </span>
-                          <span className="block break-words text-xs font-semibold text-[var(--text)]">
+                          {sale.customerName || 'Walk-in customer'}
+                        </Link>
+                      </td>
+
+                      <td className="px-3 py-4 align-top">
+                        <Link href={href} className="block min-w-0">
+                          <span className="block break-words text-sm font-bold text-[var(--text)]">
                             {sale.productName} ×{sale.quantity}
                           </span>
-                          <span className="block break-words text-xs text-[var(--muted)]">
-                            {sale.supplierName}
-                          </span>
-                          <span className="block text-[11px] font-semibold text-[var(--muted)]">
-                            {statusLabel(sale.status)}
+                          <span className="mt-1 block break-words text-xs text-[var(--muted)]">
+                            Source: {sale.supplierName}
                           </span>
                         </Link>
                       </td>
