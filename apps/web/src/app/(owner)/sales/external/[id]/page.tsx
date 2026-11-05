@@ -24,6 +24,17 @@ function rwf(value: string | number) {
   }).format(Number(value))} RWF`;
 }
 
+function paymentStatus(
+  status: string,
+  totalCents: number,
+  paidCents: number,
+) {
+  if (status !== 'POSTED') return '—';
+  if (totalCents === 0 || paidCents >= totalCents) return 'Paid';
+  if (paidCents === 0) return 'Not Paid';
+  return 'Partly Paid';
+}
+
 export default async function ExternalSaleDetailsPage({
   params,
 }: {
@@ -135,11 +146,21 @@ export default async function ExternalSaleDetailsPage({
           </div>
         </div>
 
-        <div className="grid border-t border-[var(--border)] bg-[var(--border)] sm:grid-cols-4 sm:gap-px">
+        <div className="grid border-t border-[var(--border)] bg-[var(--border)] sm:grid-cols-3 sm:gap-px">
           {[
             ['Total', rwf(sale.customerTotal)],
             ['Paid', isDraft ? '—' : rwf(customerPaidCents / 100)],
             ['Balance', isDraft ? '—' : rwf(balances.customerBalanceCents / 100)],
+            ['Customer payment', paymentStatus(
+              sale.status,
+              parseMoney(sale.customerTotal),
+              customerPaidCents,
+            )],
+            ['Supplier payment', paymentStatus(
+              sale.status,
+              parseMoney(sale.supplierTotal),
+              supplierPaidCents,
+            )],
             ['Status', saleStatus],
           ].map(([label, value], index) => (
             <div
