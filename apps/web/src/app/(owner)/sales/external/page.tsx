@@ -40,6 +40,17 @@ function statusLabel(status: string) {
   }
 }
 
+function customerPaymentStatus(
+  status: string,
+  totalCents: number,
+  paidCents: number,
+) {
+  if (status !== 'POSTED') return '—';
+  if (totalCents === 0 || paidCents >= totalCents) return 'Paid';
+  if (paidCents === 0) return 'Not Paid';
+  return 'Partly Paid';
+}
+
 type Params = {
   q?: string | string[];
   status?: string | string[];
@@ -303,7 +314,7 @@ export default async function ExternalSalesPage({
 
           {/* DESKTOP TABLE */}
           <div className="hidden overflow-x-auto xl:block">
-            <table className="w-full min-w-[1100px] border-collapse">
+            <table className="w-full min-w-[1200px] border-collapse">
               <thead>
                 <tr className="bg-[var(--surface)]">
                   {[
@@ -313,6 +324,7 @@ export default async function ExternalSalesPage({
                     ['Total', 'text-right'],
                     ['Paid', 'text-right'],
                     ['Balance', 'text-right'],
+                    ['Customer Payment', 'text-left'],
                     ['Status', 'text-left'],
                     ['Actions', 'text-center'],
                   ].map(([heading, alignment]) => (
@@ -392,6 +404,11 @@ export default async function ExternalSalesPage({
                       </td>
                       <td className="border-b border-r border-[var(--border)] p-0 align-top">
                         <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
+                          {customerPaymentStatus(sale.status, totalCents, paidCents)}
+                        </Link>
+                      </td>
+                      <td className="border-b border-r border-[var(--border)] p-0 align-top">
+                        <Link href={href} className="block px-4 py-4 text-sm font-black text-[var(--text)]">
                           {statusLabel(sale.status)}
                         </Link>
                       </td>
@@ -447,6 +464,13 @@ export default async function ExternalSalesPage({
                       </p>
                       <p className="mt-1 text-xs font-black text-[var(--primary)]">
                         {statusLabel(sale.status)}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[var(--muted)]">
+                        Customer payment: {customerPaymentStatus(
+                          sale.status,
+                          parseMoney(sale.customerTotal),
+                          paidBySale.get(sale.id) || 0,
+                        )}
                       </p>
                     </div>
                   </div>
