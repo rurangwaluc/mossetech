@@ -682,244 +682,97 @@ export default async function SalesPage({
             </div>
           </header>
 
-          {/* DESKTOP TABLE */}
+          {/* Desktop: balanced columns, compact rows, and readable dates. */}
           <div className="hidden overflow-x-auto xl:block">
-            <table className="w-full min-w-[1080px] border-collapse">
+            <table className="w-full min-w-[1050px] table-fixed border-collapse text-left">
+              <colgroup>
+                <col className="w-[14%]" />
+                <col className="w-[16%]" />
+                <col className="w-[24%]" />
+                <col className="w-[10%]" />
+                <col className="w-[10%]" />
+                <col className="w-[10%]" />
+                <col className="w-[9%]" />
+                <col className="w-[7%]" />
+              </colgroup>
               <thead>
-                <tr className="bg-[var(--surface)]">
-                  <th className="w-[145px] border-b border-r border-[var(--border)] px-4 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Date
-                  </th>
-
-                  <th className="w-[180px] border-b border-r border-[var(--border)] px-4 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Customer
-                  </th>
-
-                  <th className="border-b border-r border-[var(--border)] px-4 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Items
-                  </th>
-
-                  <th className="w-[120px] border-b border-r border-[var(--border)] px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Total
-                  </th>
-
-                  <th className="w-[120px] border-b border-r border-[var(--border)] px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Paid
-                  </th>
-
-                  <th className="w-[120px] border-b border-r border-[var(--border)] px-4 py-3 text-right text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Balance
-                  </th>
-
-                  <th className="w-[105px] border-b border-r border-[var(--border)] px-4 py-3 text-left text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Status
-                  </th>
-
-                  <th className="w-[86px] border-b border-[var(--border)] px-4 py-3 text-center text-[10px] font-black uppercase tracking-[0.14em] text-[var(--muted)]">
-                    Actions
-                  </th>
+                <tr className="border-b border-[var(--border)] bg-[var(--surface)] text-[10px] font-extrabold uppercase tracking-[0.1em] text-[var(--muted)]">
+                  <th scope="col" className="px-4 py-3">Date</th>
+                  <th scope="col" className="px-3 py-3">Customer</th>
+                  <th scope="col" className="px-3 py-3">Products</th>
+                  <th scope="col" className="px-3 py-3 text-right">Total</th>
+                  <th scope="col" className="px-3 py-3 text-right">Paid</th>
+                  <th scope="col" className="px-3 py-3 text-right">Balance</th>
+                  <th scope="col" className="px-3 py-3">Status</th>
+                  <th scope="col" className="px-3 py-3 text-right">Open</th>
                 </tr>
               </thead>
-
-              <tbody>
-                {saleList.map(
-                  (sale) => {
-                    const items =
-                      itemsBySaleId.get(
-                        sale.id,
-                      ) || [];
-
-                    const names =
-                      items
-                        .map(
-                          (item) =>
-                            `${item.itemName} ×${item.quantity}`,
-                        )
-                        .join(
-                          ', ',
-                        );
-
-                    const total =
-                      Number(
-                        sale.totalAmount,
-                      );
-
-                    const paid =
-                      Number(
-                        sale.paidAmount,
-                      );
-
-                    const balance =
-                      Number(
-                        sale.balanceAmount,
-                      );
-
-                    const hint =
-                      pendingSaleHint(
-                        pendingRequestBySaleId.get(
-                          sale.id,
-                        ),
-                      );
-
-                    const href =
-                      `/sales/${sale.id}`;
-
-                    return (
-                      <tr
-                        key={
-                          sale.id
-                        }
-                        className="group transition hover:bg-[var(--surface)]"
-                      >
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className="block px-4 py-4"
-                          >
-                            <span className="text-sm font-black tabular-nums text-[var(--text)]">
-                              {dateTime(
-                                sale.saleDate,
-                              )}
+              <tbody className="divide-y divide-[var(--border)]">
+                {saleList.map((sale) => {
+                  const items = itemsBySaleId.get(sale.id) || [];
+                  const names = items
+                    .map((item) => `${item.itemName} ×${item.quantity}`)
+                    .join(', ');
+                  const total = Number(sale.totalAmount);
+                  const paid = Number(sale.paidAmount);
+                  const balance = Number(sale.balanceAmount);
+                  const hint = pendingSaleHint(
+                    pendingRequestBySaleId.get(sale.id),
+                  );
+                  const href = `/sales/${sale.id}`;
+                  return (
+                    <tr key={sale.id} className="group transition-colors hover:bg-[var(--surface)]">
+                      <td className="px-4 py-3 align-middle">
+                        <Link href={href} prefetch className="block whitespace-nowrap text-xs font-semibold tabular-nums text-[var(--muted)] hover:text-[var(--primary)]">
+                          {dateTime(sale.saleDate).replace(', ', ' · ')}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 align-middle">
+                        <Link href={href} prefetch className="block min-w-0" title={sale.customerName || 'Walk-in customer'}>
+                          <span className="block truncate text-sm font-bold text-[var(--text)] group-hover:text-[var(--primary)]">
+                            {sale.customerName || 'Walk-in customer'}
+                          </span>
+                          {sale.customerPhone ? (
+                            <span className="mt-0.5 block truncate text-xs text-[var(--muted)]">{sale.customerPhone}</span>
+                          ) : null}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 align-middle">
+                        <Link href={href} prefetch className="block min-w-0" title={names || 'Sale'}>
+                          <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium text-[var(--text)]">
+                            {names || 'Sale'}
+                          </span>
+                          {hint ? (
+                            <span className="mt-1 block truncate text-xs font-semibold text-[var(--primary)]" title={`${hint.label}: ${hint.detail}`}>
+                              {hint.label}{hint.detail ? ` · ${hint.detail}` : ''}
                             </span>
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className="block px-4 py-4"
-                          >
-                            <span className="block truncate text-sm font-black text-[var(--text)]">
-                              {sale.customerName ||
-                                'Walk-in customer'}
-                            </span>
-
-                            {sale.customerPhone ? (
-                              <span className="mt-1 block truncate text-xs font-semibold text-[var(--muted)]">
-                                {
-                                  sale.customerPhone
-                                }
-                              </span>
-                            ) : null}
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className="block min-w-0 px-4 py-4"
-                          >
-                            <span className="block truncate text-sm font-bold text-[var(--text)]">
-                              {names ||
-                                'Sale'}
-                            </span>
-
-                            {hint ? (
-                              <span className="mt-1.5 block">
-                                <span className="block text-[11px] font-black text-[var(--primary)]">
-                                  {
-                                    hint.label
-                                  }
-                                </span>
-
-                                <span className="mt-0.5 block truncate text-xs font-semibold text-[var(--muted)]">
-                                  {
-                                    hint.detail
-                                  }
-                                </span>
-                              </span>
-                            ) : null}
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top text-right">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]"
-                          >
-                            {money(
-                              total,
-                            )}
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top text-right">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className="block px-4 py-4 text-sm font-black tabular-nums text-[var(--text)]"
-                          >
-                            {money(
-                              paid,
-                            )}
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top text-right">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className={
-                              balance > 0
-                                ? 'block px-4 py-4 text-sm font-black tabular-nums text-[#C88C18] dark:text-[#E8B449]'
-                                : 'block px-4 py-4 text-sm font-black tabular-nums text-[var(--muted)]'
-                            }
-                          >
-                            {money(
-                              balance,
-                            )}
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-r border-[var(--border)] p-0 align-top">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className={`block px-4 py-4 text-sm font-black ${statusClass(
-                              paid,
-                              balance,
-                            )}`}
-                          >
-                            {saleStatus(
-                              paid,
-                              balance,
-                            )}
-                          </Link>
-                        </td>
-
-                        <td className="border-b border-[var(--border)] px-3 py-3 text-center align-top">
-                          <Link
-                            href={
-                              href
-                            }
-                            prefetch
-                            className="inline-flex h-9 items-center justify-center rounded-lg border border-[var(--border)] px-3 text-xs font-black text-[var(--text)] transition hover:border-[var(--primary)]"
-                          >
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  },
-                )}
+                          ) : null}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 text-right align-middle">
+                        <Link href={href} prefetch className="block whitespace-nowrap text-sm font-semibold tabular-nums text-[var(--text)]">{money(total)}</Link>
+                      </td>
+                      <td className="px-3 py-3 text-right align-middle">
+                        <Link href={href} prefetch className="block whitespace-nowrap text-sm font-semibold tabular-nums text-[var(--text)]">{money(paid)}</Link>
+                      </td>
+                      <td className="px-3 py-3 text-right align-middle">
+                        <Link href={href} prefetch className={`block whitespace-nowrap text-sm font-bold tabular-nums ${balance > 0 ? 'text-[#C88C18] dark:text-[#E8B449]' : 'text-[var(--muted)]'}`}>
+                          {money(balance)}
+                        </Link>
+                      </td>
+                      <td className="px-3 py-3 align-middle">
+                        <span className={`inline-flex whitespace-nowrap rounded-md px-2 py-1 text-xs font-bold ${balance <= 0 ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : paid > 0 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'bg-rose-500/10 text-rose-700 dark:text-rose-300'}`}>
+                          {saleStatus(paid, balance)}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-right align-middle">
+                        <Link href={href} prefetch aria-label={`View sale for ${sale.customerName || 'walk-in customer'}`} className="inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-lg border border-[var(--border)] px-3 text-xs font-bold text-[var(--text)] transition-colors hover:border-[var(--primary)] hover:text-[var(--primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--primary)]">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -972,7 +825,7 @@ export default async function SalesPage({
                     }
                     href={`/sales/${sale.id}`}
                     prefetch
-                    className="block p-4 transition hover:bg-[var(--surface)] sm:p-5"
+                    className="block p-4 transition hover:bg-[var(--surface)] sm:px-5 sm:py-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
@@ -1009,12 +862,12 @@ export default async function SalesPage({
                       </div>
                     </div>
 
-                    <p className="mt-3 truncate text-xs font-semibold text-[var(--muted)]">
+                    <p className="mt-2 truncate text-xs font-semibold text-[var(--muted)]">
                       {names ||
                         'Sale'}
                     </p>
 
-                    <div className="mt-3 grid grid-cols-2 gap-x-5 border-t border-[var(--border)] pt-3">
+                    <div className="mt-2 grid grid-cols-2 gap-x-5 border-t border-[var(--border)] pt-2">
                       <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.12em] text-[var(--muted)]">
                           Paid
@@ -1047,7 +900,7 @@ export default async function SalesPage({
                     </div>
 
                     {hint ? (
-                      <div className="mt-3 border-l-2 border-[var(--primary)] pl-2">
+                      <div className="mt-2 border-l-2 border-[var(--primary)] pl-2">
                         <p className="text-[11px] font-black text-[var(--primary)]">
                           {
                             hint.label
