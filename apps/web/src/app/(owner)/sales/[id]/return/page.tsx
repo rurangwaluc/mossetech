@@ -5,6 +5,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@mossetech/db/client';
 import {
   saleItems,
+  saleReturnCustomerCredits,
   saleReturnItems,
   saleReturns,
   saleReturnRefunds,
@@ -66,6 +67,15 @@ export default async function ReturnProductsPage({
     .select({ amount: saleReturnRefunds.amount })
     .from(saleReturnRefunds)
     .where(eq(saleReturnRefunds.saleId, id));
+
+  const outstandingCredits = await db
+    .select({ amount: saleReturnCustomerCredits.remainingAmount })
+    .from(saleReturnCustomerCredits)
+    .where(eq(saleReturnCustomerCredits.saleId, id));
+
+  const outstandingCreditTotal = outstandingCredits.reduce(
+    (sum, row) => sum + Number(row.amount), 0,
+  );
 
   const creditedTotal = previousCredits.reduce(
     (sum, row) => sum + Number(row.amount), 0,
@@ -132,10 +142,20 @@ export default async function ReturnProductsPage({
         </div>
       </section>
 
+      {outstandingCreditTotal > 0 ? (
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+          <p className="text-sm font-bold text-[var(--text)]">
+            Customer credit already owed: {outstandingCreditTotal.toLocaleString('en-RW')} RWF
+          </p>
+          <p className="mt-1 text-sm text-[var(--muted)]">
+            Recorded separately from the sale and not yet available for payout or spending.
+          </p>
+        </section>
+      ) : null}
+
       <ReturnProductsForm
-        cashRefundEnabled={
-          process.env.MOSSETECH_ENABLE_RETURN_CASH_REFUNDS === 'YES'
-        }
+        customerLinked={Boolean(sale.customerId)}
+        existingCustomerCredit={outstandingCreditTotal}
         saleId={id}
         items={availableItems}
         originalItems={items.filter(item => item.itemType === 'PRODUCT').map(item => ({

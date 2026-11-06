@@ -25,7 +25,8 @@ export function ReturnProductsForm({
   originalDiscount,
   alreadyPaid,
   currentSaleTotal,
-  cashRefundEnabled,
+  customerLinked,
+  existingCustomerCredit,
 }: {
   saleId: string;
   items: Item[];
@@ -34,7 +35,8 @@ export function ReturnProductsForm({
   originalDiscount: string;
   alreadyPaid: string;
   currentSaleTotal: string;
-  cashRefundEnabled: boolean;
+  customerLinked: boolean;
+  existingCustomerCredit: number;
 }) {
   const [key] = useState(() => crypto.randomUUID());
 
@@ -43,7 +45,7 @@ export function ReturnProductsForm({
     Record<string, 'RESTOCK' | 'DAMAGED'>
   >({});
   const [reason, setReason] = useState('');
-  const [refundConfirmed, setRefundConfirmed] = useState(false);
+  const [creditConfirmed, setCreditConfirmed] = useState(false);
 
   const [state, action, pending] = useActionState<
     ProductReturnState,
@@ -115,12 +117,12 @@ export function ReturnProductsForm({
     >
       <input type="hidden" name="saleId" value={saleId} />
       <input type="hidden" name="idempotencyKey" value={key} />
-      {requiresRefund && cashRefundEnabled ? (
+      {requiresRefund && customerLinked ? (
         <>
-          <input type="hidden" name="refundMethod" value="CASH" />
+          <input type="hidden" name="settlementMethod" value="CUSTOMER_CREDIT" />
           <input
             type="hidden"
-            name="cashRefundExpectedAmount"
+            name="customerCreditExpectedAmount"
             value={preview ? preview.refundDue.toFixed(2) : ''}
           />
         </>
@@ -271,32 +273,41 @@ export function ReturnProductsForm({
               </p>
             </div>
             {requiresRefund ? (
-              cashRefundEnabled ? (
-                <label className="block space-y-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm text-[var(--text)]">
-                  <span className="block text-base font-bold">Cash refund required: {formatMoney(preview.refundDue)}</span>
-                  <span className="flex items-start gap-3">
+              <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+                <p className="text-base font-bold text-[var(--text)]">
+                  Customer credit to record: {formatMoney(preview.refundDue)}
+                </p>
+                {existingCustomerCredit > 0 ? (
+                  <p className="text-sm text-[var(--muted)]">
+                    Existing credit owed: {formatMoney(existingCustomerCredit)}.
+                    After this return, total credit owed will be {formatMoney(existingCustomerCredit + preview.refundDue)}.
+                  </p>
+                ) : null}
+                <p className="text-sm text-[var(--muted)]">
+                  This money stays owed to the customer. No cash will be refunded,
+                  and this credit cannot yet be spent on purchases or paid out.
+                </p>
+                {!customerLinked ? (
+                  <p role="alert" className="text-sm font-semibold text-[var(--text)]">
+                    Link this sale to a customer before issuing customer credit.
+                  </p>
+                ) : (
+                  <label className="flex items-start gap-3 text-sm font-medium text-[var(--text)]">
                     <input
                       type="checkbox"
-                      name="cashRefundConfirmed"
+                      name="customerCreditConfirmed"
                       value="YES"
-                      checked={refundConfirmed}
+                      checked={creditConfirmed}
                       disabled={pending || completed}
-                      onChange={(event) => setRefundConfirmed(event.target.checked)}
+                      onChange={(event) => setCreditConfirmed(event.target.checked)}
                       className="mt-1"
                     />
-                    <span>I verified this exact cash amount and will return it to the customer. The cash drawer must contain sufficient money.</span>
-                  </span>
-                </label>
-              ) : (
-                <div role="alert" className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
-                  <p className="font-bold text-[var(--text)]">Customer is owed {formatMoney(preview.refundDue)}</p>
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    The customer has paid more than the products they are keeping. This return cannot be saved yet because refunds and customer credit handling are not activated. No stock, debt, or money will change.
-                  </p>
-                </div>
-              )
+                    <span>I confirm the business owes the customer exactly {formatMoney(preview.refundDue)} as a recorded credit, with no cash paid out.</span>
+                  </label>
+                )}
+              </div>
             ) : (
-              <p className="text-sm text-[var(--muted)]">No refund is required. On confirmation, the sale, debt, stock and return history will be updated together.</p>
+              <p className="text-sm text-[var(--muted)]">No customer credit is due. On confirmation, the sale, debt, stock and return history will be updated together.</p>
             )}
           </>
         ) : (
@@ -323,12 +334,12 @@ export function ReturnProductsForm({
           completed ||
           selected.length === 0 ||
           !preview ||
-          (requiresRefund && (!cashRefundEnabled || !refundConfirmed)) ||
+          (requiresRefund && (!customerLinked || !creditConfirmed)) ||
           !reason.trim()
         }
         className="w-full rounded-lg bg-[var(--primary)] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? 'Recording return...' : requiresRefund && !cashRefundEnabled ? 'Return unavailable — refund required' : 'Confirm product return'}
+        {pending ? 'Recording return...' : requiresRefund && !customerLinked ? 'Link customer to continue' : requiresRefund ? 'Record return and customer credit' : 'Confirm product return'}
       </button>
     </form>
   );

@@ -1725,3 +1725,26 @@ export const saleReturnRefunds = pgTable('sale_return_refunds', {
     returnSql`${table.amount} > 0`,
   ),
 ]);
+
+
+// Outstanding customer credit created by a product return.
+// This is a liability, NOT a payment or an automatic cash refund.
+// Redemption and payout are intentionally unsupported in this release.
+export const saleReturnCustomerCredits = pgTable('sale_return_customer_credits', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  saleId: uuid('sale_id').notNull().references(() => sales.id, { onDelete: 'restrict' }),
+  saleReturnId: uuid('sale_return_id').notNull().unique()
+    .references(() => saleReturns.id, { onDelete: 'restrict' }),
+  customerId: uuid('customer_id').notNull()
+    .references(() => customers.id, { onDelete: 'restrict' }),
+  recordedByUserId: uuid('recorded_by_user_id').notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  remainingAmount: numeric('remaining_amount', { precision: 12, scale: 2 }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  returnCheck('sale_return_customer_credits_amount_valid_chk', returnSql`
+    ${table.amount} > 0 AND ${table.remainingAmount} >= 0
+    AND ${table.remainingAmount} <= ${table.amount}
+  `),
+]);

@@ -14,9 +14,7 @@ const { db, queryClient } = await import('@mossetech/db/client');
 const {
   users, customers, products, stockArrivals,
   sales, saleItems, saleReturns, saleReturnItems,
-  saleReturnRefunds,
-  cashDrawers,
-  cashDrawerMovements,
+  saleReturnRefunds, saleReturnCustomerCredits,
 } = await import('@mossetech/db/schema');
 
 const { executeProductReturnTransaction } =
@@ -188,11 +186,13 @@ try {
 
     check('Return history and item snapshots preserved');
 
+
+    // Cash refund requests must remain blocked.
     await assert.rejects(
       executeProductReturnTransaction(tx, {
         ...firstInput,
         idempotencyKey: randomUUID(),
-        reason: 'Remaining paid product returned',
+        reason: 'Attempted cash refund',
         requested: [{
           saleItemId: item.id,
           quantity: 1,
@@ -201,115 +201,95 @@ try {
         cashRefundConfirmed: 'YES',
         refundMethod: 'CASH',
       }),
-      /Refunds are not activated/,
+      /Cash refunds are disabled/,
     );
+    check('Cash refund request is blocked');
+
+    const creditInput = {
+      ...firstInput,
+      idempotencyKey: randomUUID(),
+      reason: 'Final product returned for customer credit',
+      requested: [{
+        saleItemId: item.id,
+        quantity: 1,
+        condition: 'RESTOCK' as const,
+      }],
+      settlementMethod: 'CUSTOMER_CREDIT',
+      customerCreditConfirmed: 'YES',
+      customerCreditExpectedAmount: '100.00',
+    };
+
+    const beforeCredit = await tx.select()
+      .from(saleReturnCustomerCredits)
+      .where(eq(saleReturnCustomerCredits.saleId, sale.id));
+
+    assert.equal(beforeCredit.length, 0);
+    check('No customer credit exists before confirmation');
+
+    await assert.rejects(
+      executeProductReturnTransaction(tx, {
+        ...creditInput,
+        customerCreditConfirmed: null,
+      }),
+      /explicitly confirm/,
+    );
+    check('Unconfirmed customer credit is blocked');
+
+    await assert.rejects(
+      executeProductReturnTransaction(tx, {
+        ...creditInput,
+        customerCreditExpectedAmount: '99.00',
+      }),
+      /explicitly confirm/,
+    );
+    check('Incorrect customer credit amount is blocked');
+
+    assert.equal(
+      await executeProductReturnTransaction(tx, creditInput),
+      'recorded',
+    );
+
+    const [finalSale] = await tx.select()
+      .from(sales).where(eq(sales.id, sale.id));
+
+    assert.equal(finalSale.totalAmount, '0.00');
+    assert.equal(finalSale.paidAmount, '0.00');
+    assert.equal(finalSale.balanceAmount, '0.00');
+    check('Full return clears sale and outstanding debt');
+
+    const credits = await tx.select()
+      .from(saleReturnCustomerCredits)
+      .where(eq(saleReturnCustomerCredits.saleId, sale.id));
+
+    assert.equal(credits.length, 1);
+    assert.equal(credits[0].customerId, customer.id);
+    assert.equal(credits[0].amount, '100.00');
+    assert.equal(credits[0].remainingAmount, '100.00');
+    check('Customer credit liability recorded exactly once');
+
+    const [finalProduct] = await tx.select()
+      .from(products).where(eq(products.id, product.id));
+
+    assert.equal(finalProduct.quantity, 4);
 
     const refunds = await tx.select()
       .from(saleReturnRefunds)
       .where(eq(saleReturnRefunds.saleId, sale.id));
 
     assert.equal(refunds.length, 0);
+    check('Stock restored without issuing a cash refund');
 
-    check('Refund remains blocked even with forged confirmation');
+    assert.equal(
+      await executeProductReturnTransaction(tx, creditInput),
+      'already-recorded',
+    );
 
-    const finalHistory = await tx.select()
-      .from(saleReturns).where(eq(saleReturns.saleId, sale.id));
+    const creditsAgain = await tx.select()
+      .from(saleReturnCustomerCredits)
+      .where(eq(saleReturnCustomerCredits.saleId, sale.id));
 
-    assert.equal(finalHistory.length, 2);
-
-    check('Blocked refund creates no additional return');
-
-    // Opt in only within this isolated test process; restore the default
-    // before the transaction exits. No web server is activated.
-    const oldFlag = process.env.MOSSETECH_ENABLE_RETURN_CASH_REFUNDS;
-    process.env.MOSSETECH_ENABLE_RETURN_CASH_REFUNDS = 'YES';
-    try {
-      const refundInput = {
-        ...firstInput,
-        idempotencyKey: randomUUID(),
-        reason: 'Last paid product returned',
-        requested: [{
-          saleItemId: item.id,
-          quantity: 1,
-          condition: 'RESTOCK' as const,
-        }],
-        cashRefundExpectedAmount: '100.00',
-        cashRefundConfirmed: 'YES',
-        refundMethod: 'CASH',
-      };
-
-      await assert.rejects(
-        executeProductReturnTransaction(tx, {
-          ...refundInput,
-          cashRefundConfirmed: null,
-        }),
-        /requires a verified amount preview and confirmation/,
-      );
-      check('Refund without explicit confirmation is blocked');
-
-      await assert.rejects(
-        executeProductReturnTransaction(tx, {
-          ...refundInput,
-          cashRefundExpectedAmount: '99.00',
-        }),
-        /expected cash refund amount has changed/,
-      );
-      check('Refund with changed expected amount is blocked');
-
-      await assert.rejects(
-        executeProductReturnTransaction(tx, refundInput),
-        /Open the cash drawer/,
-      );
-      check('Refund without an open cash drawer is blocked');
-
-      const [drawer] = await tx.insert(cashDrawers).values({
-        openedByUserId: owner.id,
-        openingCash: '200.00',
-      }).returning({ id: cashDrawers.id });
-
-      assert.equal(
-        await executeProductReturnTransaction(tx, refundInput),
-        'recorded',
-      );
-      const [refundedSale] = await tx.select().from(sales)
-        .where(eq(sales.id, sale.id));
-      assert.equal(refundedSale.totalAmount, '0.00');
-      assert.equal(refundedSale.paidAmount, '0.00');
-      assert.equal(refundedSale.balanceAmount, '0.00');
-      const [refundedProduct] = await tx.select().from(products)
-        .where(eq(products.id, product.id));
-      assert.equal(refundedProduct.quantity, 4);
-      check('Confirmed cash refund reconciles sale and stock');
-
-      const recordedRefunds = await tx.select().from(saleReturnRefunds)
-        .where(eq(saleReturnRefunds.saleId, sale.id));
-      assert.equal(recordedRefunds.length, 1);
-      assert.equal(recordedRefunds[0].amount, '100.00');
-      const movements = await tx.select().from(cashDrawerMovements)
-        .where(eq(cashDrawerMovements.drawerId, drawer.id));
-      assert.equal(movements.length, 1);
-      assert.equal(movements[0].movementType, 'SALE_RETURN_REFUND');
-      assert.equal(movements[0].direction, 'OUT');
-      assert.equal(movements[0].amount, '100.00');
-      check('Refund ledger and cash-out movement reconcile');
-
-      assert.equal(
-        await executeProductReturnTransaction(tx, refundInput),
-        'already-recorded',
-      );
-      const again = await tx.select().from(saleReturnRefunds)
-        .where(eq(saleReturnRefunds.saleId, sale.id));
-      assert.equal(again.length, 1);
-      check('Duplicate confirmed refund never pays twice');
-    } finally {
-      if (oldFlag === undefined) {
-        delete process.env.MOSSETECH_ENABLE_RETURN_CASH_REFUNDS;
-      } else {
-        process.env.MOSSETECH_ENABLE_RETURN_CASH_REFUNDS = oldFlag;
-      }
-    }
-
-
+    assert.equal(creditsAgain.length, 1);
+    check('Duplicate return cannot create duplicate credit');
     completed = true;
     throw ROLLBACK;
   });

@@ -109,6 +109,9 @@ export async function recordProductReturnAction(
           cashRefundConfirmed: formData.get('cashRefundConfirmed'),
           refundMethod: formData.get('refundMethod'),
           cashRefundExpectedAmount: formData.get('cashRefundExpectedAmount'),
+          customerCreditConfirmed: formData.get('customerCreditConfirmed'),
+          customerCreditExpectedAmount: formData.get('customerCreditExpectedAmount'),
+          settlementMethod: formData.get('settlementMethod'),
         }),
       );
 

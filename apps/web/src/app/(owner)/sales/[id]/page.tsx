@@ -17,6 +17,7 @@ import {
   corrections,
   salePayments,
   saleReturns,
+  saleReturnCustomerCredits,
   saleReturnItems,
   saleItems,
   sales,
@@ -348,6 +349,14 @@ export default async function SaleDetailPage({
         ),
       ),
   ]);
+
+  const customerCreditEntries = await db
+    .select({ amount: saleReturnCustomerCredits.remainingAmount })
+    .from(saleReturnCustomerCredits)
+    .where(eq(saleReturnCustomerCredits.saleId, sale.id));
+  const customerCreditOwed = customerCreditEntries.reduce(
+    (sum, row) => sum + Number(row.amount), 0,
+  );
 
   const returnHistory = await db
     .select({
@@ -703,6 +712,21 @@ export default async function SaleDetailPage({
               </Link>
             ) : null}
           </div>
+        </section>
+      ) : null}
+
+      {customerCreditOwed > 0 ? (
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">
+            Customer credit owed
+          </p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-[var(--text)]">
+            RWF {money(customerCreditOwed)}
+          </p>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            This is money owed to the customer, recorded separately from this sale.
+            No cash refund has been made. Credit spending and payout are not yet available.
+          </p>
         </section>
       ) : null}
 

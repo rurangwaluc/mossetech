@@ -14,6 +14,7 @@ import {
   externalSupplierSettlements,
   products,
   saleItems,
+  saleReturnCustomerCredits,
   saleReturnItems,
   saleReturns,
   salePayments,
@@ -1016,6 +1017,16 @@ export async function getReport(
       0,
     );
 
+  // Customer credits are liabilities; they must never inflate sales or
+  // customer payments received. The current outstanding amount is
+  // disclosed separately from period-based net sales.
+  const outstandingCreditRows = await db.select({
+    amount: saleReturnCustomerCredits.remainingAmount,
+  }).from(saleReturnCustomerCredits);
+  const customerCreditLiability = outstandingCreditRows.reduce(
+    (sum, row) => sum + Number(row.amount), 0,
+  );
+
   const salesTotal =
     ownedSalesTotal +
     externalSalesTotal -
@@ -1660,6 +1671,7 @@ export async function getReport(
       salesTotal,
       expensesTotal,
       returnCredit: periodReturnCredit563U,
+      customerCreditLiability,
       costOfGoodsSold,
       missingCostItems,
       grossProfit,
