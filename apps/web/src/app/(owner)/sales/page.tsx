@@ -7,6 +7,8 @@ import {
   desc,
   eq,
   inArray,
+  ilike,
+  exists,
   or,
 } from 'drizzle-orm';
 
@@ -345,7 +347,7 @@ function statusClass(
 const SALES_PAGE_SIZE = 25;
 
 type SalesPageProps = {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<{ page?: string; q?: string }>;
 };
 
 export default async function SalesPage({
@@ -359,15 +361,37 @@ export default async function SalesPage({
     'OWNER';
 
   const params = await searchParams;
+  const query = typeof params?.q === 'string'
+    ? params.q.trim().slice(0, 80)
+    : '';
+  // Treat % and _ as literal characters in a customer/product search.
+  const escapedQuery = query.replace(/[%_\\]/g, (character) => `\\${character}`);
+  const searchPattern = `%${escapedQuery}%`;
+  const matchingSale = query
+    ? or(
+        ilike(sales.customerName, searchPattern),
+        ilike(sales.customerPhone, searchPattern),
+        exists(
+          db.select({ id: saleItems.saleId })
+            .from(saleItems)
+            .where(and(
+              eq(saleItems.saleId, sales.id),
+              ilike(saleItems.itemName, searchPattern),
+            )),
+        ),
+      )
+    : undefined;
+  const searchSuffix = query ? `&q=${encodeURIComponent(query)}` : '';
   const rawPage = params?.page ?? '1';
   const requestedPage =
-    /^\\d{1,6}$/.test(rawPage)
+    /^\d{1,6}$/.test(rawPage)
       ? Math.max(1, Number(rawPage))
       : 1;
 
   const [totalRow] = await db
     .select({ count: sql<number>`count(*)::integer` })
-    .from(sales);
+    .from(sales)
+    .where(matchingSale);
 
   const totalSales = totalRow?.count ?? 0;
   const totalPages = Math.max(
@@ -379,6 +403,7 @@ export default async function SalesPage({
   const saleList = await db
     .select()
     .from(sales)
+    .where(matchingSale)
     .orderBy(desc(sales.saleDate), desc(sales.id))
     .limit(SALES_PAGE_SIZE)
     .offset((currentPage - 1) * SALES_PAGE_SIZE);
@@ -627,28 +652,50 @@ export default async function SalesPage({
         </section>
       )}
 
+      {/* Search across all sales, not only the current page. */}
+      <form action="/sales" method="get" role="search" className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label htmlFor="sales-search" className="sr-only">Search sales</label>
+        <input
+          id="sales-search"
+          name="q"
+          type="search"
+          maxLength={80}
+          defaultValue={query}
+          placeholder="Find a sale by customer, phone or product"
+          className="min-h-11 w-full min-w-0 flex-1 rounded-lg border border-[var(--border)] bg-[var(--card)] px-4 text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)] focus-visible:border-[var(--primary)] focus-visible:ring-2 focus-visible:ring-[var(--primary)]/15"
+        />
+        <div className="flex items-center gap-2">
+          <button type="submit" className="min-h-11 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-bold text-white hover:bg-[var(--primary-action-hover)]">
+            Search
+          </button>
+          {query ? (
+            <Link href="/sales" className="inline-flex min-h-11 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--text)] hover:bg-[var(--surface)]">
+              Clear
+            </Link>
+          ) : null}
+        </div>
+      </form>
+
       {/* LIST */}
       {totalSales === 0 ? (
         <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-5 py-10 text-center">
           <h2 className="font-display text-xl font-black text-[var(--text)]">
-            No sales yet
+            {query ? 'No matching sales' : 'No sales yet'}
           </h2>
 
           <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
-            Record the first
-            sale when a customer
-            buys something.
+            {query ? 'Try another customer name, phone number or product.' : 'Record the first sale when a customer buys something.'}
           </p>
 
 
-<Link
+{!query ? <Link
             href="/sales/new"
             prefetch
             className="mt-5 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)]"
           >
             <Plus className="h-4 w-4" />
             New sale
-          </Link>
+          </Link> : null}
         </section>
       ) : (
         <section className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
@@ -662,6 +709,7 @@ export default async function SalesPage({
                 {
                   totalSales
                 }{' '}
+                {query ? 'matching ' : ''}
                 {totalSales ===
                 1
                   ? 'sale'
@@ -938,7 +986,7 @@ export default async function SalesPage({
           <div className="flex items-center gap-2">
             {currentPage > 1 ? (
               <Link
-                href={`/sales?page=${currentPage - 1}`}
+                href={`/sales?page=${currentPage - 1}${searchSuffix}`}
                 className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--text)] hover:bg-[var(--surface)]"
               >
                 Previous
@@ -953,7 +1001,7 @@ export default async function SalesPage({
             </span>
             {currentPage < totalPages ? (
               <Link
-                href={`/sales?page=${currentPage + 1}`}
+                href={`/sales?page=${currentPage + 1}${searchSuffix}`}
                 className="inline-flex min-h-10 items-center rounded-lg border border-[var(--border)] px-4 text-sm font-bold text-[var(--text)] hover:bg-[var(--surface)]"
               >
                 Next
