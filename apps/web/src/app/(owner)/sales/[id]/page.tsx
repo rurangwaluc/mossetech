@@ -16,6 +16,8 @@ import { db } from '@mossetech/db/client';
 import {
   corrections,
   salePayments,
+  saleReturns,
+  saleReturnItems,
   saleItems,
   sales,
   users,
@@ -347,6 +349,53 @@ export default async function SaleDetailPage({
       ),
   ]);
 
+  const returnHistory = await db
+    .select({
+      id: saleReturns.id,
+      credit: saleReturns.creditAmount,
+      reason: saleReturns.reason,
+      recordedAt: saleReturns.recordedAt,
+      productName: saleReturnItems.productName,
+      quantity: saleReturnItems.quantityReturned,
+      condition: saleReturnItems.condition,
+    })
+    .from(saleReturns)
+    .innerJoin(
+      saleReturnItems,
+      eq(saleReturnItems.saleReturnId, saleReturns.id),
+    )
+    .where(eq(saleReturns.saleId, sale.id))
+    .orderBy(asc(saleReturns.recordedAt), asc(saleReturns.id));
+
+  const returnsById = new Map<string, {
+    credit: string;
+    reason: string;
+    recordedAt: Date;
+    lines: { name: string; quantity: number; condition: string }[];
+  }>();
+
+  for (const row of returnHistory) {
+    const existing = returnsById.get(row.id);
+    if (existing) {
+      existing.lines.push({
+        name: row.productName,
+        quantity: row.quantity,
+        condition: row.condition,
+      });
+    } else {
+      returnsById.set(row.id, {
+        credit: row.credit,
+        reason: row.reason,
+        recordedAt: row.recordedAt,
+        lines: [{
+          name: row.productName,
+          quantity: row.quantity,
+          condition: row.condition,
+        }],
+      });
+    }
+  }
+
   const originalPayments = await db
     .select({
       id: salePayments.id,
@@ -657,6 +706,49 @@ export default async function SaleDetailPage({
         </section>
       ) : null}
 
+      {returnsById.size > 0 ? (
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-base font-black text-[var(--text)]">
+              Product returns
+            </h3>
+            <p className="text-xs font-semibold text-[var(--muted)]">
+              {returnsById.size} recorded
+            </p>
+          </div>
+          <div className="mt-4 divide-y divide-[var(--border)]">
+            {[...returnsById.entries()].map(([returnId, entry]) => (
+              <div key={returnId} className="py-4 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-[var(--text)]">
+                      {dateTime(entry.recordedAt)}
+                    </p>
+                    <p className="mt-1 break-words text-sm text-[var(--muted)]">
+                      {entry.reason}
+                    </p>
+                  </div>
+                  <p className="text-sm font-black tabular-nums text-[var(--text)]">
+                    Credit {money(entry.credit)} RWF
+                  </p>
+                </div>
+                <ul className="mt-3 space-y-1">
+                  {entry.lines.map((line, index) => (
+                    <li
+                      key={`${returnId}-${index}`}
+                      className="flex flex-wrap justify-between gap-x-3 text-sm text-[var(--muted)]"
+                    >
+                      <span>{line.quantity} × {line.name}</span>
+                      <span>{line.condition === 'RESTOCK' ? 'Returned to stock' : 'Damaged / not restocked'}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <header className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
         <div className="flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6">
           <div className="min-w-0">
@@ -703,6 +795,15 @@ export default async function SaleDetailPage({
                   : 'Ask owner to fix'}
               </Link>
             )}
+
+            {isOwner ? (
+              <Link
+                href={`/sales/${sale.id}/return`}
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--border)] px-4 text-sm font-black text-[var(--text)] hover:border-[var(--primary)]"
+              >
+                Return Products
+              </Link>
+            ) : null}
 
             {canIssueWarranty ? (
               <Link

@@ -1,4 +1,10 @@
 import {
+  check as returnCheck,
+  uniqueIndex as returnUniqueIndex,
+} from 'drizzle-orm/pg-core';
+import { sql as returnSql } from 'drizzle-orm';
+
+import {
   relations,
   sql,
 } from 'drizzle-orm';
@@ -52,6 +58,7 @@ export const cashDrawerMovementTypeEnum = pgEnum('cash_drawer_movement_type', [
   'EXPENSE_CORRECTION',
   'CASH_DEBT_PAYMENT',
   'PAYMENT_CORRECTION',
+  'SALE_RETURN_REFUND',
   'CLOSING_COUNT',
   'CASH_DIFFERENCE',
 ]);
@@ -1545,3 +1552,176 @@ export const quotationItems = pgTable('quotation_items', {
     .defaultNow()
     .notNull(),
 });
+
+
+// Customer product returns. Original sale items and payments
+// remain intact; returns are recorded as separate transactions.
+//
+// Stock reconciliation must count only RESTOCK quantities.
+// DAMAGED returns must never automatically become sellable.
+//
+// Refunds are separate from return credits: a credit can
+// reduce debt without any money physically leaving the shop.
+
+export const saleReturns = pgTable('sale_returns', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  saleId: uuid('sale_id')
+    .notNull()
+    .references(() => sales.id, { onDelete: 'restrict' }),
+
+  recordedByUserId: uuid('recorded_by_user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+
+  idempotencyKey: uuid('idempotency_key')
+    .notNull()
+    .unique(),
+
+  // Historical value of the sale before this return.
+  previousSaleTotal: numeric('previous_sale_total', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  creditAmount: numeric('credit_amount', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  reason: text('reason').notNull(),
+
+  recordedAt: timestamp('recorded_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
+}, (table) => [
+  returnCheck(
+    'sale_returns_amounts_valid_chk',
+    returnSql`
+      ${table.previousSaleTotal} >= 0
+      AND ${table.creditAmount} >= 0
+      AND ${table.creditAmount} <= ${table.previousSaleTotal}
+    `,
+  ),
+  returnCheck(
+    'sale_returns_reason_required_chk',
+    returnSql`length(btrim(${table.reason})) > 0`,
+  ),
+]);
+
+export const saleReturnItems = pgTable('sale_return_items', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  saleReturnId: uuid('sale_return_id')
+    .notNull()
+    .references(() => saleReturns.id, {
+      onDelete: 'restrict',
+    }),
+
+  // Retain the original line identifier without cascading
+  // deletion when a historical sale correction is applied.
+  originalSaleItemId: uuid('original_sale_item_id')
+    .notNull(),
+
+  productId: uuid('product_id')
+    .notNull()
+    .references(() => products.id, {
+      onDelete: 'restrict',
+    }),
+
+  productName: varchar('product_name', {
+    length: 180,
+  }).notNull(),
+
+  quantityReturned: integer('quantity_returned')
+    .notNull(),
+
+  // RESTOCK or DAMAGED; enforced at the database boundary
+  // by the accompanying migration in a later step.
+  condition: varchar('condition', {
+    length: 16,
+  }).notNull(),
+
+  unitPriceSnapshot: numeric('unit_price_snapshot', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  unitCostSnapshot: numeric('unit_cost_snapshot', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  creditAmount: numeric('credit_amount', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+}, (table) => [
+  returnUniqueIndex(
+    'sale_return_items_unique_line_idx',
+  ).on(
+    table.saleReturnId,
+    table.originalSaleItemId,
+  ),
+  returnCheck(
+    'sale_return_items_quantity_valid_chk',
+    returnSql`${table.quantityReturned} > 0`,
+  ),
+  returnCheck(
+    'sale_return_items_condition_valid_chk',
+    returnSql`${table.condition} IN ('RESTOCK', 'DAMAGED')`,
+  ),
+  returnCheck(
+    'sale_return_items_amounts_valid_chk',
+    returnSql`
+      ${table.unitPriceSnapshot} >= 0
+      AND ${table.unitCostSnapshot} >= 0
+      AND ${table.creditAmount} >= 0
+    `,
+  ),
+]);
+
+export const saleReturnRefunds = pgTable('sale_return_refunds', {
+  id: uuid('id').defaultRandom().primaryKey(),
+
+  saleId: uuid('sale_id')
+    .notNull()
+    .references(() => sales.id, {
+      onDelete: 'restrict',
+    }),
+
+  saleReturnId: uuid('sale_return_id')
+    .notNull()
+    .references(() => saleReturns.id, {
+      onDelete: 'restrict',
+    }),
+
+  issuedByUserId: uuid('issued_by_user_id')
+    .notNull()
+    .references(() => users.id, {
+      onDelete: 'restrict',
+    }),
+
+  idempotencyKey: uuid('idempotency_key')
+    .notNull()
+    .unique(),
+
+  amount: numeric('amount', {
+    precision: 12,
+    scale: 2,
+  }).notNull(),
+
+  paymentMethod: paymentMethodEnum('payment_method')
+    .notNull(),
+
+  notes: text('notes'),
+
+  refundedAt: timestamp('refunded_at', {
+    withTimezone: true,
+  }).defaultNow().notNull(),
+}, (table) => [
+  returnCheck(
+    'sale_return_refunds_positive_amount_chk',
+    returnSql`${table.amount} > 0`,
+  ),
+]);

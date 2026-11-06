@@ -1,4 +1,5 @@
 import {
+  and,
   eq,
   sql,
 } from 'drizzle-orm';
@@ -10,6 +11,7 @@ import {
 import {
   products,
   saleItems,
+  saleReturnItems,
   stockArrivals,
   stockDamages,
 } from '@mossetech/db/schema';
@@ -21,8 +23,11 @@ type DbTransaction =
     >[0]
   >[0];
 
+import { calculateAvailableStock } from './stock-return-balance';
+
 export type ProductLedgerTotals = {
   imported: number;
+  restocked: number;
   sold: number;
   damaged: number;
   remaining: number;
@@ -121,6 +126,31 @@ export async function getProductLedgerTotals(
         ),
       );
 
+
+  const [returns] =
+    await tx
+      .select({
+        quantity:
+          sql<number>`
+            coalesce(
+              sum(
+                ${saleReturnItems.quantityReturned}
+              ),
+              0
+            )::int
+          `,
+      })
+      .from(saleReturnItems)
+      .where(
+        and(
+          eq(saleReturnItems.productId, productId),
+          eq(saleReturnItems.condition, 'RESTOCK'),
+        ),
+      );
+
+  const restockedQuantity =
+    Number(returns?.quantity || 0);
+
   const imported =
     Number(
       received?.quantity || 0,
@@ -145,10 +175,16 @@ export async function getProductLedgerTotals(
     damaged:
       damagedQuantity,
 
+    restocked:
+      restockedQuantity,
+
     remaining:
-      imported -
-      soldQuantity -
-      damagedQuantity,
+      calculateAvailableStock({
+        imported,
+        sold: soldQuantity,
+        damaged: damagedQuantity,
+        restocked: restockedQuantity,
+      }),
   };
 }
 

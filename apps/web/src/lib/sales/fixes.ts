@@ -25,6 +25,7 @@ import {
   products,
   saleItems,
   sales,
+  saleReturns,
 } from '@mossetech/db/schema';
 
 import {
@@ -1182,6 +1183,29 @@ async function applySaleFix(
             : 'This sale has already changed. Open it again before saving.',
         );
       }
+
+
+      const [existingReturn] = await tx
+
+        .select({ id: saleReturns.id })
+
+        .from(saleReturns)
+
+        .where(eq(saleReturns.saleId, saleId))
+
+        .limit(1);
+
+
+      if (existingReturn) {
+
+        throw new SaleFixError(
+
+          'This sale has product returns. Its original items are protected. Use the return-aware process instead.',
+
+        );
+
+      }
+
 
       const currentItems =
         await tx

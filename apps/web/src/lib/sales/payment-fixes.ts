@@ -729,6 +729,17 @@ async function applyPaymentFix(
 ) {
   await db.transaction(
     async (tx) => {
+
+      // return-payment-row-lock-563S
+      // Serialize payment corrections with product returns
+      // and concurrent debt payments.
+      await tx.execute(sql`
+        SELECT id
+        FROM sales
+        WHERE id = ${saleId}
+        FOR UPDATE
+      `);
+
       const [currentSale] =
         await tx
           .select()

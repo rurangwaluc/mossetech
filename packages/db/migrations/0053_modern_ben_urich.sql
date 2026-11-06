@@ -1,0 +1,1 @@
+ALTER TYPE "public"."cash_drawer_movement_type" ADD VALUE 'SALE_RETURN_REFUND' BEFORE 'CLOSING_COUNT';

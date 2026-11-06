@@ -14,6 +14,8 @@ import {
   externalSupplierSettlements,
   products,
   saleItems,
+  saleReturnItems,
+  saleReturns,
   salePayments,
   sales,
   stockArrivals,
@@ -866,6 +868,58 @@ export async function getReport(
     db.select().from(externalCustomerPayments),
   ]);
 
+  // periodProductReturns563U:
+  // Keep original sales in their original reporting periods.
+  // Recognize return credits on the actual return date.
+  const periodProductReturns563U = await db
+    .select()
+    .from(saleReturns)
+    .where(and(
+      gte(saleReturns.recordedAt, period.start),
+      lte(saleReturns.recordedAt, period.end),
+    ));
+
+  const periodReturnIds563U =
+    periodProductReturns563U.map((row) => row.id);
+
+  const periodReturnedItems563U =
+    periodReturnIds563U.length
+      ? await db.select()
+          .from(saleReturnItems)
+          .where(inArray(
+            saleReturnItems.saleReturnId,
+            periodReturnIds563U,
+          ))
+      : [];
+
+  const allRestockedItems563U = await db
+    .select({
+      productId: saleReturnItems.productId,
+      quantity: saleReturnItems.quantityReturned,
+    })
+    .from(saleReturnItems)
+    .where(eq(saleReturnItems.condition, 'RESTOCK'));
+
+  const periodReturnCredit563U =
+    periodProductReturns563U.reduce(
+      (sum, row) => sum + Number(row.creditAmount),
+      0,
+    );
+
+  // A sellable returned item reverses its original cost.
+  // Damaged returns are not restored as sellable inventory;
+  // their cost remains an expense pending loss classification.
+  const periodRestockedCost563U =
+    periodReturnedItems563U
+      .filter((row) => row.condition === 'RESTOCK')
+      .reduce(
+        (sum, row) =>
+          sum +
+          Number(row.unitCostSnapshot) *
+            Number(row.quantityReturned),
+        0,
+      );
+
   const saleIds =
     saleList.map(
       (sale) => sale.id,
@@ -955,13 +1009,17 @@ export async function getReport(
         sale,
       ) =>
         sum +
-        Number(
-          sale.totalAmount,
+        (
+          Number(sale.subtotalAmount) -
+          Number(sale.discountAmount)
         ),
       0,
     );
 
-  const salesTotal = ownedSalesTotal + externalSalesTotal;
+  const salesTotal =
+    ownedSalesTotal +
+    externalSalesTotal -
+    periodReturnCredit563U;
 
   const expensesTotal =
     expenseList.reduce(
@@ -986,7 +1044,7 @@ export async function getReport(
     (sum, item) =>
       sum + Number(item.unitCost) * Number(item.quantity),
     0,
-  ) + externalSupplierCost;
+  ) + externalSupplierCost - periodRestockedCost563U;
 
   const grossProfit =
     missingCostItems === 0
@@ -1397,6 +1455,37 @@ export async function getReport(
       0,
     );
 
+  // Customer returns are separate from original sales.
+  // Recognition follows the recorded return date.
+  const periodReturnedUnits563W =
+    periodReturnedItems563U.reduce(
+      (sum, item) => sum + Number(item.quantityReturned),
+      0,
+    );
+
+  const periodRestockedUnits563W =
+    periodReturnedItems563U
+      .filter((item) => item.condition === 'RESTOCK')
+      .reduce(
+        (sum, item) => sum + Number(item.quantityReturned),
+        0,
+      );
+
+  const periodDamagedReturnUnits563W =
+    periodReturnedItems563U
+      .filter((item) => item.condition === 'DAMAGED')
+      .reduce(
+        (sum, item) => sum + Number(item.quantityReturned),
+        0,
+      );
+
+  if (
+    periodReturnedUnits563W !==
+    periodRestockedUnits563W + periodDamagedReturnUnits563W
+  ) {
+    throw new Error('Returned stock quantities do not reconcile.');
+  }
+
   const stockDamagedUnits =
     damageList.reduce(
       (
@@ -1494,6 +1583,19 @@ export async function getReport(
       new Map(),
     );
 
+  const allRestockedByProduct563U =
+    allRestockedItems563U.reduce(
+      (map, item) => {
+        map.set(
+          item.productId,
+          (map.get(item.productId) || 0) +
+            Number(item.quantity),
+        );
+        return map;
+      },
+      new Map<string, number>(),
+    );
+
   const currentStock =
     productList.reduce(
       (
@@ -1523,7 +1625,8 @@ export async function getReport(
           ) || 0;
 
         const remaining =
-          received -
+          received +
+          (allRestockedByProduct563U.get(product.id) || 0) -
           sold -
           damaged;
 
@@ -1556,6 +1659,7 @@ export async function getReport(
       discountTotal,
       salesTotal,
       expensesTotal,
+      returnCredit: periodReturnCredit563U,
       costOfGoodsSold,
       missingCostItems,
       grossProfit,
@@ -1594,6 +1698,9 @@ export async function getReport(
         stockReceivedUnits,
       receivedValue:
         stockReceivedValue,
+      returnedUnits: periodReturnedUnits563W,
+      restockedUnits: periodRestockedUnits563W,
+      damagedReturnUnits: periodDamagedReturnUnits563W,
       soldUnits:
         stockSoldUnits,
       soldValue:
