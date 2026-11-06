@@ -71,7 +71,7 @@ export function ReturnProductsForm({
     return result;
   };
 
-  let preview: { credit: number; balance: number; refundDue: number } | null = null;
+  let preview: { credit: number; balance: number; refundDue: number; remainingSale: number; paid: number; previousDebt: number; debtReduction: number } | null = null;
   if (selected.length > 0) {
     try {
       const plan = prepareSaleReturn({
@@ -93,6 +93,10 @@ export function ReturnProductsForm({
         credit: plan.newReturnCreditCents / 100,
         balance: Math.max(0, nextTotal - netPaid) / 100,
         refundDue: Math.max(0, netPaid - nextTotal) / 100,
+        remainingSale: nextTotal / 100,
+        paid: netPaid / 100,
+        previousDebt: Math.max(0, toCents(currentSaleTotal) - netPaid) / 100,
+        debtReduction: (Math.max(0, toCents(currentSaleTotal) - netPaid) - Math.max(0, nextTotal - netPaid)) / 100,
       };
     } catch {
       preview = null;
@@ -101,11 +105,13 @@ export function ReturnProductsForm({
 
   const requiresRefund = Boolean(preview && preview.refundDue > 0);
   const completed = Boolean(state.success);
+  const formatMoney = (value: number) =>
+    `RWF ${new Intl.NumberFormat('en-RW', { maximumFractionDigits: 2 }).format(value)}`;
 
   return (
     <form
       action={action}
-      className="space-y-5 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-6"
+      className="space-y-6 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-6"
     >
       <input type="hidden" name="saleId" value={saleId} />
       <input type="hidden" name="idempotencyKey" value={key} />
@@ -131,9 +137,16 @@ export function ReturnProductsForm({
         </p>
       ) : (
         <div className="space-y-4">
-          <h2 className="text-base font-bold text-[var(--text)]">
-            Products being returned
-          </h2>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Step 1 · Products</p>
+              <h2 className="mt-1 text-lg font-bold text-[var(--text)]">What did the customer bring back?</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">Set the quantity for each product. Leave 0 for products the customer keeps.</p>
+            </div>
+            <span className="rounded-full border border-[var(--border)] px-3 py-1 text-xs font-semibold text-[var(--text)]">
+              {selected.length} {selected.length === 1 ? 'product' : 'products'} selected
+            </span>
+          </div>
 
           {items.map((item) => (
             <div
@@ -213,7 +226,7 @@ export function ReturnProductsForm({
       )}
 
       <label className="block text-sm font-semibold text-[var(--text)]">
-        Reason for return
+        Step 2 · Reason for return
         <textarea
           name="reason"
           value={reason}
@@ -227,58 +240,69 @@ export function ReturnProductsForm({
         />
       </label>
 
-      {preview ? (
-        <div className="space-y-2 rounded-lg border border-[var(--border)] bg-[var(--background)] p-4">
-          <h3 className="text-sm font-bold text-[var(--text)]">Return summary</h3>
-          <div className="flex justify-between gap-3 text-sm text-[var(--text)]">
-            <span>Return credit</span>
-            <strong>{preview.credit.toLocaleString('en-RW')} RWF</strong>
-          </div>
-          <div className="flex justify-between gap-3 text-sm text-[var(--text)]">
-            <span>Remaining customer debt</span>
-            <strong>{preview.balance.toLocaleString('en-RW')} RWF</strong>
-          </div>
-          {requiresRefund ? (
-            cashRefundEnabled ? (
-              <label className="block space-y-3 rounded-lg border border-[var(--border)] p-3 text-sm text-[var(--text)]">
-                <span className="font-bold">
-                  Cash refund: {preview.refundDue.toLocaleString('en-RW')} RWF
-                </span>
-                <span className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    name="cashRefundConfirmed"
-                    value="YES"
-                    checked={refundConfirmed}
-                    disabled={pending || completed}
-                    onChange={event => setRefundConfirmed(event.target.checked)}
-                    className="mt-1"
-                  />
-                  <span>
-                    I have checked the exact refund amount and confirm the
-                    cash will be returned to the customer. The cash drawer must
-                    have sufficient funds.
-                  </span>
-                </span>
-              </label>
-            ) : (
-              <p role="alert" className="text-sm font-semibold text-red-600">
-                This return requires a {preview.refundDue.toLocaleString('en-RW')} RWF
-                customer refund. Refund payouts are not enabled; this return
-                cannot be recorded.
-              </p>
-            )
-          ) : (
-            <p className="text-xs text-[var(--muted)]">
-              No customer payout is required. Final amounts are checked again on saving.
-            </p>
-          )}
+      <section className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-4 sm:p-5" aria-live="polite">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Step 3 · Before you confirm</p>
+          <h3 className="mt-1 text-lg font-bold text-[var(--text)]">What changes after this return?</h3>
         </div>
-      ) : (
-        <p className="text-xs text-[var(--muted)]">
-          Select a quantity to review the return before confirming.
-        </p>
-      )}
+        {preview ? (
+          <>
+            <dl className="space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-3 text-[var(--muted)]">
+                <dt>Current sale total</dt><dd className="tabular-nums">{formatMoney(Number(currentSaleTotal))}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[var(--muted)]">
+                <dt>Value of products returned</dt><dd className="font-semibold tabular-nums text-[var(--text)]">− {formatMoney(preview.credit)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-t border-[var(--border)] pt-3 text-[var(--text)]">
+                <dt className="font-bold">New sale total</dt><dd className="text-lg font-black tabular-nums">{formatMoney(preview.remainingSale)}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-[var(--muted)]">
+                <dt>Customer already paid</dt><dd className="tabular-nums">{formatMoney(preview.paid)}</dd>
+              </div>
+            </dl>
+            <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">Customer still owes</p>
+              <p className="mt-1 text-2xl font-black tabular-nums text-[var(--text)]">{formatMoney(preview.balance)}</p>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                {preview.balance === 0
+                  ? 'The outstanding debt will be cleared. Existing payments stay in the history.'
+                  : `Debt will decrease by ${formatMoney(preview.debtReduction)}. Only the remaining balance can be collected.`}
+              </p>
+            </div>
+            {requiresRefund ? (
+              cashRefundEnabled ? (
+                <label className="block space-y-3 rounded-lg border border-[var(--border)] bg-[var(--card)] p-4 text-sm text-[var(--text)]">
+                  <span className="block text-base font-bold">Cash refund required: {formatMoney(preview.refundDue)}</span>
+                  <span className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      name="cashRefundConfirmed"
+                      value="YES"
+                      checked={refundConfirmed}
+                      disabled={pending || completed}
+                      onChange={(event) => setRefundConfirmed(event.target.checked)}
+                      className="mt-1"
+                    />
+                    <span>I verified this exact cash amount and will return it to the customer. The cash drawer must contain sufficient money.</span>
+                  </span>
+                </label>
+              ) : (
+                <div role="alert" className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-4">
+                  <p className="font-bold text-[var(--text)]">Customer is owed {formatMoney(preview.refundDue)}</p>
+                  <p className="mt-1 text-sm text-[var(--muted)]">
+                    The customer has paid more than the products they are keeping. This return cannot be saved yet because refunds and customer credit handling are not activated. No stock, debt, or money will change.
+                  </p>
+                </div>
+              )
+            ) : (
+              <p className="text-sm text-[var(--muted)]">No refund is required. On confirmation, the sale, debt, stock and return history will be updated together.</p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-[var(--muted)]">Choose at least one product quantity above to see the updated sale and debt before saving.</p>
+        )}
+      </section>
 
       {state.error ? (
         <p role="alert" className="text-sm font-semibold text-red-600">
@@ -304,7 +328,7 @@ export function ReturnProductsForm({
         }
         className="w-full rounded-lg bg-[var(--primary)] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? 'Recording return...' : 'Confirm product return'}
+        {pending ? 'Recording return...' : requiresRefund && !cashRefundEnabled ? 'Return unavailable — refund required' : 'Confirm product return'}
       </button>
     </form>
   );

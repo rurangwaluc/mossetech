@@ -102,9 +102,7 @@ export default async function ReturnProductsPage({
         </h1>
 
         <p className="mt-2 text-sm text-[var(--muted)]">
-          Select what the customer brought back.
-          Existing payments and the original sale history
-          will be preserved.
+          Choose the returned products, review the new debt and stock impact, then confirm. Original payments and sale history are preserved.
         </p>
       </div>
 

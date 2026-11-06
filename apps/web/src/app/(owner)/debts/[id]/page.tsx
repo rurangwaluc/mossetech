@@ -11,6 +11,8 @@ import { db } from '@mossetech/db/client';
 import {
   cashDrawers,
   saleItems,
+  saleReturnItems,
+  saleReturns,
   salePayments,
   sales,
   users,
@@ -173,6 +175,22 @@ export default async function DebtDetailPage({
         ),
       ),
   ]);
+
+  const returnedLines = await db
+    .select({
+      productName: saleReturnItems.productName,
+      quantity: saleReturnItems.quantityReturned,
+      credit: saleReturnItems.creditAmount,
+      recordedAt: saleReturns.recordedAt,
+    })
+    .from(saleReturnItems)
+    .innerJoin(saleReturns, eq(saleReturnItems.saleReturnId, saleReturns.id))
+    .where(eq(saleReturns.saleId, sale.id))
+    .orderBy(desc(saleReturns.recordedAt));
+
+  const totalReturnCredit = returnedLines.reduce(
+    (sum, line) => sum + Number(line.credit), 0,
+  );
 
   const visiblePayments =
     payments.slice(
@@ -343,9 +361,26 @@ export default async function DebtDetailPage({
             )}
           </div>
 
+          {returnedLines.length > 0 ? (
+            <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+              <p className="text-sm font-bold text-[var(--text)]">Products returned</p>
+              <div className="mt-2 space-y-2">
+                {returnedLines.map((line, index) => (
+                  <div key={`${line.productName}-${line.recordedAt.toISOString()}-${index}`} className="flex justify-between gap-3 text-sm">
+                    <span className="text-[var(--muted)]">{line.productName} × {line.quantity}</span>
+                    <span className="shrink-0 font-semibold tabular-nums text-[var(--text)]">− {money(line.credit)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 border-t border-[var(--border)] pt-2 text-xs text-[var(--muted)]">
+                Total credited for returns: {money(totalReturnCredit)}. Original payments remain in the payment history.
+              </p>
+            </div>
+          ) : null}
+
           <div className="mt-3 flex items-center justify-between gap-4 text-sm">
             <span className="font-semibold text-[var(--muted)]">
-              Sale total
+              {returnedLines.length > 0 ? 'Sale total after returns' : 'Sale total'}
             </span>
 
             <strong className="font-black text-[var(--text)]">
