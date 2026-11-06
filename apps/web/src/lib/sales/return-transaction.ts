@@ -7,6 +7,7 @@ import {
   saleReturnItems,
   saleReturnRefunds,
   saleReturns,
+  referralRewards,
   sales,
 } from '@mossetech/db/schema';
 
@@ -121,6 +122,21 @@ export async function executeProductReturnTransaction(
           throw new Error('Return request belongs to another sale.');
         }
         return 'already-recorded';
+      }
+
+      // An existing referral reward must be resolved
+      // before the original sale can be returned.
+      // The sale row is already locked by this transaction.
+      const [linkedReferral] = await tx
+        .select({ id: referralRewards.id })
+        .from(referralRewards)
+        .where(eq(referralRewards.saleId, saleId))
+        .limit(1);
+
+      if (linkedReferral) {
+        throw new Error(
+          'This sale has a referral reward. Resolve the reward before returning products.',
+        );
       }
 
       const [pending] = await tx

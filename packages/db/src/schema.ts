@@ -1748,3 +1748,50 @@ export const saleReturnCustomerCredits = pgTable('sale_return_customer_credits',
     AND ${table.remainingAmount} <= ${table.amount}
   `),
 ]);
+
+
+// Referral rewards are payable obligations until paid.
+// Unpaid rewards must not be recorded as cash expenses.
+export const referralRewards = pgTable('referral_rewards', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  saleId: uuid('sale_id').notNull().unique()
+    .references(() => sales.id, { onDelete: 'restrict' }),
+  referrerName: varchar('referrer_name', { length: 160 }).notNull(),
+  recordedByUserId: uuid('recorded_by_user_id').notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  paidAmount: numeric('paid_amount', { precision: 12, scale: 2 })
+    .notNull().default('0'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow().notNull(),
+}, (table) => [
+  returnCheck('referral_reward_amount_check', returnSql`
+    ${table.amount} > 0 AND ${table.paidAmount} >= 0
+    AND ${table.paidAmount} <= ${table.amount}
+  `),
+  returnCheck('referral_reward_name_check', returnSql`
+    length(btrim(${table.referrerName})) > 1
+  `),
+]);
+
+export const referralRewardPayments = pgTable('referral_reward_payments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  rewardId: uuid('reward_id').notNull()
+    .references(() => referralRewards.id, { onDelete: 'restrict' }),
+  expenseId: uuid('expense_id').notNull().unique()
+    .references(() => expenses.id, { onDelete: 'restrict' }),
+  recordedByUserId: uuid('recorded_by_user_id').notNull()
+    .references(() => users.id, { onDelete: 'restrict' }),
+  idempotencyKey: uuid('idempotency_key').notNull().unique(),
+  amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
+  paymentMethod: paymentMethodEnum('payment_method').notNull(),
+  paidAt: timestamp('paid_at', { withTimezone: true })
+    .defaultNow().notNull(),
+}, (table) => [
+  returnCheck('referral_payment_amount_check', returnSql`
+    ${table.amount} > 0
+  `),
+]);

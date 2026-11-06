@@ -26,6 +26,7 @@ import {
   saleItems,
   sales,
   saleReturns,
+  referralRewards,
 } from '@mossetech/db/schema';
 
 import {
@@ -1168,6 +1169,20 @@ async function applySaleFix(
       if (!currentSale) {
         throw new SaleFixError(
           'Sale was not found.',
+        );
+      }
+
+      // Protect agreed and paid referral rewards
+      // against subsequent changes to the linked sale.
+      const [linkedReferral] = await tx
+        .select({ id: referralRewards.id })
+        .from(referralRewards)
+        .where(eq(referralRewards.saleId, saleId))
+        .limit(1);
+
+      if (linkedReferral) {
+        throw new SaleFixError(
+          'This sale has a referral reward. Resolve the reward before correcting the sale.',
         );
       }
 

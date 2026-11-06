@@ -11,6 +11,7 @@ import {
   Menu,
   Package,
   ReceiptText,
+  Handshake,
   Settings,
   ShoppingCart,
   Truck,
@@ -83,6 +84,12 @@ const navigation = [
     href: '/debts',
     icon: CircleDollarSign,
     roles: ['OWNER', 'EMPLOYEE'],
+  },
+  {
+    label: 'Referrals',
+    href: '/referrals',
+    icon: Handshake,
+    roles: ['OWNER'],
   },
   {
     label: 'Expenses',
