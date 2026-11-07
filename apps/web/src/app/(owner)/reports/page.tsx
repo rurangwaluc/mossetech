@@ -22,11 +22,6 @@ type ReportsPageProps = {
   }>;
 };
 
-type Tone =
-  | 'normal'
-  | 'positive'
-  | 'negative';
-
 const PRESETS: Array<{
   value: ReportPreset;
   label: string;
@@ -92,101 +87,53 @@ function reportQuery(
   return params.toString();
 }
 
-function valueClass(
-  tone: Tone,
-) {
-  if (
-    tone === 'negative'
-  ) {
-    return 'text-[#E85D5D]';
-  }
 
-  if (
-    tone === 'positive'
-  ) {
-    return 'text-[#5F8A63] dark:text-[#79C27D]';
-  }
-
-  return 'text-[#222222] dark:text-[#F5F5F5]';
-}
-
-function Value({
-  children,
-  tone = 'normal',
-}: {
-  children: React.ReactNode;
-  tone?: Tone;
-}) {
-  return (
-    <span
-      className={`font-black tabular-nums ${valueClass(
-        tone,
-      )}`}
-    >
-      {children}
-    </span>
-  );
-}
-
-function SectionHeading({
-  eyebrow,
-  title,
-  action,
-}: {
-  eyebrow: string;
-  title: string;
-  action?: React.ReactNode;
-}) {
-  return (
-    <div className="mb-3 flex items-end justify-between gap-4">
-      <div className="min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--primary)] sm:text-[11px]">
-          {eyebrow}
-        </p>
-
-        <h2 className="mt-1 font-display text-lg font-black text-[#222222] dark:text-[#F5F5F5]">
-          {title}
-        </h2>
-      </div>
-
-      {action}
-    </div>
-  );
-}
-
-function MobileRow({
-  label,
-  value,
-  detail,
-  tone = 'normal',
-}: {
+type OverviewCardProps = {
   label: string;
-  value: React.ReactNode;
-  detail?: string;
-  tone?: Tone;
+  value: string;
+  detail: string;
+  accent?: 'positive' | 'negative';
+};
+
+function OverviewCard({ label, value, detail, accent }: OverviewCardProps) {
+  return (
+    <div className="min-w-0 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 sm:p-5">
+      <p className="text-xs font-bold text-[var(--muted)]">{label}</p>
+      <p className={`mt-2 break-words text-xl font-black tabular-nums sm:text-2xl ${
+        accent === 'negative' ? 'text-red-600 dark:text-red-400' :
+        accent === 'positive' ? 'text-emerald-700 dark:text-emerald-400' :
+        'text-[var(--text)]'
+      }`}>{value}</p>
+      <p className="mt-2 text-xs leading-5 text-[var(--muted)]">{detail}</p>
+    </div>
+  );
+}
+
+function DetailRow({ label, value, note }: { label: string; value: string; note?: string }) {
+  return (
+    <div className="flex flex-col gap-1 border-t border-[var(--border)] py-3 first:border-t-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="min-w-0">
+        <p className="text-sm font-semibold text-[var(--text)]">{label}</p>
+        {note ? <p className="mt-0.5 text-xs text-[var(--muted)]">{note}</p> : null}
+      </div>
+      <span className="shrink-0 text-sm font-black tabular-nums text-[var(--text)]">{value}</span>
+    </div>
+  );
+}
+
+function ReportSection({ title, description, children }: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="border-t border-neutral-200 py-3.5 first:border-t-0 dark:border-[#343434]">
-      <div className="flex items-start justify-between gap-4">
-        <p className="min-w-0 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-          {label}
-        </p>
-
-        <div className="shrink-0 text-right text-sm">
-          <Value
-            tone={tone}
-          >
-            {value}
-          </Value>
-        </div>
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-base font-black text-[var(--text)] sm:text-lg">{title}</h2>
+        {description ? <p className="mt-1 text-xs leading-5 text-[var(--muted)]">{description}</p> : null}
       </div>
-
-      {detail ? (
-        <p className="mt-1.5 pr-2 text-xs font-semibold leading-5 text-[#7D7D7D] dark:text-[#8F8F8F]">
-          {detail}
-        </p>
-      ) : null}
-    </div>
+      {children}
+    </section>
   );
 }
 
@@ -228,209 +175,13 @@ export default async function ReportsPage({
       filters,
     );
 
-  const summaryRows: Array<{
-    key: string;
-    label: string;
-    value: string;
-    detail: string;
-    tone: Tone;
-  }> = [
-    {
-      key: 'sales',
-      label: 'Sales',
-      value:
-        money(
-          summary.salesTotal,
-        ),
-      detail: `${summary.salesCount} ${
-        summary.salesCount ===
-        1
-          ? 'sale'
-          : 'sales'
-      }`,
-      tone: 'normal',
-    },
-    {
-      key: 'external-sales',
-      label: 'External stock sales',
-      value: money(report.external.salesTotal),
-      detail: `${report.external.salesCount} completed external sale(s) / included in Sales above`,
-      tone: 'normal',
-    },
-    {
-      key: 'external-shop-cost',
-      label: 'External shop costs',
-      value: money(report.external.supplierCost),
-      detail: 'Agreed cost of completed external sales / included in product costs',
-      tone: 'normal',
-    },
-    {
-      key: 'external-gross-profit',
-      label: 'Profit or Loss From External Stock',
-      value: money(report.external.grossProfit),
-      detail: 'Completed external sales minus agreed source shop costs / included in gross profit below',
-      tone: report.external.grossProfit < 0 ? 'negative' : 'positive',
-    },
-    {
-      key: 'external-shop-due',
-      label: 'Money We Still Owe Suppliers',
-      value: money(report.external.supplierOutstanding),
-      detail: 'Total amount we still need to pay suppliers',
-      tone: report.external.supplierOutstanding > 0 ? 'negative' : 'normal',
-    },
-    {
-      key: 'cost-of-sales',
-      label: 'Cost of products sold',
-      value: money(summary.costOfGoodsSold),
-      detail: summary.missingCostItems > 0
-        ? `${summary.missingCostItems} sale item(s) missing cost`
-        : 'Recorded cost when products were sold',
-      tone: 'normal',
-    },
-    {
-      key: 'gross-profit',
-      label: 'Profit or Loss Before Business Expenses',
-      value: summary.grossProfit === null
-        ? 'Cost missing'
-        : money(summary.grossProfit),
-      detail: summary.grossProfit === null
-        ? 'Record missing product costs before relying on profit'
-        : 'Sales after discounts minus product costs',
-      tone: summary.grossProfit === null
-        ? 'normal'
-        : summary.grossProfit < 0 ? 'negative' : 'positive',
-    },
-    {
-      key: 'net-profit',
-      label: 'Profit or Loss After Business Expenses',
-      value: summary.netProfit === null
-        ? 'Cost missing'
-        : money(summary.netProfit),
-      detail: 'Profit after subtracting recorded business expenses',
-      tone: summary.netProfit === null
-        ? 'normal'
-        : summary.netProfit < 0 ? 'negative' : 'positive',
-    },
-    {
-      key: 'received',
-      label:
-        'Money received',
-      value:
-        money(
-          summary.moneyReceived,
-        ),
-      detail:
-        'Customer payments received in this period',
-      tone:
-        summary.moneyReceived >
-        0
-          ? 'positive'
-          : 'normal',
-    },
-    {
-      key: 'expenses',
-      label: 'Expenses',
-      value:
-        money(
-          summary.expensesTotal,
-        ),
-      detail:
-        'Business money spent in this period',
-      tone:
-        summary.expensesTotal >
-        0
-          ? 'negative'
-          : 'normal',
-    },
-    {
-      key: 'discounts',
-      label: 'Discounts',
-      value:
-        money(
-          summary.discountTotal,
-        ),
-      detail:
-        summary.discountTotal >
-        0
-          ? `Sales before discount: ${money(
-              summary.salesBeforeDiscount,
-            )}`
-          : 'No discounts given',
-      tone: 'normal',
-    },
-  ];
-
-  const paymentRows =
-    report.paymentRows.length >
-    0
-      ? report.paymentRows.map(
-          (row) => ({
-            key:
-              `payment-${row.method}`,
-            label:
-              row.name,
-            value:
-              money(
-                row.total,
-              ),
-            detail:
-              row.later > 0
-                ? `${money(
-                    row.atSale,
-                  )} at sale / ${money(
-                    row.later,
-                  )} later`
-                : 'Customer payments received',
-            tone:
-              row.total > 0
-                ? ('positive' as Tone)
-                : ('normal' as Tone),
-          }),
-        )
-      : [
-          {
-            key:
-              'customer-payments-none',
-            label:
-              'Customer payments',
-            value:
-              money(0),
-            detail:
-              'No customer payments received in this period',
-            tone:
-              'normal' as Tone,
-          },
-        ];
-
-  const expenseRows =
-    report.expenseCategoryRows.map(
-      (row) => ({
-        key:
-          `expense-${row.category}`,
-        label:
-          `Expense / ${row.category}`,
-        value:
-          money(
-            row.total,
-          ),
-        detail:
-          'Business expense',
-        tone:
-          'negative' as Tone,
-      }),
-    );
-
-  const moneyRows = [
-    ...paymentRows,
-    ...expenseRows,
-  ];
-
   return (
-    <section className="space-y-7 pb-6">
-      <header className="border-b border-neutral-200 pb-5 dark:border-[#343434]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="space-y-7 pb-8">
+      <header className="border-b border-[var(--border)] pb-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
+            <h1 className="text-2xl font-black text-[var(--text)]">Reports</h1>
+            <p className="mt-1 text-sm font-semibold text-[var(--muted)]">
               {
                 report.period
                   .label
@@ -439,11 +190,7 @@ export default async function ReportsPage({
           </div>
 
           <Link
-            href={
-              canDownload
-                ? `/reports/download?${query}&mode=download`
-                : '#'
-            }
+            href={canDownload ? `/reports/download?${query}&mode=download` : '#'}
             aria-disabled={!canDownload}
             tabIndex={canDownload ? undefined : -1}
             className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary-action)] px-5 text-sm font-black text-white transition hover:bg-[var(--primary-action-hover)] sm:w-auto"
@@ -579,537 +326,65 @@ export default async function ReportsPage({
         ) : null}
       </header>
 
-      <section>
-        <SectionHeading
-          eyebrow="Summary"
-          title="Period activity"
-        />
-
-        <div className="md:hidden">
-          {summaryRows.map(
-            (row) => (
-              <MobileRow
-                key={
-                  row.key
-                }
-                label={
-                  row.label
-                }
-                value={
-                  row.value
-                }
-                detail={
-                  row.detail
-                }
-                tone={
-                  row.tone
-                }
-              />
-            ),
-          )}
+      <ReportSection title="Performance" description="Activity during the selected period. External stock sales are included in total sales.">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <OverviewCard label="Total sales" value={money(summary.salesTotal)} detail={`${summary.salesCount} completed sale${summary.salesCount === 1 ? '' : 's'}`} />
+          <OverviewCard label="Money received" value={money(summary.moneyReceived)} detail="Customer payments received during this period" />
+          <OverviewCard label="Business expenses" value={money(summary.expensesTotal)} detail="Recorded expenses during this period" />
+          <OverviewCard label="Profit after expenses" value={summary.netProfit === null ? 'Cost missing' : money(summary.netProfit)} accent={summary.netProfit !== null && summary.netProfit < 0 ? 'negative' : 'positive'} detail={summary.netProfit === null ? 'Some product costs are missing; profit cannot be confirmed' : 'Sales less product costs and recorded expenses'} />
         </div>
+      </ReportSection>
 
-        <div className="hidden overflow-hidden border-y border-neutral-200 dark:border-[#343434] md:block">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#FAFAFC] text-left dark:bg-[#1B1B1B]">
-                <th className="w-[30%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Metric
-                </th>
-
-                <th className="w-[22%] px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Value
-                </th>
-
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Detail
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {summaryRows.map(
-                (row) => (
-                  <tr
-                    key={
-                      row.key
-                    }
-                    className="border-t border-neutral-200 dark:border-[#343434]"
-                  >
-                    <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                      {
-                        row.label
-                      }
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right text-sm">
-                      <Value
-                        tone={
-                          row.tone
-                        }
-                      >
-                        {
-                          row.value
-                        }
-                      </Value>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                      {
-                        row.detail
-                      }
-                    </td>
-                  </tr>
-                ),
-              )}
-            </tbody>
-          </table>
+      <ReportSection title="Money still owed" description="Current outstanding balances, not sales or expenses for the selected period.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <OverviewCard label="Customers owe us" value={money(receivables.currentOutstanding)} detail={`${receivables.unpaidSalesCount} sale${receivables.unpaidSalesCount === 1 ? '' : 's'} with unpaid balances`} />
+          <OverviewCard label="We owe suppliers" value={money(report.external.supplierOutstanding)} accent={report.external.supplierOutstanding > 0 ? 'negative' : undefined} detail="Unpaid external-source shop balances; stays until settled" />
         </div>
-      </section>
+        <Link href="/debts" className="inline-flex items-center gap-1 text-sm font-bold text-[var(--primary)]">
+          View customer debts <ArrowRight className="h-4 w-4" />
+        </Link>
+      </ReportSection>
 
-      <section>
-        <SectionHeading
-          eyebrow="Money"
-          title="Customer Payments and Unpaid Sales"
-          action={
-            <Link
-              href="/debts"
-              className="inline-flex shrink-0 items-center gap-1 text-xs font-black text-[var(--primary)]"
-            >
-              View debts
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          }
-        />
-
-        <div className="md:hidden">
-          {moneyRows.map(
-            (row) => (
-              <MobileRow
-                key={
-                  row.key
-                }
-                label={
-                  row.label
-                }
-                value={
-                  row.value
-                }
-                detail={
-                  row.detail
-                }
-                tone={
-                  row.tone
-                }
-              />
-            ),
-          )}
-
-          <MobileRow
-            label="Money Customers Still Owe"
-            value={money(
-              receivables.currentOutstanding,
-            )}
-            detail="Current total across all unpaid sales"
-          />
-
-          <MobileRow
-            label="Unpaid sales"
-            value={
-              receivables.unpaidSalesCount
-            }
-            detail={
-              receivables.unpaidSalesCount ===
-              0
-                ? 'Customers have no unpaid balances'
-                : receivables.unpaidSalesCount ===
-                    1
-                  ? '1 sale still has money owed'
-                  : `${receivables.unpaidSalesCount} sales still have money owed`
-            }
-          />
+      <ReportSection title="Stock overview" description="Remaining stock is the current position. Stock movements reflect the selected period.">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <OverviewCard label="Remaining stock" value={`${stock.remainingUnits.toLocaleString('en-US')} units`} detail="Current quantity in inventory" />
+          <OverviewCard label="Selling value of stock" value={money(stock.remainingValue)} detail="Estimated at current selling prices; not stock cost or profit" />
+          <OverviewCard label="Received" value={`${stock.receivedUnits.toLocaleString('en-US')} units`} detail="Added during selected period" />
+          <OverviewCard label="Sold" value={`${stock.soldUnits.toLocaleString('en-US')} units`} detail="Sold from owned inventory in selected period" />
         </div>
+      </ReportSection>
 
-        <div className="hidden overflow-hidden border-y border-neutral-200 dark:border-[#343434] md:block">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#FAFAFC] text-left dark:bg-[#1B1B1B]">
-                <th className="w-[30%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Category
-                </th>
-
-                <th className="w-[22%] px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Value
-                </th>
-
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Detail
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {moneyRows.map(
-                (row) => (
-                  <tr
-                    key={
-                      row.key
-                    }
-                    className="border-t border-neutral-200 dark:border-[#343434]"
-                  >
-                    <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                      {
-                        row.label
-                      }
-                    </td>
-
-                    <td className="px-4 py-3.5 text-right text-sm">
-                      <Value
-                        tone={
-                          row.tone
-                        }
-                      >
-                        {
-                          row.value
-                        }
-                      </Value>
-                    </td>
-
-                    <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                      {
-                        row.detail
-                      }
-                    </td>
-                  </tr>
-                ),
-              )}
-
-              <tr className="border-t-2 border-neutral-300 dark:border-[#454545]">
-                <td className="px-4 py-3.5 text-sm font-black text-[#222222] dark:text-[#F5F5F5]">
-                  Money Customers Still Owe
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {money(
-                      receivables.currentOutstanding,
-                    )}
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                  Current total
-                  across all unpaid
-                  sales
-                </td>
-              </tr>
-
-              <tr className="border-t border-neutral-200 dark:border-[#343434]">
-                <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                  Sales Not Fully Paid
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {
-                      receivables.unpaidSalesCount
-                    }
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                  {receivables.unpaidSalesCount ===
-                  0
-                    ? 'Customers have no unpaid balances'
-                    : receivables.unpaidSalesCount ===
-                        1
-                      ? '1 sale still has money owed'
-                      : `${receivables.unpaidSalesCount} sales still have money owed`}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <details className="group rounded-xl border border-[var(--border)] bg-[var(--card)]">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-black text-[var(--text)] sm:p-5 [&::-webkit-details-marker]:hidden">
+          Detailed financial breakdown
+          <span className="text-xs font-semibold text-[var(--muted)] group-open:hidden">Show details +</span>
+          <span className="hidden text-xs font-semibold text-[var(--muted)] group-open:inline">Hide details −</span>
+        </summary>
+        <div className="border-t border-[var(--border)] px-4 pb-2 sm:px-5">
+          <DetailRow label="External stock sales" value={money(report.external.salesTotal)} note={`${report.external.salesCount} completed external sale(s); already included in total sales`} />
+          <DetailRow label="External source shop costs" value={money(report.external.supplierCost)} note="Included in product costs, not an additional expense" />
+          <DetailRow label="External stock gross profit" value={money(report.external.grossProfit)} note="Already included in overall gross profit" />
+          <DetailRow label="Cost of goods sold" value={money(summary.costOfGoodsSold)} note={summary.missingCostItems > 0 ? `${summary.missingCostItems} sale item(s) missing cost` : 'Recorded cost of products sold'} />
+          <DetailRow label="Profit before business expenses" value={summary.grossProfit === null ? 'Cost missing' : money(summary.grossProfit)} />
+          <DetailRow label="Discounts" value={money(summary.discountTotal)} />
+          <DetailRow label="Damaged stock" value={`${stock.damagedUnits} units`} />
+          {report.paymentRows.map(row => (
+            <DetailRow key={row.method} label={`${row.name} received`} value={money(row.total)} note={row.later > 0 ? `${money(row.atSale)} at sale / ${money(row.later)} later` : undefined} />
+          ))}
+          {report.expenseCategoryRows.map(row => (
+            <DetailRow key={row.category} label={`Expense: ${row.category}`} value={money(row.total)} />
+          ))}
         </div>
-      </section>
+      </details>
 
-      <section>
-        <SectionHeading
-          eyebrow="Stock"
-          title="Stock position"
-        />
-
-        <div className="md:hidden">
-          <div className="border-t border-neutral-200 py-3.5 dark:border-[#343434]">
-            <div className="flex items-start justify-between gap-4">
-              <p className="text-sm font-black text-[#222222] dark:text-[#F5F5F5]">
-                Current remaining
-              </p>
-
-              <div className="text-right">
-                <p className="text-sm font-black text-[#222222] dark:text-[#F5F5F5]">
-                  {
-                    stock.remainingUnits
-                  }{' '}
-                  units
-                </p>
-
-                <p className="mt-1 text-xs font-black text-[#222222] dark:text-[#F5F5F5]">
-                  {money(
-                    stock.remainingValue,
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-1.5 text-xs font-semibold leading-5 text-[#7D7D7D] dark:text-[#8F8F8F]">
-              Current ledger /
-              current selling
-              prices
-            </p>
+      {report.productRows.length > 0 ? (
+        <ReportSection title="Best-selling products" description="Product sales during the selected period.">
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] px-4 sm:px-5">
+            {report.productRows.map(row => (
+              <DetailRow key={row.id} label={row.name} value={money(row.salesValue)} note={`${row.quantity} units sold`} />
+            ))}
           </div>
-
-          <MobileRow
-            label="Received"
-            value={`${stock.receivedUnits} units`}
-            detail={`${money(
-              stock.receivedValue,
-            )} / selling price at receipt`}
-          />
-
-          <MobileRow
-            label="Sold"
-            value={`${stock.soldUnits} units`}
-            detail={`${money(
-              stock.soldValue,
-            )} / sale item value`}
-          />
-
-          <MobileRow
-            label="Damaged"
-            value={`${stock.damagedUnits} units`}
-            detail="Quantity only"
-          />
-        </div>
-
-        <div className="hidden overflow-hidden border-y border-neutral-200 dark:border-[#343434] md:block">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-[#FAFAFC] text-left dark:bg-[#1B1B1B]">
-                <th className="w-[28%] px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Metric
-                </th>
-
-                <th className="w-[18%] px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Quantity
-                </th>
-
-                <th className="w-[22%] px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Value
-                </th>
-
-                <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                  Notes
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr className="border-t border-neutral-200 dark:border-[#343434]">
-                <td className="px-4 py-3.5 text-sm font-black text-[#222222] dark:text-[#F5F5F5]">
-                  Current remaining
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {
-                      stock.remainingUnits
-                    }{' '}
-                    units
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {money(
-                      stock.remainingValue,
-                    )}
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                  Current ledger /
-                  current selling
-                  prices
-                </td>
-              </tr>
-
-              <tr className="border-t border-neutral-200 dark:border-[#343434]">
-                <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                  Received
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {
-                      stock.receivedUnits
-                    }{' '}
-                    units
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {money(
-                      stock.receivedValue,
-                    )}
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                  Selected period /
-                  selling price at
-                  receipt
-                </td>
-              </tr>
-
-              <tr className="border-t border-neutral-200 dark:border-[#343434]">
-                <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                  Sold
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {
-                      stock.soldUnits
-                    }{' '}
-                    units
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {money(
-                      stock.soldValue,
-                    )}
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                  Selected period /
-                  sale item value
-                </td>
-              </tr>
-
-              <tr className="border-t border-neutral-200 dark:border-[#343434]">
-                <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                  Damaged
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm">
-                  <Value>
-                    {
-                      stock.damagedUnits
-                    }{' '}
-                    units
-                  </Value>
-                </td>
-
-                <td className="px-4 py-3.5 text-right text-sm font-bold text-[#8B8B8B]">
-                  —
-                </td>
-
-                <td className="px-4 py-3.5 text-sm font-semibold text-[#6B7280] dark:text-[#A3A3A3]">
-                  Selected period /
-                  quantity only
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {report.productRows.length >
-      0 ? (
-        <section>
-          <SectionHeading
-            eyebrow="Products"
-            title="Best sellers"
-          />
-
-          <div className="md:hidden">
-            {report.productRows.map(
-              (row) => (
-                <MobileRow
-                  key={
-                    row.id
-                  }
-                  label={
-                    row.name
-                  }
-                  value={money(
-                    row.salesValue,
-                  )}
-                  detail={`${row.quantity} sold`}
-                />
-              ),
-            )}
-          </div>
-
-          <div className="hidden overflow-hidden border-y border-neutral-200 dark:border-[#343434] md:block">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-[#FAFAFC] text-left dark:bg-[#1B1B1B]">
-                  <th className="px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                    Product
-                  </th>
-
-                  <th className="w-[22%] px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                    Quantity sold
-                  </th>
-
-                  <th className="w-[24%] px-4 py-3 text-right text-[11px] font-black uppercase tracking-[0.12em] text-[#6B7280] dark:text-[#A3A3A3]">
-                    Sales value
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {report.productRows.map(
-                  (row) => (
-                    <tr
-                      key={
-                        row.id
-                      }
-                      className="border-t border-neutral-200 dark:border-[#343434]"
-                    >
-                      <td className="px-4 py-3.5 text-sm font-bold text-[#222222] dark:text-[#F5F5F5]">
-                        {
-                          row.name
-                        }
-                      </td>
-
-                      <td className="px-4 py-3.5 text-right text-sm">
-                        <Value>
-                          {
-                            row.quantity
-                          }
-                        </Value>
-                      </td>
-
-                      <td className="px-4 py-3.5 text-right text-sm">
-                        <Value>
-                          {money(
-                            row.salesValue,
-                          )}
-                        </Value>
-                      </td>
-                    </tr>
-                  ),
-                )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+        </ReportSection>
       ) : null}
     </section>
   );
