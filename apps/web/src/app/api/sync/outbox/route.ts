@@ -400,6 +400,26 @@ export async function POST(
       }
 
       const salePayload = body.payload;
+      const referralPresent =
+        typeof salePayload === 'object' &&
+        salePayload !== null &&
+        !Array.isArray(salePayload) &&
+        (
+          ('referrerName' in salePayload &&
+            Boolean(salePayload.referrerName)) ||
+          ('referralAmount' in salePayload &&
+            Boolean(salePayload.referralAmount)) ||
+          ('referralNotes' in salePayload &&
+            Boolean(salePayload.referralNotes))
+        );
+
+      if (referralPresent && user.role !== 'OWNER') {
+        return errorResponse(
+          'Only the owner can record referral rewards.',
+          403,
+        );
+      }
+
       const createsCustomer =
         typeof salePayload === 'object' &&
         salePayload !== null &&

@@ -106,6 +106,8 @@ export function proxy(request: NextRequest) {
     pathname.startsWith('/quotations/') ||
     pathname === '/reports' ||
     pathname.startsWith('/reports/') ||
+    pathname === '/referrals' ||
+    pathname.startsWith('/referrals/') ||
     pathname === '/requests' ||
     pathname.startsWith('/requests/') ||
     pathname === '/sales' ||

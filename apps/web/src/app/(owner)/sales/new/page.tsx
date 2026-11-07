@@ -396,6 +396,7 @@ export default async function NewSalePage() {
             user.role ===
               'EMPLOYEE'
           }
+          canRecordReferral={user.role === 'OWNER'}
         />
       </>
       )}

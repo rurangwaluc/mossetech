@@ -43,6 +43,9 @@ export const saleFormSchema = z.object({
   extraKept: moneySchema.default('0'),
   extraReason: z.string().trim().max(1000).optional(),
   notes: z.string().trim().max(1000).optional(),
+  referrerName: z.string().trim().max(160).optional(),
+  referralAmount: z.string().trim().optional(),
+  referralNotes: z.string().trim().max(1000).optional(),
   items: z.array(saleLineItemSchema).min(1, 'Add at least one item.'),
 });
 

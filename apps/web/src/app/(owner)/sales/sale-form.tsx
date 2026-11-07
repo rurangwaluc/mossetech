@@ -86,6 +86,7 @@ type SaleFormProps = {
   customers: CustomerOption[];
   hasOpenDrawer: boolean;
   canGiveDiscount: boolean;
+  canRecordReferral: boolean;
 };
 
 const fieldClass =
@@ -211,6 +212,7 @@ export function SaleForm({
   customers,
   hasOpenDrawer,
   canGiveDiscount,
+  canRecordReferral,
 }: SaleFormProps) {
   const [
     state,
@@ -223,6 +225,7 @@ export function SaleForm({
 
   const router =
     useRouter();
+  const [hasReferral, setHasReferral] = useState(false);
 
   const [
     savingLocally,
@@ -931,6 +934,9 @@ export function SaleForm({
             value(
               'notes',
             ),
+          referrerName: value('referrerName'),
+          referralAmount: value('referralAmount'),
+          referralNotes: value('referralNotes'),
 
           items:
             saleItems,
@@ -1391,6 +1397,51 @@ export function SaleForm({
             ) : null}
           </div>
         </section>
+
+
+        {canRecordReferral && (
+          <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:p-6">
+            <label className="flex items-center gap-3 text-sm font-bold text-[var(--text)]">
+              <input
+                type="checkbox"
+                checked={hasReferral}
+                onChange={(event) => setHasReferral(event.target.checked)}
+                className="h-4 w-4 accent-[var(--primary)]"
+              />
+              Customer referred by someone
+            </label>
+
+            {hasReferral && (
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="text-sm font-bold text-[var(--text)]">
+                  Referred by
+                  <input name="referrerName" required minLength={2}
+                    maxLength={160} placeholder="Referrer name"
+                    className={`${fieldClass} mt-2`} />
+                </label>
+
+                <label className="text-sm font-bold text-[var(--text)]">
+                  Agreed reward (RWF)
+                  <input name="referralAmount" type="number" required
+                    min="0.01" step="0.01" placeholder="0"
+                    className={`${fieldClass} mt-2`} />
+                </label>
+
+                <label className="text-sm font-bold text-[var(--text)] sm:col-span-2">
+                  Notes (optional)
+                  <input name="referralNotes" maxLength={1000}
+                    placeholder="Referral details"
+                    className={`${fieldClass} mt-2`} />
+                </label>
+
+                <p className="text-xs text-[var(--muted)] sm:col-span-2">
+                  The reward is recorded only for a fully paid sale.
+                  Pay it later from Referrals.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ITEMS */}
         <section className="relative z-20 overflow-visible rounded-xl border border-[var(--border)] bg-[var(--card)]">

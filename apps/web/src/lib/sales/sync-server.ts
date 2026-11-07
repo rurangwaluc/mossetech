@@ -18,11 +18,15 @@ import {
   saleItems,
   salePayments,
   sales,
+  referralRewards,
 } from '@mossetech/db/schema';
 
 import {
   saleFormSchema,
 } from '@mossetech/validators/sale';
+import {
+  validateSaleReferral,
+} from '@/lib/referrals/sale-referral';
 
 import {
   calculateSalePaymentSplit,
@@ -51,9 +55,13 @@ type DbTransaction =
 
 type SyncUser = {
   id: string;
+  role?: string;
 };
 
 type SaleCreatePayload = {
+  referrerName?: unknown;
+  referralAmount?: unknown;
+  referralNotes?: unknown;
   customerMode?: unknown;
   customerId?: unknown;
   newCustomerName?: unknown;
@@ -611,6 +619,9 @@ export async function executeSaleCreateSync(
       notes:
         raw.notes ||
         undefined,
+      referrerName: raw.referrerName || undefined,
+      referralAmount: raw.referralAmount || undefined,
+      referralNotes: raw.referralNotes || undefined,
 
       items:
         raw.items,
@@ -1193,6 +1204,33 @@ export async function executeSaleCreateSync(
         id:
           sales.id,
       });
+
+
+  const referral = validateSaleReferral(
+    parsed.data.referrerName,
+    parsed.data.referralAmount,
+    parsed.data.referralNotes,
+    totalAmount,
+    paidAmount,
+    balanceAmount,
+  );
+
+  if (referral) {
+    if (user.role !== 'OWNER') {
+      throw new SaleSyncError(
+        'Only the owner can record referral rewards.',
+        403,
+      );
+    }
+
+    await tx.insert(referralRewards).values({
+      saleId: sale.id,
+      referrerName: referral.referrerName,
+      recordedByUserId: user.id,
+      amount: referral.amount,
+      notes: referral.notes,
+    });
+  }
 
   if (mixedPayments) {
     if (mixedPayments.payments.length > 0) {

@@ -27,11 +27,15 @@ import {
   saleItems,
   salePayments,
   sales,
+  referralRewards,
 } from '@mossetech/db/schema';
 
 import {
   saleFormSchema,
 } from '@mossetech/validators/sale';
+import {
+  validateSaleReferral,
+} from '@/lib/referrals/sale-referral';
 
 import {
   calculateSalePaymentSplit,
@@ -321,6 +325,9 @@ export async function createSaleAction(
         formData.get(
           'notes',
         ) || undefined,
+      referrerName: formData.get('referrerName') || undefined,
+      referralAmount: formData.get('referralAmount') || undefined,
+      referralNotes: formData.get('referralNotes') || undefined,
 
       items,
     });
@@ -932,6 +939,30 @@ export async function createSaleAction(
               createdAt:
                 sales.createdAt,
             });
+
+
+        const referral = validateSaleReferral(
+          parsed.data.referrerName,
+          parsed.data.referralAmount,
+          parsed.data.referralNotes,
+          totalAmount,
+          paidAmount,
+          balanceAmount,
+        );
+
+        if (referral) {
+          if (user.role !== 'OWNER') {
+            throw new Error('Only the owner can record referral rewards.');
+          }
+
+          await tx.insert(referralRewards).values({
+            saleId: sale.id,
+            referrerName: referral.referrerName,
+            recordedByUserId: user.id,
+            amount: referral.amount,
+            notes: referral.notes,
+          });
+        }
 
         /*
          * A completely unpaid sale has no payment event.
