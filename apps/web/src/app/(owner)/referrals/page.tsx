@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { randomUUID } from 'node:crypto';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { db } from '@mossetech/db/client';
 import {
+  externalCustomerPayments,
+  externalSales,
   referralRewards,
   sales,
 } from '@mossetech/db/schema';
@@ -35,14 +37,18 @@ export default async function ReferralsPage({ searchParams }: Props) {
     db.select({
       id: referralRewards.id,
       saleId: referralRewards.saleId,
+      externalSaleId: referralRewards.externalSaleId,
+      externalStatus: externalSales.status,
+      externalTotal: externalSales.customerTotal,
       referrerName: referralRewards.referrerName,
       amount: referralRewards.amount,
       paidAmount: referralRewards.paidAmount,
-      customerName: sales.customerName,
+      customerName: sql<string | null>`COALESCE(${sales.customerName}, ${externalSales.customerName})`,
       createdAt: referralRewards.createdAt,
     })
       .from(referralRewards)
-      .innerJoin(sales, eq(referralRewards.saleId, sales.id))
+      .leftJoin(sales, eq(referralRewards.saleId, sales.id))
+      .leftJoin(externalSales, eq(referralRewards.externalSaleId, externalSales.id))
       .orderBy(desc(referralRewards.createdAt))
       .limit(100),
 
@@ -58,6 +64,29 @@ export default async function ReferralsPage({ searchParams }: Props) {
       .limit(100),
   ]);
 
+  const externalIds = rewards
+    .map((reward) => reward.externalSaleId)
+    .filter((id): id is string => Boolean(id));
+  const externalPaymentTotals = externalIds.length
+    ? await db.select({
+        externalSaleId: externalCustomerPayments.externalSaleId,
+        paid: sql<string>`COALESCE(SUM(${externalCustomerPayments.amount}), 0)`,
+      }).from(externalCustomerPayments)
+        .where(inArray(externalCustomerPayments.externalSaleId, externalIds))
+        .groupBy(externalCustomerPayments.externalSaleId)
+    : [];
+  const externalPaid = new Map(
+    externalPaymentTotals.map((row) => [row.externalSaleId, row.paid]),
+  );
+  const isCancelled = (reward: (typeof rewards)[number]) =>
+    reward.externalSaleId !== null && reward.externalStatus === 'CANCELLED';
+  const isEligibleExternal = (reward: (typeof rewards)[number]) =>
+    Boolean(reward.externalSaleId) &&
+    reward.externalStatus === 'POSTED' &&
+    Number(reward.externalTotal) > 0 &&
+    Number(externalPaid.get(reward.externalSaleId! ) ?? 0) === Number(reward.externalTotal) &&
+    Number(reward.amount) <= Number(reward.externalTotal);
+
   const usedSales = new Set(rewards.map((reward) => reward.saleId));
 
   const eligibleSales = availableSales.filter((sale) =>
@@ -68,10 +97,10 @@ export default async function ReferralsPage({ searchParams }: Props) {
   );
 
   const rewardTotal = rewards.reduce(
-    (sum, reward) => sum + Number(reward.amount), 0
+    (sum, reward) => sum + (isCancelled(reward) ? 0 : Number(reward.amount)), 0
   );
   const paidTotal = rewards.reduce(
-    (sum, reward) => sum + Number(reward.paidAmount), 0
+    (sum, reward) => sum + (isCancelled(reward) ? 0 : Number(reward.paidAmount)), 0
   );
   const owedTotal = Math.max(0, rewardTotal - paidTotal);
 
@@ -224,7 +253,12 @@ export default async function ReferralsPage({ searchParams }: Props) {
               0,
               Number(reward.amount) - Number(reward.paidAmount)
             );
-            const status = outstanding === 0
+            const canPay = reward.externalSaleId
+              ? isEligibleExternal(reward)
+              : true;
+            const status = isCancelled(reward)
+              ? 'Sale cancelled'
+              : outstanding === 0
               ? 'Paid'
               : Number(reward.paidAmount) > 0
                 ? 'Partly paid'
@@ -243,7 +277,9 @@ export default async function ReferralsPage({ searchParams }: Props) {
                     Customer: {reward.customerName || 'Walk-in customer'}
                   </p>
                   <Link
-                    href={`/sales/${reward.saleId}`}
+                    href={reward.externalSaleId
+                      ? `/sales/external/${reward.externalSaleId}`
+                      : `/sales/${reward.saleId}`}
                     className="text-sm underline"
                   >
                     View sale
@@ -255,7 +291,12 @@ export default async function ReferralsPage({ searchParams }: Props) {
                   <p className="text-xs text-[var(--muted)]">
                     Still owed: {money(outstanding)}
                   </p>
-                  {outstanding > 0 && (
+                  {reward.externalSaleId && outstanding > 0 && !canPay && !isCancelled(reward) && (
+                    <p className="text-xs text-[var(--muted)]">
+                      Payout available after full customer payment.
+                    </p>
+                  )}
+                  {outstanding > 0 && canPay && (
                     <form
                       action={payReferralRewardAction}
                       className="mt-3 flex flex-wrap items-center justify-end gap-2"

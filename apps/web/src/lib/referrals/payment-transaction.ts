@@ -3,6 +3,8 @@ import { db } from '@mossetech/db/client';
 import {
   cashDrawerMovements,
   expenses,
+  externalCustomerPayments,
+  externalSales,
   referralRewardPayments,
   referralRewards,
   saleReturns,
@@ -78,6 +80,7 @@ export async function executeReferralCashPayment(
     const [candidate] = await tx
       .select({
         saleId: referralRewards.saleId,
+        externalSaleId: referralRewards.externalSaleId,
       })
       .from(referralRewards)
       .where(eq(referralRewards.id, rewardId))
@@ -87,12 +90,20 @@ export async function executeReferralCashPayment(
       throw new Error('Referral reward not found.');
     }
 
-    // Coordinate with sale corrections and returns.
-    await tx.execute(sql`
-      SELECT id FROM sales
-      WHERE id = ${candidate.saleId}
-      FOR UPDATE
-    `);
+    // Lock the parent sale first: payment, cancellation and payout serialize
+    // on the same row. A reward has exactly one of these references.
+    if (candidate.externalSaleId) {
+      await tx.execute(sql`
+        SELECT id FROM external_sales
+        WHERE id = ${candidate.externalSaleId} FOR UPDATE
+      `);
+    } else if (candidate.saleId) {
+      await tx.execute(sql`
+        SELECT id FROM sales WHERE id = ${candidate.saleId} FOR UPDATE
+      `);
+    } else {
+      throw new Error('Referral reward has no linked sale.');
+    }
 
     // Serialize simultaneous payout attempts for this reward.
     await tx.execute(sql`
@@ -107,7 +118,8 @@ export async function executeReferralCashPayment(
       .where(eq(referralRewards.id, rewardId))
       .limit(1);
 
-    if (!reward || reward.saleId !== candidate.saleId) {
+    if (!reward || reward.saleId !== candidate.saleId ||
+        reward.externalSaleId !== candidate.externalSaleId) {
       throw new Error('Referral reward changed. Please review.');
     }
 
@@ -133,37 +145,64 @@ export async function executeReferralCashPayment(
       return 'already-recorded';
     }
 
-    const [sale] = await tx
-      .select()
-      .from(sales)
-      .where(eq(sales.id, reward.saleId))
-      .limit(1);
+    if (reward.externalSaleId) {
+      const [sale] = await tx.select({
+        id: externalSales.id,
+        status: externalSales.status,
+        total: externalSales.customerTotal,
+      }).from(externalSales)
+        .where(eq(externalSales.id, reward.externalSaleId))
+        .limit(1);
 
-    if (!sale) {
-      throw new Error('Linked sale was not found.');
-    }
+      if (!sale || sale.status !== 'POSTED') {
+        throw new Error('Complete the external sale before paying its referral.');
+      }
 
-    const returns = await tx
-      .select({ id: saleReturns.id })
-      .from(saleReturns)
-      .where(eq(saleReturns.saleId, sale.id))
-      .limit(1);
+      const [totals] = await tx.select({
+        paid: sql<string>`COALESCE(SUM(${externalCustomerPayments.amount}), 0)`,
+      }).from(externalCustomerPayments)
+        .where(eq(externalCustomerPayments.externalSaleId, sale.id));
 
-    if (returns.length) {
-      throw new Error(
-        'This sale has returns. Review the referral reward first.',
-      );
-    }
+      const totalCents = moneyCents(sale.total);
+      const customerPaidCents = moneyCents(totals.paid);
+      if (totalCents <= 0 || customerPaidCents !== totalCents ||
+          moneyCents(reward.amount) > totalCents) {
+        throw new Error('Referral payments require a fully paid eligible sale.');
+      }
+    } else if (reward.saleId) {
+      const [sale] = await tx
+        .select()
+        .from(sales)
+        .where(eq(sales.id, reward.saleId))
+        .limit(1);
 
-    if (
-      moneyCents(sale.balanceAmount) !== 0 ||
-      moneyCents(sale.paidAmount) !==
-        moneyCents(sale.totalAmount) ||
-      moneyCents(sale.totalAmount) <= 0
-    ) {
-      throw new Error(
-        'Referral payments require a fully paid eligible sale.',
-      );
+      if (!sale) {
+        throw new Error('Linked sale was not found.');
+      }
+
+      const returns = await tx
+        .select({ id: saleReturns.id })
+        .from(saleReturns)
+        .where(eq(saleReturns.saleId, sale.id))
+        .limit(1);
+
+      if (returns.length) {
+        throw new Error(
+          'This sale has returns. Review the referral reward first.',
+        );
+      }
+
+      if (
+        moneyCents(sale.balanceAmount) !== 0 ||
+        moneyCents(sale.paidAmount) !== moneyCents(sale.totalAmount) ||
+        moneyCents(sale.totalAmount) <= 0
+      ) {
+        throw new Error(
+          'Referral payments require a fully paid eligible sale.',
+        );
+      }
+    } else {
+      throw new Error('Referral reward has no linked sale.');
     }
 
     const rewardCents = moneyCents(reward.amount);
@@ -201,7 +240,9 @@ export async function executeReferralCashPayment(
         amount: money(amountCents),
         paymentMethod: 'CASH',
         expenseDate: new Date(),
-        notes: `Referral linked to sale ${reward.saleId}`,
+        notes: reward.externalSaleId
+          ? `Referral linked to external sale ${reward.externalSaleId}`
+          : `Referral linked to sale ${reward.saleId}`,
       })
       .returning({ id: expenses.id });
 

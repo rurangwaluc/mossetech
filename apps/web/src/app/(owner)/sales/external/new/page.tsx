@@ -8,7 +8,7 @@ import { requirePermission } from '@/lib/auth/require-permission';
 import { ExternalSaleForm } from './external-sale-form';
 
 export default async function NewExternalSalePage() {
-  await requirePermission('sales.create');
+  const user = await requirePermission('sales.create');
 
   const supplierList = await db
     .select({
@@ -39,7 +39,7 @@ export default async function NewExternalSalePage() {
         </p>
       </div>
 
-      <ExternalSaleForm suppliers={supplierList} />
+      <ExternalSaleForm suppliers={supplierList} canRecordReferral={user.role === 'OWNER'} />
     </main>
   );
 }

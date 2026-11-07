@@ -27,8 +27,10 @@ const inputClass =
 
 export function ExternalSaleForm({
   suppliers,
+  canRecordReferral,
 }: {
   suppliers: Supplier[];
+  canRecordReferral: boolean;
 }) {
   const [state, formAction, pending] = useActionState(
     createExternalSaleDraftAction,
@@ -38,6 +40,7 @@ export function ExternalSaleForm({
   const [key] = useState(() => crypto.randomUUID());
   const [supplierTotal, setSupplierTotal] = useState('');
   const [customerTotal, setCustomerTotal] = useState('');
+  const [hasReferral, setHasReferral] = useState(false);
   const [shopList, setShopList] = useState(suppliers);
   const [selectedShopId, setSelectedShopId] = useState('');
   const [addingShop, setAddingShop] = useState(false);
@@ -272,6 +275,43 @@ export function ExternalSaleForm({
           />
         </label>
       </div>
+
+      {canRecordReferral && (
+        <section className="space-y-3 rounded-lg border border-[var(--border)] p-4">
+          <label className="flex cursor-pointer items-center gap-3 text-sm font-semibold text-[var(--text)]">
+            <input
+              type="checkbox"
+              checked={hasReferral}
+              onChange={(event) => setHasReferral(event.target.checked)}
+            />
+            Customer referred by someone
+          </label>
+          {hasReferral && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-sm font-semibold text-[var(--text)]">
+                Referred by
+                <input name="referrerName" minLength={2} maxLength={160}
+                  required placeholder="Referrer name" className={inputClass} />
+              </label>
+              <label className="text-sm font-semibold text-[var(--text)]">
+                Agreed reward (RWF)
+                <input name="referralAmount" type="number" inputMode="decimal"
+                  min="0.01" step="0.01" required placeholder="e.g. 10000"
+                  className={inputClass} />
+              </label>
+              <label className="text-sm font-semibold text-[var(--text)] sm:col-span-2">
+                Referral notes (optional)
+                <input name="referralNotes" maxLength={1000}
+                  placeholder="Agreed referral terms" className={inputClass} />
+              </label>
+              <p className="text-xs text-[var(--muted)] sm:col-span-2">
+                This records an agreed reward only. No payment is made until
+                the external sale is completed and the customer pays in full.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="rounded-lg border border-[var(--border)] p-4">
         <p className="text-sm text-[var(--muted)]">

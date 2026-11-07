@@ -1754,8 +1754,10 @@ export const saleReturnCustomerCredits = pgTable('sale_return_customer_credits',
 // Unpaid rewards must not be recorded as cash expenses.
 export const referralRewards = pgTable('referral_rewards', {
   id: uuid('id').defaultRandom().primaryKey(),
-  saleId: uuid('sale_id').notNull().unique()
+  saleId: uuid('sale_id').unique()
     .references(() => sales.id, { onDelete: 'restrict' }),
+  externalSaleId: uuid('external_sale_id').unique()
+    .references(() => externalSales.id, { onDelete: 'restrict' }),
   referrerName: varchar('referrer_name', { length: 160 }).notNull(),
   recordedByUserId: uuid('recorded_by_user_id').notNull()
     .references(() => users.id, { onDelete: 'restrict' }),
@@ -1768,6 +1770,10 @@ export const referralRewards = pgTable('referral_rewards', {
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .defaultNow().notNull(),
 }, (table) => [
+  returnCheck('referral_reward_one_sale_check', returnSql`
+    (${table.saleId} IS NOT NULL AND ${table.externalSaleId} IS NULL)
+    OR (${table.saleId} IS NULL AND ${table.externalSaleId} IS NOT NULL)
+  `),
   returnCheck('referral_reward_amount_check', returnSql`
     ${table.amount} > 0 AND ${table.paidAmount} >= 0
     AND ${table.paidAmount} <= ${table.amount}

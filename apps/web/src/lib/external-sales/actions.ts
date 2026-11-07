@@ -7,6 +7,7 @@ import {
   cashDrawerMovements,
   externalCustomerPayments,
   externalSales,
+  referralRewards,
   suppliers,
 } from '@mossetech/db/schema';
 import { and, eq, sql } from 'drizzle-orm';
@@ -14,6 +15,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { requirePermission } from '@/lib/auth/require-permission';
 import { lockCurrentOpenDrawer } from '@/lib/cash-drawer/locking';
 import { formatMoney, parseMoney } from './money';
+import { validateExternalDraftReferral } from '@/lib/referrals/external-sale-referral';
 
 export type ExternalSaleDraftState = {
   error?: string;
@@ -56,6 +58,9 @@ export async function createExternalSaleDraftAction(
     'customerTotal',
   );
   const notes = textValue(formData, 'notes');
+  const referrerName = textValue(formData, 'referrerName');
+  const referralAmount = textValue(formData, 'referralAmount');
+  const referralNotes = textValue(formData, 'referralNotes');
 
   if (
     !UUID_PATTERN.test(idempotencyKey) ||
@@ -96,6 +101,19 @@ export async function createExternalSaleDraftAction(
     return { error: 'Both prices must be above zero.' };
   }
 
+  if (user.role !== 'OWNER' && (referrerName || referralAmount || referralNotes)) {
+    return { error: 'Only the owner can record referral rewards.' };
+  }
+
+  let referral: ReturnType<typeof validateExternalDraftReferral>;
+  try {
+    referral = validateExternalDraftReferral(
+      referrerName, referralAmount, referralNotes, customerCents,
+    );
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Invalid referral.' };
+  }
+
   try {
     return await db.transaction(async (tx) => {
       const [supplier] = await tx
@@ -134,6 +152,16 @@ export async function createExternalSaleDraftAction(
         return {
           error: 'This sale was already submitted. Refresh the list before trying again.',
         };
+      }
+
+      if (referral) {
+        await tx.insert(referralRewards).values({
+          externalSaleId: created.id,
+          recordedByUserId: user.id,
+          referrerName: referral.referrerName,
+          amount: referral.amount,
+          notes: referral.notes,
+        });
       }
 
       return { externalSaleId: created.id };
@@ -441,6 +469,16 @@ export async function updateExternalSaleDraftAction(
         .limit(1);
 
       if (!shop) return false;
+
+      const [reward] = await tx
+        .select({ amount: referralRewards.amount })
+        .from(referralRewards)
+        .where(eq(referralRewards.externalSaleId, id))
+        .limit(1);
+
+      if (reward && parseMoney(reward.amount) > sellingCents) {
+        return false;
+      }
 
       const updated = await tx
         .update(externalSales)

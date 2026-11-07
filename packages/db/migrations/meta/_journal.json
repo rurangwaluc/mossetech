@@ -393,6 +393,13 @@
       "when": 1793974143156,
       "tag": "0055_spooky_jocasta",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1794055000000,
+      "tag": "0056_external_referral_rewards",
+      "breakpoints": true
     }
   ]
 }
