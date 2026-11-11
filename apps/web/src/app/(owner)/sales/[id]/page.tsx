@@ -1313,6 +1313,28 @@ export default async function SaleDetailPage({
         ) : null}
       </section>
       <SaleDocuments saleId={sale.id} />
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 sm:hidden">
+        <h2 className="text-base font-black text-[var(--text)]">Save documents on iPhone</h2>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Open the PDF, tap Share, then Save to Files. This also works when
+          the Download button does not save directly.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {[
+            { label: 'Invoice', path: 'invoice' },
+            { label: 'Receipt', path: 'receipt' },
+            { label: 'Delivery note', path: 'delivery-note' },
+          ].map((document) => (
+            <a
+              key={document.path}
+              href={`/sales/${sale.id}/${document.path}?mode=inline`}
+              className="inline-flex min-h-11 items-center rounded-lg border border-[var(--border)] px-3 text-sm font-bold text-[var(--primary)]"
+            >
+              Open {document.label}
+            </a>
+          ))}
+        </div>
+      </section>
       <WarrantyHistory saleId={sale.id} />
     </section>
   );

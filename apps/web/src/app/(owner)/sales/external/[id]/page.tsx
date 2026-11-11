@@ -260,7 +260,7 @@ export default async function ExternalSaleDetailsPage({
               Documents
             </h3>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              View, print or download customer documents.
+              On iPhone, open a PDF, tap Share, then Save to Files. You can also use Download PDF.
             </p>
           </div>
 
@@ -293,17 +293,15 @@ export default async function ExternalSaleDetailsPage({
                     <div className="flex flex-wrap items-center gap-3">
                       <a
                         href={`${href}?mode=inline`}
-                        target="_blank"
-                        rel="noopener noreferrer"
                         className="text-sm font-bold text-[var(--primary)] hover:underline"
                       >
-                        View / Print
+                        Open PDF
                       </a>
                       <a
-                        href={href}
+                        href={`${href}?mode=download`}
                         className="text-sm font-bold text-[var(--primary)] hover:underline"
                       >
-                        Download
+                        Download PDF
                       </a>
                     </div>
                   ) : (
