@@ -9,6 +9,8 @@ import {
 import { db } from '@mossetech/db/client';
 import {
   expenses,
+  referralRewards,
+  referralRewardPayments,
   externalSales,
   externalCustomerPayments,
   externalSupplierSettlements,
@@ -869,6 +871,45 @@ export async function getReport(
     db.select().from(externalCustomerPayments),
   ]);
 
+  // Referral agreements are recognized when recorded, independently of when
+  // cash is paid. Payments post their own expense and drawer movement.
+  // Exclude linked payout expenses below to avoid deducting rewards twice.
+  const [periodRewardRows, allRewardRows, referralPayoutExpenses] = await Promise.all([
+    db.select({
+      amount: referralRewards.amount,
+      externalSaleId: referralRewards.externalSaleId,
+      externalStatus: externalSales.status,
+    }).from(referralRewards)
+      .leftJoin(externalSales, eq(referralRewards.externalSaleId, externalSales.id))
+      .where(and(
+        gte(referralRewards.createdAt, period.start),
+        lte(referralRewards.createdAt, period.end),
+      )),
+    db.select({
+      amount: referralRewards.amount,
+      paidAmount: referralRewards.paidAmount,
+      externalSaleId: referralRewards.externalSaleId,
+      externalStatus: externalSales.status,
+    }).from(referralRewards)
+      .leftJoin(externalSales, eq(referralRewards.externalSaleId, externalSales.id)),
+    db.select({ expenseId: referralRewardPayments.expenseId })
+      .from(referralRewardPayments),
+  ]);
+  const activeReferral = (reward: { externalSaleId: string | null; externalStatus: string | null }) =>
+    !reward.externalSaleId || reward.externalStatus !== 'CANCELLED';
+  const referralCost = periodRewardRows.reduce(
+    (sum, reward) => sum + (activeReferral(reward) ? Number(reward.amount) : 0), 0,
+  );
+  const referralOutstanding = allRewardRows.reduce(
+    (sum, reward) => sum + (activeReferral(reward)
+      ? Math.max(0, Number(reward.amount) - Number(reward.paidAmount)) : 0), 0,
+  );
+  const referralPayoutExpenseIds = new Set(referralPayoutExpenses.map(row => row.expenseId));
+  const referralCashPaid = expenseList.reduce(
+    (sum, expense) => sum + (referralPayoutExpenseIds.has(expense.id)
+      ? Number(expense.amount) : 0), 0,
+  );
+
   // periodProductReturns563U:
   // Keep original sales in their original reporting periods.
   // Recognize return credits on the actual return date.
@@ -1032,18 +1073,12 @@ export async function getReport(
     externalSalesTotal -
     periodReturnCredit563U;
 
-  const expensesTotal =
-    expenseList.reduce(
-      (
-        sum,
-        expense,
-      ) =>
-        sum +
-        Number(
-          expense.amount,
-        ),
-      0,
-    );
+  // Accrued reward cost replaces (not adds to) referral cash payout expenses.
+  const otherExpensesTotal = expenseList.reduce(
+    (sum, expense) => sum + (referralPayoutExpenseIds.has(expense.id)
+      ? 0 : Number(expense.amount)), 0,
+  );
+  const expensesTotal = otherExpensesTotal + referralCost;
 
   // Sale-time cost snapshots; never use today's product cost
   // to recalculate historical profit.
@@ -1670,6 +1705,10 @@ export async function getReport(
       discountTotal,
       salesTotal,
       expensesTotal,
+      otherExpensesTotal,
+      referralCost,
+      referralCashPaid,
+      referralOutstanding,
       returnCredit: periodReturnCredit563U,
       customerCreditLiability,
       costOfGoodsSold,

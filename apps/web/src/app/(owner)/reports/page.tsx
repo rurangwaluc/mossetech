@@ -330,8 +330,17 @@ export default async function ReportsPage({
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <OverviewCard label="Total sales" value={money(summary.salesTotal)} detail={`${summary.salesCount} completed sale${summary.salesCount === 1 ? '' : 's'}`} />
           <OverviewCard label="Money received" value={money(summary.moneyReceived)} detail="Customer payments received during this period" />
-          <OverviewCard label="Business expenses" value={money(summary.expensesTotal)} detail="Recorded expenses during this period" />
+          <OverviewCard label="Sales less referrals" value={money(summary.salesTotal - summary.referralCost)} detail="Sales revenue minus agreed referral costs; before product costs and other expenses" />
+          <OverviewCard label="Business expenses" value={money(summary.expensesTotal)} detail="Other expenses plus agreed referral rewards; no double counting" />
           <OverviewCard label="Profit after expenses" value={summary.netProfit === null ? 'Cost missing' : money(summary.netProfit)} accent={summary.netProfit !== null && summary.netProfit < 0 ? 'negative' : 'positive'} detail={summary.netProfit === null ? 'Some product costs are missing; profit cannot be confirmed' : 'Sales less product costs and recorded expenses'} />
+        </div>
+      </ReportSection>
+
+      <ReportSection title="Referral costs" description="Rewards reduce profit when agreed; cash is deducted only when actually paid.">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <OverviewCard label="Agreed this period" value={money(summary.referralCost)} detail="Already included in business expenses and profit" />
+          <OverviewCard label="Cash paid this period" value={money(summary.referralCashPaid)} detail="Cash movements, not an extra profit deduction" />
+          <OverviewCard label="Still owe referrers" value={money(summary.referralOutstanding)} detail="Current unpaid rewards across the business" />
         </div>
       </ReportSection>
 
@@ -366,6 +375,9 @@ export default async function ReportsPage({
           <DetailRow label="External stock gross profit" value={money(report.external.grossProfit)} note="Already included in overall gross profit" />
           <DetailRow label="Cost of goods sold" value={money(summary.costOfGoodsSold)} note={summary.missingCostItems > 0 ? `${summary.missingCostItems} sale item(s) missing cost` : 'Recorded cost of products sold'} />
           <DetailRow label="Profit before business expenses" value={summary.grossProfit === null ? 'Cost missing' : money(summary.grossProfit)} />
+          <DetailRow label="Other business expenses" value={money(summary.otherExpensesTotal)} note="Excludes referral payouts already recognized when agreed" />
+          <DetailRow label="Referral rewards agreed" value={money(summary.referralCost)} note="Included once in expenses and profit" />
+          <DetailRow label="Referral cash payouts" value={money(summary.referralCashPaid)} note="Cash outflow only; not an extra profit cost" />
           <DetailRow label="Discounts" value={money(summary.discountTotal)} />
           <DetailRow label="Damaged stock" value={`${stock.damagedUnits} units`} />
           {report.paymentRows.map(row => (

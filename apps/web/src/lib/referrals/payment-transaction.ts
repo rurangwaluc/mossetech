@@ -102,7 +102,8 @@ export async function executeReferralCashPayment(
         SELECT id FROM sales WHERE id = ${candidate.saleId} FOR UPDATE
       `);
     } else {
-      throw new Error('Referral reward has no linked sale.');
+      // Standalone business rewards lock the reward row below.
+      // Owner approval and a recorded business reason are mandatory.
     }
 
     // Serialize simultaneous payout attempts for this reward.
@@ -201,8 +202,9 @@ export async function executeReferralCashPayment(
           'Referral payments require a fully paid eligible sale.',
         );
       }
-    } else {
-      throw new Error('Referral reward has no linked sale.');
+    } else if (!reward.businessReason ||
+        reward.businessReason.trim().length < 10) {
+      throw new Error('Standalone referral requires an approved business reason.');
     }
 
     const rewardCents = moneyCents(reward.amount);
@@ -242,7 +244,9 @@ export async function executeReferralCashPayment(
         expenseDate: new Date(),
         notes: reward.externalSaleId
           ? `Referral linked to external sale ${reward.externalSaleId}`
-          : `Referral linked to sale ${reward.saleId}`,
+          : reward.saleId
+            ? `Referral linked to sale ${reward.saleId}`
+            : `Standalone referral: ${reward.businessReason}`,
       })
       .returning({ id: expenses.id });
 

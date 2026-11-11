@@ -400,6 +400,13 @@
       "when": 1794055000000,
       "tag": "0056_external_referral_rewards",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1794450000000,
+      "tag": "0057_business_referral_accounting",
+      "breakpoints": true
     }
   ]
 }

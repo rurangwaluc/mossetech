@@ -175,3 +175,49 @@ export async function payReferralRewardAction(form: FormData) {
 
   redirect('/referrals?payment=recorded');
 }
+
+/** Owner-only standalone reward, unrelated to any particular sale. */
+export async function createStandaloneReferralAction(form: FormData) {
+  const owner = await requireOwner();
+  const keyValue = form.get('idempotencyKey');
+  const nameValue = form.get('referrerName');
+  const reasonValue = form.get('businessReason');
+  const notesValue = form.get('notes');
+  const referrerName = typeof nameValue === 'string' ? nameValue.trim() : '';
+  const businessReason = typeof reasonValue === 'string' ? reasonValue.trim() : '';
+  const notes = typeof notesValue === 'string' ? notesValue.trim() : '';
+  if (typeof keyValue !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(keyValue) ||
+      referrerName.length < 2 || referrerName.length > 160 ||
+      businessReason.length < 10 || businessReason.length > 500 ||
+      notes.length > 1000) {
+    redirect('/referrals?error=invalid-details');
+  }
+  let cents: number;
+  try {
+    cents = amountInCents(form.get('amount'));
+  } catch {
+    redirect('/referrals?error=invalid-amount');
+  }
+  let created = false;
+  try {
+    const inserted = await db.insert(referralRewards).values({
+      saleId: null,
+      externalSaleId: null,
+      businessReason,
+      standaloneIdempotencyKey: keyValue,
+      referrerName,
+      recordedByUserId: owner.id,
+      amount: (cents / 100).toFixed(2),
+      notes: notes || null,
+    }).onConflictDoNothing({ target: referralRewards.standaloneIdempotencyKey })
+      .returning({ id: referralRewards.id });
+    created = inserted.length === 1;
+  } catch {
+    redirect('/referrals?error=save-failed');
+  }
+  if (!created) redirect('/referrals?error=duplicate');
+  revalidatePath('/referrals');
+  revalidatePath('/reports');
+  redirect('/referrals?created=1');
+}

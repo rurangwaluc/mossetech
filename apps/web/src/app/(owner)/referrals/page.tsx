@@ -11,6 +11,7 @@ import {
 import { requireOwner } from '@/lib/auth/session';
 import {
   createReferralRewardAction,
+  createStandaloneReferralAction,
   payReferralRewardAction,
 } from '@/lib/referrals/actions';
 
@@ -38,6 +39,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
       id: referralRewards.id,
       saleId: referralRewards.saleId,
       externalSaleId: referralRewards.externalSaleId,
+      businessReason: referralRewards.businessReason,
       externalStatus: externalSales.status,
       externalTotal: externalSales.customerTotal,
       referrerName: referralRewards.referrerName,
@@ -123,7 +125,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
           Referral rewards
         </h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          Record who brought a customer and track agreed rewards.
+          Record referral rewards across sales and other business activities.
         </p>
       </div>
 
@@ -239,6 +241,37 @@ export default async function ReferralsPage({ searchParams }: Props) {
       </section>
 
       <section className="rounded-xl border border-[var(--border)] p-4 md:p-5">
+        <h2 className="text-lg font-semibold text-[var(--text)]">Other business referrals</h2>
+        <p className="mt-1 text-sm text-[var(--muted)]">
+          Owner-approved rewards for genuine business introductions not attached to a sale.
+          These are business costs when recorded and cash payments only when paid.
+        </p>
+        <form action={createStandaloneReferralAction} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <input type="hidden" name="idempotencyKey" value={randomUUID()} />
+          <label className="space-y-1 text-sm">Referred by
+            <input name="referrerName" required minLength={2} maxLength={160}
+              className="block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3" />
+          </label>
+          <label className="space-y-1 text-sm">Reward (RWF)
+            <input name="amount" type="number" min="0.01" step="0.01" required
+              className="block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3" />
+          </label>
+          <label className="space-y-1 text-sm sm:col-span-2">Business reason (required)
+            <input name="businessReason" required minLength={10} maxLength={500}
+              placeholder="Describe the genuine business introduction or service"
+              className="block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3" />
+          </label>
+          <label className="space-y-1 text-sm sm:col-span-2">Notes (optional)
+            <input name="notes" maxLength={1000}
+              className="block w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3" />
+          </label>
+          <button type="submit" className="rounded-lg bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white sm:col-span-2 sm:justify-self-start">
+            Record business referral
+          </button>
+        </form>
+      </section>
+
+      <section className="rounded-xl border border-[var(--border)] p-4 md:p-5">
         <h2 className="text-lg font-semibold text-[var(--text)]">
           Referral history
         </h2>
@@ -274,16 +307,18 @@ export default async function ReferralsPage({ searchParams }: Props) {
                     {reward.referrerName}
                   </p>
                   <p className="text-sm text-[var(--muted)]">
-                    Customer: {reward.customerName || 'Walk-in customer'}
+                    {reward.businessReason
+                      ? `Business referral: ${reward.businessReason}`
+                      : `Customer: ${reward.customerName || 'Walk-in customer'}`}
                   </p>
-                  <Link
+                  {(reward.saleId || reward.externalSaleId) && <Link
                     href={reward.externalSaleId
                       ? `/sales/external/${reward.externalSaleId}`
                       : `/sales/${reward.saleId}`}
                     className="text-sm underline"
                   >
                     View sale
-                  </Link>
+                  </Link>}
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">{money(reward.amount)}</p>
@@ -342,7 +377,7 @@ export default async function ReferralsPage({ searchParams }: Props) {
       </section>
 
       <p className="text-xs text-[var(--muted)]">
-        Payments are recorded as expenses only when paid.
+        Agreed rewards reduce profit when recorded. Cash expenses and drawer movements are recorded only when paid.
         An open cash drawer with enough cash is required.
         Unpaid rewards remain outstanding obligations.
       </p>

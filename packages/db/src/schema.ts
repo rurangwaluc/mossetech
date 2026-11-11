@@ -1758,6 +1758,9 @@ export const referralRewards = pgTable('referral_rewards', {
     .references(() => sales.id, { onDelete: 'restrict' }),
   externalSaleId: uuid('external_sale_id').unique()
     .references(() => externalSales.id, { onDelete: 'restrict' }),
+  // A standalone referral has neither sale reference and requires a business reason.
+  businessReason: varchar('business_reason', { length: 500 }),
+  standaloneIdempotencyKey: uuid('standalone_idempotency_key').unique(),
   referrerName: varchar('referrer_name', { length: 160 }).notNull(),
   recordedByUserId: uuid('recorded_by_user_id').notNull()
     .references(() => users.id, { onDelete: 'restrict' }),
@@ -1773,6 +1776,8 @@ export const referralRewards = pgTable('referral_rewards', {
   returnCheck('referral_reward_one_sale_check', returnSql`
     (${table.saleId} IS NOT NULL AND ${table.externalSaleId} IS NULL)
     OR (${table.saleId} IS NULL AND ${table.externalSaleId} IS NOT NULL)
+    OR (${table.saleId} IS NULL AND ${table.externalSaleId} IS NULL
+        AND length(btrim(coalesce(${table.businessReason}, ''))) >= 10)
   `),
   returnCheck('referral_reward_amount_check', returnSql`
     ${table.amount} > 0 AND ${table.paidAmount} >= 0

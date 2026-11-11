@@ -276,10 +276,28 @@ function SummaryTable({
           report.summary.expensesTotal,
         ),
       detail:
-        'Business money spent in this period',
+        'Other expenses plus agreed referral rewards; cash payouts not double-counted',
       negative:
         report.summary.expensesTotal >
         0,
+    },
+    {
+      label: 'Referral rewards agreed',
+      value: money(report.summary.referralCost),
+      detail: 'Recognized once as a business cost in this reporting period',
+      negative: report.summary.referralCost > 0,
+    },
+    {
+      label: 'Referral cash payouts',
+      value: money(report.summary.referralCashPaid),
+      detail: 'Cash outflow only; not an additional profit deduction',
+      negative: false,
+    },
+    {
+      label: 'Unpaid referral obligations',
+      value: money(report.summary.referralOutstanding),
+      detail: 'Current outstanding rewards, not cash already spent',
+      negative: report.summary.referralOutstanding > 0,
     },
     {
       label:
